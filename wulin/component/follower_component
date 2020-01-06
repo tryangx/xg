@@ -1,0 +1,20 @@
+---------------------------------------
+FOLLOWER_COMPONENT = class()
+
+---------------------------------------
+FollowerProperties = 
+{
+	{ type="STRING",        name="TYPE" },
+	{ type="NUMBER",        name="LEVEL" },
+	{ type="LIST_NUMBER",   name="FOLLOWERS" },
+	{ type="OBJECT",        name="MASTER" },
+}
+
+---------------------------------------
+function FOLLOWER_COMPONENT:__init()
+	self.type        = "COMPONENT"
+	self.name        = "FOLLOWER_COMPONENT"
+	self._properties = GangProperties
+end
+
+---------------------------------------
