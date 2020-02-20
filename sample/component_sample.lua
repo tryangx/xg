@@ -16,8 +16,8 @@ TestComponentProperties =
 
 ---------------------------------------
 function TestComponent:__init()
-	self.name        = "TEST_COMPONENT"
-	self._properties = TestComponentProperties
+	--self.name        = "TEST_COMPONENT"
+	--self._properties = TestComponentProperties
 end
 ---------------------------------------
 

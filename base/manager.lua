@@ -32,14 +32,38 @@ function Manager:GetCount()
 end
 
 --------------------------------------------------------------
+--
+-- Getter()
+--
+--------------------------------------------------------------
 function Manager:GetData( id )
 	if not id or id == 0 then return nil end
 	if not self._datas then return nil end
 	return self._datas[id]
 end
 
---------------------------------------------------------------
-function Manager:GetIndexData( index )
+
+function Manager:GetDataByAttr( key, value )
+	for _, data in pairs( self._datas ) do
+		if data[key] == value then
+			return data
+		end
+	end
+	return nil
+end
+
+
+function Manager:GetDataByFilter( filter )
+	for _, data in pairs( self._datas ) do
+		if filter( data ) then
+			return data
+		end
+	end
+	return nil
+end
+
+
+function Manager:GetDataByIndex( index )
 	for _, data in pairs( self._datas ) do
 		if index > 1 then
 			index = index - 1
@@ -49,6 +73,7 @@ function Manager:GetIndexData( index )
 	end
 	return nil
 end
+
 
 --------------------------------------------------------------
 function Manager:NewID()
@@ -104,19 +129,14 @@ function Manager:LoadFromData( datas )
 	for k, data in pairs( datas ) do		
 		local newData = self._clz()
 
-		if data.id == nil then
-			--less codes, use index as key-id
-			data.id = k
-		end
+		if data.id == nil then data.id = k end
 		
 		newData:Load( data )
 
 		self:AddData( newData.id, newData )
 		
 		--set allocated id
-		if self._alloateId <= data.id then
-			self._alloateId = data.id
-		end
+		if self._alloateId <= data.id then self._alloateId = data.id end
 
 		number = number + 1
 	end

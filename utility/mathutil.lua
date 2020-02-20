@@ -11,12 +11,21 @@ MathCompareMethod =
 	LESS_THAN_AND_EQUALS = 4,
 }
 
-function MathUtil_Size( dict )
+function MathUtil_GetSize( dict )
 	local size = 0
 	for _, _ in pairs( dict ) do
 		size = size + 1
 	end
 	return size
+end
+
+-- Get the data by the index from the dict
+function MathUtil_GetDataByIndex( dict, Index )
+	if not Index then Index = 1 end
+	for _, v in pairs( dict ) do
+		if Index == 1 then return v end
+		Index = Index - 1
+	end
 end
 
 --[[
@@ -172,8 +181,9 @@ function MathUtil_Dump( source, depth, indent )
 		--print( "Depth too high" )
 		return
 	end
-	DumpWithTab( "{", indent )	
-	for k, v in pairs( source ) do
+--	print( source )
+	DumpWithTab( "{", indent )		
+	for k, v in pairs( source ) do		
 		local key
 		if typeof( k ) == "object" or typeof( k ) == "class" then
 			key = ""
@@ -231,18 +241,47 @@ end
 
 --[[
 	return the table combined by two tables together
+
+	@usage
+		local t = { { a = 1 }, { a = 2 } }
+		Dump( t )
+
+		local t1 = { { a = 3 } }
+		t2 = MathUtil_Merge( t, t1 )
+
+		print( "after merge" )
+		Dump( t2 )
 --]]
-function MathUtil_Merge( left, right, condition )
-	if not right then return left end	
+function MathUtil_MergeList( left, right, condition )
 	local destination = {}
 	for k, v in pairs( left ) do
 		if not condition or condition( v ) then
 			table.insert( destination, v )
 		end
 	end
-	for k, v in pairs( right ) do
+	if right then
+		for k, v in pairs( right ) do
+			if not condition or condition( v ) then
+				table.insert( destination, v )
+			end
+		end
+	end
+	return destination
+end
+
+
+function MathUtil_MergeDict( left, right, condition )
+	local destination = {}
+	for k, v in pairs( left ) do
 		if not condition or condition( v ) then
-			table.insert( destination, v )
+			destination[k] = v
+		end
+	end
+	if right then
+		for k, v in pairs( right ) do
+			if not condition or condition( v ) then
+				destination[k] = v
+			end
 		end
 	end
 	return destination

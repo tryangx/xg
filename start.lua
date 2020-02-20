@@ -1,4 +1,5 @@
 ---------------------------------------------
+--Link the libraries
 package.path = package.path .. ";lib/?.lua"
 package.path = package.path .. ";base/?.lua"
 package.path = package.path .. ";utility/?.lua"
@@ -10,6 +11,7 @@ require "xgame_utility"
 require "xgame_common"
 
 ---------------------------------------------
+--Link the GameLogic
 package.path = package.path .. ";wulin/?.lua"
 
 require "wulin"
@@ -93,4 +95,4 @@ MathUtility_Dump( d )
 ---------------------------------------------
 --require "sample.component_sample"
 
-require "sample.ecs_sample"
+--require "sample.ecs_sample"

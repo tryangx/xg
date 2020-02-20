@@ -42,6 +42,7 @@ end
 -----------------------------------
 -- 
 function DBG_Error( content, lv )
+	if not lv then lv = DBGLevel.IMPORTANT end
 	if typeof( lv ) == "number" and lv >= _level then
 		error( content )
 	else
@@ -74,7 +75,7 @@ function DBG_Trace( content, cond, lv )
 end
 
 -----------------------------------
-function DBG_TrackBug( content )
+function DBG_TraceBug( content )
 	Log_Write( "tracebug", content )
 end
 

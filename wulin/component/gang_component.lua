@@ -1,4 +1,12 @@
 ---------------------------------------
+---------------------------------------
+--[[
+	
+
+
+--]]
+---------------------------------------
+---------------------------------------
 GANG_COMPONENT = class()
 
 ---------------------------------------
@@ -12,8 +20,18 @@ GangProperties =
 
 ---------------------------------------
 function GANG_COMPONENT:__init()
-	self.typename    = "GANG_COMPONENT"
-	self._properties = GangProperties
+	--self.ecsname     = "GANG_COMPONENT"
+	--self._properties = GangProperties
 end
 
 ---------------------------------------
+function GANG_COMPONENT:Activate()	
+end
+
+function GANG_COMPONENT:Deactivate()
+
+end
+
+function GANG_COMPONENT:Update()
+
+end

@@ -1,5 +1,8 @@
 ---------------------------------------
-package.path = package.path .. ";utility/?.lua"
+--package.path = package.path .. ";utility/?.lua"
 
 ---------------------------------------
-require "MathUtility"
+require "mathutil"
+require "randomizer"
+require "file"
+require "logutil"

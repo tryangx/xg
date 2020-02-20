@@ -4,7 +4,7 @@
 --
 ------------------------------------------
 
-local function debug_msg( conent,  )
+local function debug_msg( conent )
 	if true then
 		print( content )
 	end

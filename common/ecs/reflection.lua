@@ -18,13 +18,13 @@ function Reflection_Import( reflection, object )
 		end
 	else
 		object = reflection:Import( object )
-	end
+	end	
 	return object
 end
 
 ---------------------------------------
 function Reflection_Export( reflection, object )
-	if not object then DBG_Error( "object is invalid to export" ) end
+	if not object then DBG_TraceBug( "object is invalid to export" ) return end
 	if object._properties then
 		--print( "Object=", object._type or object.name or "", " has properties" )
 		reflection:ExportBegin( object.TYPE, REFLECTION_SEPERATOR.OBJECT )
