@@ -90,34 +90,36 @@ end
 
 function FileReflection:ImportData( data, name )
 	if not data or not name then error( "Wrong Data" ) end
+
 	--print( "import data=", data, "name=", name )
 
 	local t = typeof( data )
 	if t == "string" or t == "number" or t == "boolean" then
 		--print( "data", name .. "=" .. data )
-		--object[name] = data
-		return data
+		return data		
 	end
 
 	--check ecs object
 	local object	
-	if data.ecstype == "ECSSCENE" then		
-		properties = ECSSceneProperties
+	if data.ecstype == "ECSSCENE" then				
+		properties = ECSProperties
 		object     = ECS_CreateScene( "UNKNOWN" )
-	elseif data.ecstype == "ECSENTITY" then
-		properties = ECSEntityProperties
+		--print( "creat scene", object )
+	elseif data.ecstype == "ECSENTITY" then		
+		properties = ECSProperties
 		object     = ECS_CreateEntity( "ECSENTITY", "UNKNOWN" )
+		--print( "creat entity", object )
 	elseif data.ecstype == "ECSCOMPONENT" then
-		properties = ECSProperties		
-		object     = ECS_CreateComponent( data.ecsname, "UNKNOWN" )				
+		properties = ECSComponentProperties
+		object     = ECS_CreateComponent( data.ecsname, "UNKNOWN" )
+		--print( "creat component", object )
 	end
 
 	if object then
 		--print( "ecstype=" .. data.ecstype, object )
-		--for pname, prop in pairs( properties ) do if not data[pname] then DBG_Trace( "missing prop=" .. pname ) end end
-		for itemname, item in pairs( ECSProperties ) do
+		for itemname, item in pairs( properties ) do
 			if not data[itemname] then error( "why no property=" .. itemname ) end
-			--print( "!!!!!!!set", name, data[name] )
+			--print( "!!!!!!!set", itemname, data[itemname] )
 			object[itemname] = data[itemname]
 		end
 	else
@@ -125,11 +127,11 @@ function FileReflection:ImportData( data, name )
 	end
 	
 	for key, value in pairs( data ) do
-		--print( "prop=" .. key, value )
-		if not object[key] then
+		--print( "prop=" .. key, value, object[key] )
+		if not object[key] then			
 			local child = self:ImportData( value, key )
-			object[key] = child
 			--print( "set key=" .. key .. " data=", child )
+			object[key] = child			
 		end
 	end
 
@@ -261,7 +263,7 @@ function FileReflection:ExportValue( name, value )
 	if t == "table" then
 		if not self._isArray and name then self:Write( "\"" .. name .. "\":" ) end
 
-		print( "name=" .. name, "isarray=" .. ( ( self._isArray == true ) and "true" or "false" ) )
+		--print( "name=" .. name, "isarray=" .. ( ( self._isArray == true ) and "true" or "false" ) )
 
 		--if name == "parent" then error( "" ) end
 
@@ -343,7 +345,7 @@ function FileReflection:ExportValue( name, value )
 			self._isArray  = lastState
 		end
 
-		print( "  end", name, value )
+		--print( "  end", name, value )
 	else
 		if not self._isArray and name then self:Write( "\"" .. name .. "\":" ) end
 

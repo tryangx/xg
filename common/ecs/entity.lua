@@ -117,6 +117,7 @@ function ECSEntity:Activate()
 		component.status = ECSENTITYSTATUS.ACTIVATING
 		--Loading 
 		component.entityid = entity.ecsid
+		component.parent   = entity
 		component:Activate()
 		component.status = ECSENTITYSTATUS.ACTIVATED
 	end)

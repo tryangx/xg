@@ -45,6 +45,7 @@ end
 
 function Manager:GetDataByAttr( key, value )
 	for _, data in pairs( self._datas ) do
+		--print( "key=" .. key, data[key], value, typeof(data[key]), typeof(value))
 		if data[key] == value then
 			return data
 		end

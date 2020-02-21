@@ -23,7 +23,7 @@ ECS_RegisterSystem( FightSystem( { name = "FIGHT_SYSTEM" } ) )
 local bfscene
 
 function create()
-	print( "Create?")
+	print( "Generate Test Data" )
 	--------------------------------------
 	--test case
 	--------------------------------------
@@ -60,8 +60,8 @@ function create()
 	bfscene:GetRootEntity():AddChild( fightDataEntity )
 
 	local fight = ECS_CreateComponent( "FIGHT_COMPONENT" )
-	Prop_Add( fight, "reds", roleEntity1.id )
-	Prop_Add( fight, "blues", roleEntity1.id )
+	Prop_Add( fight, "reds", roleEntity1.ecsid )
+	Prop_Add( fight, "blues", roleEntity2.ecsid )
 	fightDataEntity:AddComponent( fight )
 end
 
@@ -79,11 +79,14 @@ function run()
 	end
 end
 
-function load()
+function load( filename )	
+	print( "Load Test Data From File=", filename )
+
+	ECS_Reset()
+
 	--load from bf.json
-	ImportFileReflection:SetFile( "bf.json" )
+	ImportFileReflection:SetFile( filename )
 	local file = Reflection_Import( ImportFileReflection )
-	--bfscene = file
 	bfscene = MathUtil_GetDataByIndex( file )
 	--print( "load=", bfscene ) MathUtil_Dump( bfscene, 8 )	
 	ECS_Dump( bfscene )
@@ -91,7 +94,8 @@ function load()
 end
 
 function save( filename )
-	--save to bf1.json
+	print( "Save Data to File=", filename )
+	--save to bf1.json	
 	if bfscene then		
 		ExportFileReflection:SetFile( filename )
 		Reflection_Export( ExportFileReflection, bfscene )
@@ -110,6 +114,6 @@ save( "bf1.json" )
 --]]
 
 --[[]]
-load()
+load( "bf.json" )
 run()
 --]]

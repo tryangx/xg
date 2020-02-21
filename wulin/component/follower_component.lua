@@ -1,4 +1,14 @@
 ---------------------------------------
+--
+-- Fight Attributes
+--
+--   Hp:    VITAL, Hit points
+--   Atk:   HARD, Damage 
+--   Def:   INTERNAL, Damage Resist
+--   Skill: SOFT, Extra Direct Damage 
+--   Agi:   Block 
+--
+---------------------------------------
 FOLLOWER_COMPONENT = class()
 
 ---------------------------------------
@@ -56,3 +66,6 @@ function FOLLOWER_COMPONENT:GenFightAttr( params )
 		end
 	end	
 end
+
+
+---------------------------------------

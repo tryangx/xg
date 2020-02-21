@@ -7,7 +7,8 @@
 --
 ---------------------------------------
 local _ecsids = {}
-local _ecsidCounter = 10000
+local _ecsidDefault = 10000
+local _ecsidCounter = _ecsidDefault
 
 _randomizer = Randomizer()
 
@@ -15,10 +16,14 @@ function ECS_InitID()
 	_randomizer:Seed( os.time() )
 end
 
+function ECS_ResetID()
+	_ecsidCounter = _ecsidDefault
+end
+
 function ECS_CreateID()
 	--template solution
 	--  ecsid = time_stamp + counter + random_string
-	local ecsid = ""
+	local ecsid = "eid"
 
 	ecsid = ecsid .. os.time()
 

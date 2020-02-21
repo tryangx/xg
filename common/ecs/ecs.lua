@@ -38,8 +38,15 @@ ECSProperties =
 {
 	ecstype  = { type="STRING" },
 	ecsname  = { type="STRING" },
+	ecsid    = { type="STRING" },
 }
 
+
+ECSComponentProperties = 
+{
+	ecstype  = { type="STRING" },
+	ecsname  = { type="STRING" },
+}
 
 ---------------------------------------
 local _ecs = {}
@@ -64,7 +71,6 @@ local function ECS_Register( typeName, clz, properties )
 	if not clz.Activate then error( typeName .. " hasn't Activate()" ) end
 	if not clz.Deactivate then error( typeName .. " hasn't Deactivate()" ) end
 	if not clz.Update then error( typeName .. " hasn't Update()" ) end
-
 
 	DBG_Trace( "ECSType=" .. typeName .. " registered." )
 end
@@ -91,11 +97,28 @@ local function ECS_Create( typeName, name )
 			obj._properties = data.properties
 			--print( "Create component", obj.ecsname, obj.name, obj.ecstype )
 		end
-		--print( "====Create", typeName, name, obj )
+		--print( "====Create ECS", obj.ecstype, obj.ecsname, obj.ecsid, obj )
 		return obj
 	end
+
 	DBG_Error( "Create ecstype=" .. typeName .. " failed!", DBGLevel.FATAL )
 end
+
+
+---------------------------------------
+---------------------------------------
+function ECS_Reset()
+	--reset manager	
+	for _, data in pairs( _ecs ) do
+		data.mgr:Clear()
+	end
+
+	--reset ecsid
+	ECS_ResetID()
+
+	print( "Reset ECS" )
+end
+
 
 ---------------------------------------
 -- @param id scene:name, entity:id
@@ -108,14 +131,14 @@ local function ECS_Find( typeName, keyname )
 		DBG_Error( "ECSType=" .. typeName .. " doesn't has manager." )
 	else
 		local obj = data.mgr:GetData( keyname )		
-		if typeName == "ECSENTITY" then
+		if typeName == "ECSCOMPONENT" then
 			--keyname is id
-			return data.mgr:GetDataByAttr( "ecsid", keyname )
-		else
 			--use a filter to find the name			
 			return data.mgr:GetDataByFilter( function( target )
 					return target.ecsname == keyname 
 				end )
+		else
+			return data.mgr:GetDataByAttr( "ecsid", keyname )
 		end
 	end
 end
@@ -210,10 +233,12 @@ function ECS_Dump( object, indent )
 	if t == "number" or t == "string" or t == "boolean" then
 		print( blank .. "value=", object )
 	else
-		print( blank .. "ecstype=", object.ecstype, " ecsname=", object.ecsname, object )
+		
 		if object.ecstype == "ECSSCENE" then
+			print( blank .. "ecstype=" .. object.ecstype, " ecsname=" .. object.ecsname, " ecsid=" .. object.ecsid, object )
 			ECS_Dump( object:GetRootEntity(), indent + 1 )
 		elseif object.ecstype == "ECSENTITY" then
+			print( blank .. "ecstype=" .. object.ecstype, " ecsname=" .. object.ecsname, " ecsid=" .. object.ecsid, object )
 			if object.children then
 				for _, entity in ipairs( object.children ) do
 					ECS_Dump( entity, indent + 1 )
@@ -225,6 +250,7 @@ function ECS_Dump( object, indent )
 				end
 			end
 		elseif object.ecstype == "ECSCOMPONENT" then
+			print( blank .. "ecstype=" .. object.ecstype, " ecsname=" .. object.ecsname, object )
 		else
 			for _, subObj in pairs( object ) do
 				ECS_Dump( subObj, indent + 1 )
@@ -232,6 +258,7 @@ function ECS_Dump( object, indent )
 		end
 	end		
 end
+
 
 ---------------------------------------
 --
