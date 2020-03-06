@@ -82,8 +82,6 @@ end
 -----------------------------------
 -- print content once
 function DBG_Warning( key, content )
-	if _warnings[key] then return end
-	_warnings[key] = 1
 	print( "[WRN]" .. key .."-->".. content )
 end
 

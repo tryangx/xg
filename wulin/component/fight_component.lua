@@ -13,7 +13,7 @@ FightResult =
 FIGHT_COMPONENT = class()
 
 ---------------------------------------
-FightProperties = 
+FIGHT_PROPERTIES = 
 {
 	reds       = { type="LIST" },--store the entity id of fighter
 	blues      = { type="LIST" },--store the entity id of fighter
@@ -27,8 +27,8 @@ function FIGHT_COMPONENT:__init()
 end
 
 ---------------------------------------
-function FIGHT_COMPONENT:Activate()	
-	print( "activate fight_cmp eid=", self.entityid )
+function FIGHT_COMPONENT:Activate()
+	--print( "activate fight_cmp eid=", self.entityid )
 	ECS_GetSystem( "FIGHT_SYSTEM" ):AppendFight( self.entityid )
 
 	--prepare datas
@@ -48,13 +48,15 @@ function FIGHT_COMPONENT:Activate()
 				line = 1
 				row = row + 1
 			end
-			local fighter = ECS_FindEntity( id )
-			if fighter then
-				local component = fighter:GetComponent( "FOLLOWER_COMPONENT" )
-				if not component then error( "Role Component is invalid" ) end				
+			local role = ECS_FindEntity( id )
+			if role then
+				local follower = role:GetComponent( "FOLLOWER_COMPONENT" )				
+				if not follower then error( "Follower Component is invalid" ) end
+				local fighter = role:GetComponent( "FIGHTER_COMPONENT" )
+				if not fighter then error( "Fighter Component is invalid" ) end								
 				--Dump( component ) print( "!!!!!!!!!!find fighter", fighter, id ) Dump( component )
-				print( "parepare", component.name, id )
-				table.insert( positions, { fighter=component, row=row, line=line } )
+				--print( "parepare", follower.name, id )
+				table.insert( positions, { follower=follower, fighter=fighter, row=row, line=line } )
 			end
 		end
 	end

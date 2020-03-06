@@ -112,13 +112,16 @@ end
 --
 ---------------------------------------
 function ECSEntity:Activate()
+	--print( "Activate Entity" )
 	entity = self
 	Prop_Foreach( self, "components", function ( component )
 		component.status = ECSENTITYSTATUS.ACTIVATING
 		--Loading 
 		component.entityid = entity.ecsid
 		component.parent   = entity
-		component:Activate()
+		--print( "Activate component", component.ecsname, component.Activate )
+		--Dump( component )
+		if component.Activate then component:Activate() end		
 		component.status = ECSENTITYSTATUS.ACTIVATED
 	end)
 	Prop_Foreach( self, "children", function ( child )
@@ -128,9 +131,10 @@ end
 
 
 function ECSEntity:Deactivate()
+	--print( "Deactivate Entity" )
 	Prop_Foreach( self, "components", function ( component )
 		component.status = ECSENTITYSTATUS.DEACTIVATING
-		component:Activate()
+		if component.Deactivate then component:Deactivate() end
 		component.status = ECSENTITYSTATUS.DEACTIVATED
 	end )
 	Prop_Foreach( self, "children", function ( child )

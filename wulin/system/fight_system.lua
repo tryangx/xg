@@ -11,6 +11,20 @@
 --
 -- Fighters will fight with 
 --
+--
+--
+-- Duel Process
+--   1. Both side choose its fight-skill at first
+--   2. Traverse all the actions both
+--   3. Determine tactic( default / speed / power / skill )
+--      Speed : attack 50%, defend 100%, speed 150%
+--      Power : attack 150%, defend 50%, speed 50%
+--      Skill : attack 50%, defend 150%, speed 50%
+--      Normal: nothing
+--      Rest  : recover 10%, defend 25%
+--   4. Calculate the 
+--
+--
 ------------------------------------------------------------------------------
 FightFormation = 
 {
@@ -34,14 +48,14 @@ end
 
 ---------------------------------------
 function FightSystem:Activate()
-
+	print( "Activate System")
 end
 
 
 ---------------------------------------
-function FightSystem:Update( deltaTime )
+function FightSystem:Update( deltaTime )	
 	for _, fight in ipairs( self._fights ) do
-		self:Fight( fight )
+		self:ProcessFight( fight )
 	end
 end
 
@@ -54,17 +68,7 @@ end
 
 
 ---------------------------------------
-function FightSystem:Fight( fight_id )
-	local entity = ECS_FindEntity( fight_id )
-	if not entity then
-		DBG_Error( "invalid fight entity!", fight_id )
-		return
-	end
-	
-	local cmp = entity:GetComponent( "FIGHT_COMPONENT" )
-
-	print( "Lets fight", fight_id, entity, cmp )
-
+local function MakeDuels( cmp )
 	local duels = {}
 
 	function FindTarget( fighter, opps )
@@ -77,11 +81,11 @@ function FightSystem:Fight( fight_id )
 		local distance = 0
 		for _, opp in ipairs( opps ) do			
 			if not find then
-				find = opp.fighter
+				find = opp
 			else
 				local newDistance = abs( opp.line - fighter.line ) + abs( opp.fighter - fighter.row )
 				if newDistance < distance then
-					find = opp.fighter
+					find = opp
 				end
 			end
 		end
@@ -90,12 +94,11 @@ function FightSystem:Fight( fight_id )
 	
 	function MakeTeamDuel( teams, oppTeams )
 		for _, data in ipairs( teams ) do
-			local fighter = data.fighter
-			local target = FindTarget( fighter, oppTeams )
+			local target = FindTarget( data.fighter, oppTeams )
 			if target then
-				local priority = Random_GetInt_Sync( 1, fighter.fight_attr.agi )				
-				table.insert( duels, { atk = fighter, def = target, priority = priority } )
-				print( "make duel", fighter, target )
+ 				local priority = Random_GetInt_Sync( 1, data.fighter.agility )				
+				table.insert( duels, { atk = data, def = target, priority = priority } )
+				--print( "make duel", data.follower.name, target.follower.name )
 			end
 		end
 	end
@@ -113,31 +116,39 @@ function FightSystem:Fight( fight_id )
 		return l.priority > r.priority
 	end )
 
+	return duels;
+end
+
+
+local function ProcessDuels( duels )
 	function ProcessDuel( atk, def )
-		if def.fight_attr.hp <= 0 then return end
+		if def.fighter.hp <= 0 then return end
 		--damage
 		--  DamageOutput = atk
 		--  DamageExtra  = rand( 1, ski )
 		--  DamageOutputResist = def		
-		local base_damage = atk.fight_attr.atk - def.fight_attr.def
-		local extra_damage = Random_GetInt_Sync( 0, atk.fight_attr.ski ) - Random_GetInt_Sync( 0, math.floor( def.fight_attr.agi * 0.5 ) )
+		local base_damage = 100--atk.fighter.atk - def.fight_attr.def
+		local extra_damage = Random_GetInt_Sync( 0, atk.fighter.technique ) - Random_GetInt_Sync( 0, math.floor( def.fighter.agility * 0.5 ) )
 		local damage = math.max( 0, base_damage + extra_damage )
 		if damage <= 0 then return end
-		print( atk.name .. " deal damage " .. damage .. " to " .. def.name )
-		def.fight_attr.hp = math.max( 0, def.fight_attr.hp - damage )
-		print( def.name .. " hp is " .. def.fight_attr.hp .. " now." )
-	end
+		print( atk.follower.name .. " deal damage " .. damage .. " to " .. def.follower.name )
+		def.fighter.hp = math.max( 0, def.fighter.hp - damage )
+		print( def.follower.name .. " hp is " .. def.fighter.hp .. " now." )
+	end	
 
 	--process duels
 	for _, duel in ipairs( duels ) do
 		ProcessDuel( duel.atk, duel.def )
 	end
+end
 
+
+local function CheckResult( cmp )
 	--check winner
 	function HasAlive( teams )
 		for _, data in ipairs( teams ) do
 			local fighter = data.fighter
-			if fighter.fight_attr.hp > 0 then
+			if data.fighter.hp > 0 then
 				return true
 			end
 		end
@@ -145,10 +156,27 @@ function FightSystem:Fight( fight_id )
 
 	if not HasAlive( cmp._reds ) then
 		print( "red teams are all dead" )
-	elseif not HasAlive( cmp._reds ) then
+	elseif not HasAlive( cmp._blues ) then
 		print( "red teams are all dead" )
 	end
 end
+
+
+function FightSystem:ProcessFight( fight_id )
+	local entity = ECS_FindEntity( fight_id )
+	if not entity then
+		DBG_Error( "invalid fight entity!", fight_id )
+		return
+	end
+
+	print( "Fight", fight_id, entity )
+
+	local cmp = entity:GetComponent( "FIGHT_COMPONENT" )
+	local duels = MakeDuels( cmp )
+	ProcessDuels( duels )
+	CheckResult( cmp )
+end
+
 
 ---------------------------------------
 function FightSystem:Duel( roleid1, roleid2 )

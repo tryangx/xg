@@ -52,6 +52,7 @@ end
 --
 ---------------------------------------
 function ECSScene:Activate()
+	--print( "Activate Scene" )
 	if self.status ~= ECSSCENESTATUS.INITED then DBG_Error( "Current scene isn't initialized" ) return end
 	--print( "RootEntity=", self:GetRootEntity() )
 	self:GetRootEntity():Activate()
@@ -59,6 +60,7 @@ end
 
 
 function ECSScene:Deactivate()
+	--print( "Deactivate Scene" )
 	if self.status ~= ECSSCENESTATUS.ACTIVATED then DBG_Error( "Current scene cann't be deactivated, the status is" .. ( self.status or "UNKNOWN" ) ) return end	
 	self:GetRootEntity():Deactivate()
 end

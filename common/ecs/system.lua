@@ -28,7 +28,7 @@ end
 
 ---------------------------------------
 function ECS_UpdateSystem( deltaTime )
-	for _, sys in pairs( _ecsSystems ) do
+	for _, sys in pairs( _ecsSystems ) do		
 		sys:Update( deltaTime )
 	end
 end

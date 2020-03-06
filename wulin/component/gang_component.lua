@@ -10,7 +10,7 @@
 GANG_COMPONENT = class()
 
 ---------------------------------------
-GangProperties = 
+GANG_PROPERTIES = 
 {
 	type      = { type="STRING", },
 	level     = { type="NUMBER", },
@@ -20,8 +20,6 @@ GangProperties =
 
 ---------------------------------------
 function GANG_COMPONENT:__init()
-	--self.ecsname     = "GANG_COMPONENT"
-	--self._properties = GangProperties
 end
 
 ---------------------------------------

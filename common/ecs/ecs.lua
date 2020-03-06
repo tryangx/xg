@@ -1,6 +1,5 @@
 ---------------------------------------
 ---------------------------------------
----------------------------------------
 require "scene"
 require "entity"
 require "component"
@@ -68,9 +67,9 @@ local function ECS_Register( typeName, clz, properties )
 	end
 	_ecs[typeName] = data
 
-	if not clz.Activate then error( typeName .. " hasn't Activate()" ) end
-	if not clz.Deactivate then error( typeName .. " hasn't Deactivate()" ) end
-	if not clz.Update then error( typeName .. " hasn't Update()" ) end
+	if not clz.Activate then DBG_Trace( typeName .. " hasn't Activate()" ) end
+	if not clz.Deactivate then DBG_Trace( typeName .. " hasn't Deactivate()" ) end
+	if not clz.Update then DBG_Trace( typeName .. " hasn't Update()" ) end
 
 	DBG_Trace( "ECSType=" .. typeName .. " registered." )
 end
@@ -151,7 +150,8 @@ end
 --
 ---------------------------------------
 function ECS_CreateComponent( name )
-	return ECS_Create( name, "ECSCOMPONENT" )
+	local component =  ECS_Create( name, "ECSCOMPONENT" )
+	return component
 end
 
 
@@ -163,7 +163,13 @@ end
 
 
 function ECS_CreateScene( name )
-	return ECS_Create( "ECSSCENE", name )
+	local scene = ECS_Create( "ECSSCENE", name )
+	
+	--create role data root entity
+	local rootEntity = ECS_CreateEntity( "RootEntity" )
+	scene:SetRootEntity( rootEntity )
+
+	return scene
 end
 
 

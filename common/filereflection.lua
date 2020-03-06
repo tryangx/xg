@@ -51,11 +51,16 @@ function FileReflection:SetFile( fileName )
 		self._fileHandle = io.open( fileName, "a" )
 	end
 
-	--if self._fileHandle then print( "file=", self._fileName, "is opened" ) end
+	if self._fileHandle then
+		--print( "file=", self._fileName, "is opened" )
+	else
+		DBG_Error( "Open File [" .. fileName .. "] failed!" )
+	end
 end
 
 ---------------------------------------
 function FileReflection:Read()
+	if not self._fileHandle then DBG_Error( "File handler is invalid" ) return end
 	if self._isParsed then return end
 	self._isParsed  = true;
 	self._content   = self._fileHandle:read()
@@ -306,7 +311,6 @@ function FileReflection:ExportValue( name, value )
 			end
 
 			self:ExportEnd( value.TYPE, REFLECTION_SEPERATOR.OBJECT )
-
 		else
 			--print( "it's not ecs object", name, value )
 

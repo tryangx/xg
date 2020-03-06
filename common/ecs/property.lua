@@ -38,16 +38,16 @@ function Prop_GetByIndex( container, name, Index, Key, Data )
 	local prop = container._properties[name]	
 	if prop.type == "LIST" or prop.type == "DICT" then
 		if not Index or Index < 1 then Index = 1 end
-		local data = container[name]				
-		--if not data then print( name, "isn't exist" ) return end
-		for _, v in pairs( data ) do
-			if Index == 1 then
-				--MathUtil_Dump( v ) print( "try", v[Key], Data, name )
-				if ( not Key and not Data ) or v[Key] == Data then
-					return v			
+		local data = container[name]
+		if not data then print( name, "isn't exist" ) return end
+		for _, v in pairs( data ) do			
+			--MathUtil_Dump( v ) print( "try", v[Key], Data, name )
+			if ( not Key and not Data ) or v[Key] == Data then
+				if Index == 1 then					
+					return v	
 				end
-			end
-			Index = Index - 1
+				Index = Index - 1
+			end			
 		end
 	else
 		DBG_Error( "Not supported property type." .. prop.type )
