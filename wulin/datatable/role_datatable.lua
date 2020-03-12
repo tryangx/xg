@@ -9,30 +9,57 @@ local ROLE_DATATALBE =
 		age       = 35,
 
 		--FIGHTER DATA
-		hp        = 100,
-		mp        = 60,
-		st        = 80,
+		hp        = 9000,
+		mp        = 260,
+		st        = 280,
  
 		vital     = 85,
 		physical  = 85,
 		internal  = 70,
-		strength  = 80,
-		technique = 70,
-		agility   = 60,
+		strength  = 85,
+		technique = 75,
+		agility   = 65,
 	
-		mental    = {},
+		mentals   = {},
 
-		status    = {},
+		statuses  = {},
+
+		skills    = { 100, 120 },
 	},
 
 	[101] =
+	{
+		--FOLLOWER DATA
+		name      = "肖峰",
+		age       = 35,
+
+		--FIGHTER DATA
+		hp        = 1000,
+		mp        = 260,
+		st        = 280,
+ 
+		vital     = 150,
+		physical  = 100,
+		internal  = 100,
+		strength  = 150,
+		technique = 150,
+		agility   = 150,
+	
+		mentals   = {},
+
+		statuses  = {},
+
+		skills    = { 100, 120 },
+	},
+
+	[110] =
 	{
 		--FOLLOWER DATA
 		name      = "慕容复",
 		age       = 30,
 
 		--FIGHTER DATA
-		hp        = 70,
+		hp        = 5000,
 		mp        = 60,
 		st        = 60,
  
@@ -43,9 +70,36 @@ local ROLE_DATATALBE =
 		technique = 80,
 		agility   = 70,
 	
-		mental    = {},
+		mentals   = {},
 
-		status    = {},
+		statuses  = {},
+
+		skills    = { 100, 120 },
+	},
+
+	[111] =
+	{
+		--FOLLOWER DATA
+		name      = "邓百川",
+		age       = 36,
+
+		--FIGHTER DATA
+		hp        = 400,
+		mp        = 30,
+		st        = 40,
+ 
+		vital     = 40,
+		physical  = 50,
+		internal  = 35,
+		strength  = 50,
+		technique = 40,
+		agility   = 30,
+	
+		mentals   = {},
+
+		statuses  = {},
+
+		skills    = { 100 },
 	},
 }
 

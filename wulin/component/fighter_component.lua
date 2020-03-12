@@ -2,13 +2,22 @@
 ---------------------------------------
 FIGHTER_ATTR = 
 {
-	VITAL      = 1,  --Affect Hp, 
-	PHYSICAL   = 2,  --Affect ST, Physical Defense,
-	INTERNAL   = 3,  --Affect MP, Direct Damage	
-	STRENGTH   = 10, --Resist Physical Damage
-	TECHNIQUE  = 11, --Affect Hit Accuracy, Critical( Physical Damage )
-	AGILITY    = 12, --Affect Evade, Attack Sequence
+	VITAL      = 1,  --Affect Hp, MP
+	PHYSICAL   = 2,  --Affect HP, ST, 
+	INTERNAL   = 10, --Affect MP, INT action damage/resist
+	STRENGTH   = 11, --Resist ST, PHY action damage/resist
+	TECHNIQUE  = 20, --Affect Hit Accuracy, Critical( Physical Damage )
+	AGILITY    = 21, --Affect Evade, Attack Sequence
 }
+
+
+FIGHTER_ELEMENT = 
+{
+	NON = 0,
+	PHY = 1,
+	INT = 2,	
+}
+
 
 FIGHTER_POINTS = 
 {
@@ -67,7 +76,8 @@ FIGHTER_PROPERTIES =
 	-- type : object
 	-- value: cur/max
 	vital      = { type="OBJECT" },
-	physical   = { type="OBJECT" },
+	physical   = { type="OBJECT" },	
+
 	internal   = { type="OBJECT" },
 	strength   = { type="OBJECT" },
 	technique  = { type="OBJECT" },
@@ -80,13 +90,14 @@ FIGHTER_PROPERTIES =
 
 	--mental
 	-- valuetype: { type: string, init_value = number, post_value = number }
-	mental     = { type="OBJECT" },
+	mentals    = { type="OBJECT" },
 
 	--status
 	--  valuetype: { type = FIGHTER_STATUSTYPE, effect = number, duration = number }
-	status     = { type="OBJECT" },
+	statuses   = { type="OBJECT" },
 
-	--
+	--skills
+	skills     = { type="OBJECT" },
 }
 
 ---------------------------------------

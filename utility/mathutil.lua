@@ -56,6 +56,16 @@ function MathUtil_Reverse( list )
 	return newList
 end
 
+
+function MathUtil_CreateShuffledSequence( length )
+	local seqs = {}
+	for i = 1, length do
+		table.insert( seqs, i )
+	end
+	return MathUtil_Shuffle_Sync( seqs )
+end
+
+
 --[[
 	Shuffle Table
 	
@@ -784,6 +794,7 @@ end
 	Float interpolate
 
 	@usage
+	--input_value, input_value_min, input_value_max, dest_value_min, dest_value_max
 	print( MathUtil_Interpolate( 50, 0, 100, 1, 10 )
 	-->>5.5
 ]]

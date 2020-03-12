@@ -76,6 +76,8 @@ FIGHTSKILL_PROPERTIES =
 
 	cost       = { type="OBJECT", },
 
+	acttime    = { type="NUMBER", },
+
 	weapon     = { type="OBJECT", },
 	
 	actions    = { type="OBJECT", },

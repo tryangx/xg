@@ -245,6 +245,7 @@ function create_roledata_entity()
 	
 	CreateRole( 100 )
 	CreateRole( 101 )
+	--CreateRole( 111 )
 	
 	return roleDataEntity
 end
@@ -265,6 +266,7 @@ function test_fightsystem()
 	local fight = ECS_CreateComponent( "FIGHT_COMPONENT" )
 	Prop_Add( fight, "reds",  roleDataEntity:GetChild( 1 ).ecsid )
 	Prop_Add( fight, "blues", roleDataEntity:GetChild( 2 ).ecsid )
+	--Prop_Add( fight, "blues", roleDataEntity:GetChild( 3 ).ecsid )
 	fightDataEntity:AddComponent( fight )
 
 	--activate
