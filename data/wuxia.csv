@@ -1,0 +1,4 @@
+id,name,age,grade,traits,lv,skills
+1,段誉,24,5,"{hp_max=1000,hp_rate=1.1,st_max=1000,st_max=1.1,mp_max=500,internal_rate=1.1,strength_rate=1.3,technique_rate=1.1}",60,{100}
+2,萧峰,40,5,"{init_lv=40,hp_max=1000,hp_rate=1.1,st_max=1000,st_max=1.1,mp_max=500,internal_rate=1.2,strength_rate=0.9,technique_rate=0.9,agility=1.4}",60,{120}
+3,虚竹,28,5,"{hp_max=1000,hp_rate=1.1,st_max=1000,st_max=1.1,mp_max=500,internal_rate=1.2,strength_rate=1.1,technique_rate=1.0,agility_rate=1.0}",60,"{100,120}"
