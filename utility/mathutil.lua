@@ -326,8 +326,13 @@ end
 function MathUtil_ShallowCopy( source, destination )
 	if not destination then destination = {} end
 	if source then
-		for field, value in pairs(source) do
-			destination[field] = value
+		local t = typeof(source)
+		if t == "table" then
+			for field, value in pairs(source) do
+				destination[field] = value			
+			end
+		else
+			return source
 		end
 	end
 	return destination
@@ -511,6 +516,30 @@ function MathUtil_Remove( list, target, name )
 		end
 	end
 	return false
+end
+
+
+--[[
+	local list = { 1, 2, 3, 4, 5 }
+	MathUtil_RemoveIf( list, function( v )
+		return v == 2 or v == 4
+	end )
+	--list will be 1=1, 2=3, 3=5.
+--]]
+function MathUtil_RemoveIf( list, fn )
+	local begin = 1
+	local findItem = true
+	while findItem do
+		findItem = false
+		for inx = begin, #list do
+			if fn( list[inx] ) then
+				table.remove( list, inx )
+				begin = inx
+				findItem = true
+				break
+			end
+		end
+	end
 end
 
 --[[

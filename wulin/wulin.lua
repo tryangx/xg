@@ -4,16 +4,24 @@ package.path = package.path .. ";wulin/component/?.lua"
 package.path = package.path .. ";wulin/system/?.lua"
 package.path = package.path .. ";wulin/datatable/?.lua"
 
+--data table
+require "fightskill_datatable"
+require "fightskilltemplate_datatable"
+require "role_datatable"
+
+--component
 require "fight_component"
 require "fighter_component"
 require "fightskill_component"
+require "fightertemplate_component"
 require "follower_component"
 require "gang_component"
 
+--system
 require "fight_system"
+require "fightergenerator_system"
+require "fightskillcreator_system"
 
-require "fightskill_datatable"
-require "role_datatable"
 
 ---------------------------------------------------
 ---------------------------------------------------
@@ -23,11 +31,17 @@ ECS_RegisterComponent( "FOLLOWER_COMPONENT",      FOLLOWER_COMPONENT,      FOLLO
 ECS_RegisterComponent( "FIGHT_COMPONENT",         FIGHT_COMPONENT,         FIGHT_PROPERTIES )
 ECS_RegisterComponent( "FIGHTER_COMPONENT",       FIGHTER_COMPONENT,       FIGHTER_PROPERTIES )
 ECS_RegisterComponent( "FIGHTSKILL_COMPONENT",    FIGHTSKILL_COMPONENT,    FIGHTSKILL_PROPERTIES )
+ECS_RegisterComponent( "FIGHTERTEMPLATE_COMPONENT",    FIGHTERTEMPLATE_COMPONENT,    FIGHTERTEMPLATE_PROPERTIES )
 
 
+---------------------------------------------------
+---------------------------------------------------
 --register system
-ECS_RegisterSystem( FightSystem( { name = "FIGHT_SYSTEM" } ) )
+FightSystem = FIGHT_SYSTEM()
+ECS_RegisterSystem( FightSystem )
 
+FighterGeneratorSystem = FIGHTERGENERATOR_SYSTEM()
+FightSkillCreatorSystem = FIGHTSKILLCREATOR_SYSTEM()
 
 ---------------------------------------------------
 ---------------------------------------------------
@@ -91,9 +105,37 @@ function create_follower( id )
 end
 
 
-function create_component_bydatatable( componentType, getter, id )
+function create_component_bytabledata( componentType, tabledata )
 	local component = ECS_CreateComponent( componentType )
-	MathUtil_ShallowCopy( getter( id ), component )	
+	if tabledata then
+		--use properties	
+		--print( "properties", component._properties )
+		for name, _ in pairs( component._properties ) do
+			if tabledata[name] then
+				component[name] = MathUtil_ShallowCopy( tabledata[name] )
+				--print( "set", name, component[name] )
+			end			
+		end
+	end
+	--MathUtil_ShallowCopy( getter( id ), component )	
+	return component
+end
+
+
+function create_component_bydatatableid( componentType, getter, id )
+	local component = ECS_CreateComponent( componentType )
+	local tabledata = getter( id )
+	if tabledata then
+		--use properties	
+		--print( "properties", component._properties )
+		for name, _ in pairs( component._properties ) do
+			if tabledata[name] then
+				component[name] = MathUtil_ShallowCopy( tabledata[name] )
+				--print( "set", name, component[name] )
+			end			
+		end
+	end
+	--MathUtil_ShallowCopy( getter( id ), component )	
 	return component
 end
 
@@ -227,26 +269,49 @@ function create_battlefield_scene()
 	return ECS_CreateScene( "battlefield" )
 end
 
-function create_roledata_entity()
+local function create_roleentity_bydatatable( roleDataEntity, roleTable )
+	local roleEntity, follower, fighter, fightertemplate
+	
+	--create root role entity
+	roleEntity = ECS_CreateEntity( "Role" )
+	roleDataEntity:AddChild( roleEntity )
+
+	--Create follower data
+	follower = create_component_bytabledata( "FOLLOWER_COMPONENT", roleTable )
+	roleEntity:AddComponent( follower )
+
+	--Create fighter data
+	fighter = create_component_bytabledata( "FIGHTER_COMPONENT", roleTable )	
+	--fighter = ECS_CreateComponent( "FIGHTER_COMPONENT" )
+	roleEntity:AddComponent( fighter )
+
+	--Create fighter template data
+	fightertemplate = ECS_CreateComponent( "FIGHTERTEMPLATE_COMPONENT" )
+	roleEntity:AddComponent( fightertemplate )
+
+	--Generate datas
+	if not roleTable.template then DBG_Error( "Role data needs template" ) end
+	FighterGeneratorSystem:Generate( fighter, fightertemplate, roleTable.template )
+	
+	--Dump( fightertemplate )
+	--InputUtil_Pause()	
+end
+
+
+local function create_roledata_entity()
 	local roleDataEntity = ECS_CreateEntity( "RoleData" )
-
-	local roleEntity, follower, fighter
-
-	--create role entity
-	function CreateRole( id )
-		roleEntity = ECS_CreateEntity( "Role" )
-		roleDataEntity:AddChild( roleEntity )
-
-		follower = create_component_bydatatable( "FOLLOWER_COMPONENT", ROLE_DATATABLE_Get, id )
-		roleEntity:AddComponent( follower )
-		fighter = create_component_bydatatable( "FIGHTER_COMPONENT", ROLE_DATATABLE_Get, id )
-		roleEntity:AddComponent( fighter )		
-	end
 	
-	CreateRole( 100 )
-	CreateRole( 101 )
+	--[[
+	create_roleentity_bydatatable( roleDataEntity, 100, 1 )
+	create_roleentity_bydatatable( roleDataEntity, 101, 2 )
+	create_roleentity_bydatatable( roleDataEntity, 102, 3 )
+	create_roleentity_bydatatable( roleDataEntity, 110, 1 )
 	--CreateRole( 111 )
-	
+	]]
+	ROLE_DATATABLE_Foreach( function ( role )
+		create_roleentity_bydatatable( roleDataEntity, role )
+	end)
+
 	return roleDataEntity
 end
 
@@ -265,16 +330,59 @@ function test_fightsystem()
 	bfscene:GetRootEntity():AddChild( fightDataEntity )
 	local fight = ECS_CreateComponent( "FIGHT_COMPONENT" )
 	Prop_Add( fight, "reds",  roleDataEntity:GetChild( 1 ).ecsid )
-	Prop_Add( fight, "blues", roleDataEntity:GetChild( 2 ).ecsid )
-	--Prop_Add( fight, "blues", roleDataEntity:GetChild( 3 ).ecsid )
+	--Prop_Add( fight, "reds",  roleDataEntity:GetChild( 3 ).ecsid )
+	Prop_Add( fight, "blues", roleDataEntity:GetChild( 3 ).ecsid )
+	--Prop_Add( fight, "blues", roleDataEntity:GetChild( 4 ).ecsid )
 	fightDataEntity:AddComponent( fight )
 
 	--activate
 	bfscene:Activate()
 
 	run()
+	--save_data( bfscene, "test.scene" )
 end
 
-test_fightsystem()
 
----------------------------------------------------
+function test_fightergenerator()	
+	local roletemplate = TxtDataUtil_Parse( "data/wuxia.csv" )
+	FighterGeneratorSystem:SetTemplateData( roletemplate )
+	--Dump( roletemplate, 8 )
+end
+
+
+function test_fightskillcreateor()
+	FIGHTSKILL_DATATABLE_Foreach( function ( skill )
+		FightSkillCreatorSystem:Create( skill, skill.template )
+	end)
+
+--[[
+
+	skill       = {}
+	skill.name  = "降龙十八掌"
+	skill.id    = 110
+	FightSkillCreatorSystem:Create( skill, 110 )
+	FIGHTSKILL_DATATABLE_Add( skill.id, skill )	
+
+	skill = {}
+	skill.name  = "六脉神剑"
+	skill.id    = 120
+	FightSkillCreatorSystem:Create( skill, 120 )
+	FIGHTSKILL_DATATABLE_Add( skill.id, skill )	
+
+	skill = {}
+	skill.name  = "天山折梅手"
+	skill.id    = 130
+	FightSkillCreatorSystem:Create( skill, 130 )
+	FIGHTSKILL_DATATABLE_Add( skill.id, skill )	
+	]]
+end
+
+
+--[[]]
+test_fightskillcreateor()
+--]]
+--[[]]
+--test_fightsystem()
+test_fightergenerator()
+test_fightsystem()
+--]]

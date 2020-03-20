@@ -2,8 +2,6 @@
 ---------------------------------------
 FIGHTER_ATTR = 
 {
-	VITAL      = 1,  --Affect Hp, MP
-	PHYSICAL   = 2,  --Affect HP, ST, 
 	INTERNAL   = 10, --Affect MP, INT action damage/resist
 	STRENGTH   = 11, --Resist ST, PHY action damage/resist
 	TECHNIQUE  = 20, --Affect Hit Accuracy, Critical( Physical Damage )
@@ -13,18 +11,10 @@ FIGHTER_ATTR =
 
 FIGHTER_ELEMENT = 
 {
-	NON = 0,
-	PHY = 1,
-	INT = 2,	
+	STRENGTH = 1,
+	ELEMENT  = 2,
 }
 
-
-FIGHTER_POINTS = 
-{
-	HP   = 0,
-	ST   = 1,
-	MP   = 2,
-}
 
 FIGHTER_STATUSTYPE = 
 {
@@ -51,12 +41,6 @@ FIGHTER_STATUSTYPE =
 	AGILITY_WEAKEN     = 141,
 }
 
-FIGHTER_MENTAL = 
-{
-	WISDOM     = 1,  --Affect Experence needs to level up
-
-}
-
 ---------------------------------------
 --
 -- Attributes
@@ -68,24 +52,22 @@ FIGHTER_PROPERTIES =
 	--points
 	-- type : object
 	-- value: cur/max
-	hp         = { type="OBJECT" },
-	mp         = { type="OBJECT" },
-	st         = { type="OBJECT" },
+	hp         = { type="NUMBER" },
+	mp         = { type="NUMBER" },
+	st         = { type="NUMBER" },
+	maxhp      = { type="NUMBER" },
+	maxmp      = { type="NUMBER" },
+	maxst      = { type="NUMBER" },
 
 	--attr
-	-- type : object
-	-- value: cur/max
-	vital      = { type="OBJECT" },
-	physical   = { type="OBJECT" },	
-
-	internal   = { type="OBJECT" },
-	strength   = { type="OBJECT" },
-	technique  = { type="OBJECT" },
-	agility    = { type="OBJECT" },
+	ability    = { type="NUMBER" },
+	internal   = { type="NUMBER" },
+	strength   = { type="NUMBER" },
+	technique  = { type="NUMBER" },
+	agility    = { type="NUMBER" },
 
 	--growth
 	lv         = { type="NUMBER" },
-	maxlv      = { type="NUMBER" },
 	exp        = { type="NUMBER" },
 
 	--mental
@@ -98,6 +80,7 @@ FIGHTER_PROPERTIES =
 
 	--skills
 	skills     = { type="OBJECT" },
+	passiveSkills = { type="OBJECT" },
 }
 
 ---------------------------------------
@@ -122,24 +105,13 @@ function FIGHTER_COMPONENT:Update()
 end
 
 ---------------------------------------
-local Fighter_Attr_Level = 
-{
-	[1] = { attrs={atk={min=3,max=5},def={min=1,max=3},agi={min=1,max=3},ski={min=1,max=3},hp={min=10,max=15} } },
-	[2] = { attrs={atk={min=4,max=8},def={min=2,max=5},agi={min=2,max=4},ski={min=2,max=4},hp={min=12,max=25} } },
-	[3] = { attrs={atk={min=6,max=12},def={min=4,max=8},agi={min=3,max=6},ski={min=3,max=6},hp={min=20,max=30} } },
-}
-
-function FIGHTER_COMPONENT:GenFightAttr( params )
-	self.fight_attr = { atk = 1, def = 1, agi = 1, ski = 1, hp = 10 }
-	--by level
-	local level = params and params.level or Random_GetInt_Sync( 1, 3 )
-	if level then
-		local levels = Fighter_Attr_Level[params.level]
-		if not levels then error( "no level data" ) end
-		local attrs = levels.attrs
-		local attrNames = { "atk", "def", "agi", "ski", "hp" }
-		for _, attrName in ipairs( attrNames ) do
-			self.fight_attr[attrName] = Random_GetInt_Sync( attrs[attrName].min, attrs[attrName].max )
-		end
-	end	
+function FIGHTER_COMPONENT:Dump()
+	print( "hp=" .. self.hp .. "/" .. self.maxhp )
+	print( "mp=" .. self.mp .. "/" .. self.maxmp )
+	print( "st=" .. self.st .. "/" .. self.maxst )
+	print( "str=" .. self.strength )
+	print( "int=" .. self.internal )
+	print( "tec=" .. self.technique )
+	print( "agi=" .. self.agility )
+	print( "ski=" .. #self.skills )
 end

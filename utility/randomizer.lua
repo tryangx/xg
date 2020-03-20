@@ -67,7 +67,6 @@ function Random_GetInt( min, max, desc )
 	return Random_GetInt_Sync( min, max, desc )
 end
 ]]
-
 function Random_GetInt_Const( min, max, seed )
 	if not seed then error( "no seed" ) end
 	_constRandomizer:SetSeed( seed )
@@ -126,6 +125,7 @@ function Random_GetTable_Sync( list, probName )
 	return nil
 end
 
+--[[
 function Random_GetDictData( entity, id )
 	local list = Asset_GetListFromDict( entity, id )
 	if #list then return nil end
@@ -144,7 +144,6 @@ function Random_GetListItem( list )
 	if number == 1 then return list[1] end
 	return list[Random_GetInt_Sync( 1, number )]
 end
-
 
 -- Randomizer
 function Random_LocalGetRange( min, max, desc )
@@ -170,3 +169,5 @@ function Random_SyncGetProb( desc )
 	end
 	return value
 end
+
+]]

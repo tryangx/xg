@@ -44,30 +44,93 @@ FIGHT_ACTIONTIME =
 {
 	DEFAULT  = 1000,
 	USESKILL = 3000,
-	DEFEND   = 2000,
+	REST     = 5000,
+	DEFEND   = 5000,
 }
 
+
+FIGHT_SKILLPOSE = 
+{
+	NONE   = { NONE={}, UPPER={ atk=-10 }, CENTER={ hit=10 },  LOWER={ def=10 },  ALL={} },
+	UPPER  = { NONE={}, UPPER={ atk=-10 }, CENTER={ hit=10 },  LOWER={ def=10 },  ALL={} },
+	CENTER = { NONE={}, UPPER={ def=10 },  CENTER={ atk=-10 }, LOWER={ hit=10 },  ALL={} },
+	LOWER  = { NONE={}, UPPER={ hit=10 },  CENTER={ def=10 },  LOWER={ atk=-10 }, ALL={} },
+	ALL    = { NONE={}, UPPER={ hit=10 },  CENTER={ hit=10 },  LOWER={ hit=10 },  ALL={} },
+}
+
+
+FIGHT_TARGET =
+{
+	SELF          = 0,
+	TARGET        = 1,
+	SINGLE_ENEMY  = 10,
+	ALL_ENEMIES   = 11,	
+	SINGLE_FRIEND = 20,
+	ALL_FRIENDS   = 21,
+	ALL           = 30,
+	SINGLE_ALL    = 31,
+}
+
+
+FIGHT_RULE = 
+{
+	ENABLE_SAVEPONIT = 1,
+	ENABLE_CRITICAL  = 1,	
+}
+
+
+FIGHT_PARAMS = 
+{
+	DEFEND_COST_RATE = 0.25,
+}
 
 ---------------------------------------
 -- Helper
 ---------------------------------------
-local function ForeachRole( teams, fn )
+local function ForeachRole( teams, fn, ... )
 	for _, role in ipairs( teams ) do
-		fn ( role )
+		fn ( role, ... )
 	end
 end
 
 
 ---------------------------------------
-local function Dump_Role( role )
-	print( role.follower.name )
-	print( "", "hp=" .. role.fighter.hp )
-	print( "", "mp=" .. role.fighter.mp )
-	print( "", "st=" .. role.fighter.st )
-	print( "", "DealDamg=" .. ( role.fighter._dealDamage or 0 ) )
-	print( "", "HitTimes=" .. ( role.fighter._totalHit or 0 ) )
-	print( "", "ActTimes=" .. ( role.fighter._actTimes or 0 ) )
-	print( "", "RestTimes=" .. ( role.fighter._restTimes or 0 ) )
+local function Dump_Role( role, type )
+	print( "Dump=" .. role.follower.name )
+	if MathUtil_IndexOf( type, "ATTRS" ) then
+		print( "", "lv=" .. role.fighter.lv .. "/" .. role.template.potential )
+		print( "", "hp=" .. role.fighter.hp .. "/" .. role.fighter.maxhp )
+		print( "", "mp=" .. role.fighter.mp .. "/" .. role.fighter.maxmp )
+		print( "", "st=" .. role.fighter.st .. "/" .. role.fighter.maxst )
+		print( "", "STRENGTH =" .. role.fighter.strength  .. "/" .. role.template.strength )
+		print( "", "INTERNAL =" .. role.fighter.internal  .. "/" .. role.template.internal )
+		print( "", "TECHNIQUE=" .. role.fighter.technique .. "/" .. role.template.technique )
+		print( "", "AGILITY  =" .. role.fighter.agility   .. "/" .. role.template.agility )
+		print( "", "template =" .. role.template.name )
+		print( "", "skills   =" .. #role.fighter.skills )
+	else
+		print( "", "lv=" .. role.fighter.lv )
+		print( "", "hp=" .. role.fighter.hp )
+		print( "", "mp=" .. role.fighter.mp )
+		print( "", "st=" .. role.fighter.st )		
+	end	
+	if MathUtil_IndexOf( type, "STATS" ) then
+		print( "", "HitTimes=" .. ( role.fighter._totalHit or 0 ) .. "-" .. ( ( role.fighter._totalHit and role.fighter._totalHitTries ) and math.ceil( role.fighter._totalHit * 100 / role.fighter._totalHitTries ) .. "%" or "" ) )
+		print( "", "CriTimes=" .. ( ( role.fighter._criticalTimes and role.fighter._totalHit and role.fighter._totalHit > 0 ) and role.fighter._criticalTimes .. "(" .. math.ceil( role.fighter._criticalTimes * 100 / role.fighter._totalHit ) .. "%)" or "" ) )
+		print( "", "ActTimes=" .. ( role.fighter._skillTimes or 0 ) .. "Skill/" .. ( role.fighter._restTimes or 0 ) .. "Rest/" .. ( role.fighter._defendTimes or 0 ) .. "Defend" )
+		--[[
+		print( "", "ActTimes=" .. ( role.fighter._actTimes or 0 ) )
+		print( "", "RestTimes=" .. ( role.fighter._restTimes or 0 ) )
+		print( "", "DefdTimes=" .. ( role.fighter._defendTimes or 0 ) )		
+		print( "", "IntDamage=" .. ( role.fighter._INTERNAL_DMG or 0 ) )
+		print( "", "StrDamage=" .. ( role.fighter._STRENGTH_DMG or 0 ) )
+		]]
+		print( "", "DealDamg=" .. ( role.fighter._dealDamage or 0 ) .. "/" ..  ( role.fighter._INTERNAL_DMG or 0 ) .. "Int/" .. ( role.fighter._STRENGTH_DMG or 0 ) .. "Str" )		
+		print( "", "DmgPerTim=" .. ( ( role.fighter._dealDamage and role.fighter._totalHit ) and math.ceil( role.fighter._dealDamage / role.fighter._totalHit ) or 0 ) )
+		for skill, times in pairs( role.fighter._useSkillList ) do
+			print( "", skill.name .. "=" .. times )
+		end
+	end
 end
 
 
@@ -135,19 +198,17 @@ end
 ---------------------------------------
 local function CanUsingSkill( skill, atk, def, isDefend )
 	--check cost
-	--print( "can using skill", skill.name, skill.cost.type, skill.cost.value )	
-	local value
-	if isDefend then
-		value = skill.cost.defend
-	else
-		value = skill.cost.using
+	--print( "can using skill", skill.name, skill.cost.type, skill.cost.value )
+	local rate = isDefend and FIGHT_PARAMS.DEFEND_COST_RATE or 1
+	local st_cost = math.ceil( skill.cost.st * rate )
+	if atk.fighter.st < st_cost then 
+		--print( "Need", st_cost, atk.fighter.st )
+		return false
 	end
-	if skill.cost.type == "ST" then
-		return atk.fighter.st > value
-	elseif skill.cost.type == "MP" then
-		return atk.fighter.mp > value
-	elseif skill.cost.type == "HP" then
-		return atk.fighter.hp > value
+	local mp_cost = math.ceil( skill.cost.mp * rate )
+	if atk.fighter.mp < mp_cost then
+		--print( "Need", mp_cost, atk.fighter.mp )
+		return false
 	end
 	return true
 end
@@ -156,33 +217,30 @@ end
 ---------------------------------------
 local function UseSkill( role, skill, isDefend )
 	if not skill then return end
-	local value
-	if isDefend then
-		value = skill.cost.defend
-	else
-		value = skill.cost.using
-	end
-	if skill.cost.type == "ST" then
-		role.fighter.st = role.fighter.st - value
-	elseif skill.cost.type == "MP" then
-		role.fighter.mp = role.fighter.mp - value
-	elseif skill.cost.type == "HP" then
-		role.fighter.hp = role.fighter.hp - value
-	end
+	local rate = isDefend and FIGHT_PARAMS.DEFEND_COST_RATE or 1
+	local st_cost = math.ceil( skill.cost.st * rate )
+	local mp_cost = math.ceil( skill.cost.mp * rate )
+	if skill.cost.st > 0 then role.fighter.st = math.max( 0, role.fighter.st - st_cost ) end
+	if skill.cost.mp > 0 then role.fighter.mp = math.max( 0, role.fighter.mp - mp_cost ) end
 end
 
 ---------------------------------------
 local function DetermineSkill( atk, def )
+	if not atk.fighter.skills or #atk.fighter.skills == 0 then
+		DBG_Error( atk.follower.name, "no skills" )
+		return
+	end
 	local usingSkill
 	local totalProb = 0
 	local skills = {}
 	for _, id in ipairs( atk.fighter.skills ) do
-		local skill = FIGHTSKILL_DATATABLE_Get( id )		
-		if CanUsingSkill( skill, atk, def ) then
-			--print( "select skill", skill.name )
+		local skill = FIGHTSKILL_DATATABLE_Get( id )
+		if not skill then DBG_Error( "Skill is invalid! Id=" .. id ) end		
+		if skill and CanUsingSkill( skill, atk, def ) then
+			--print( "push skill pool", skill.name, skill.lv, totalProb )
 			if not usingSkill then usingSkill = skill end
 			totalProb = totalProb + skill.lv
-			table.insert( skills, { prob = skill.lv, skill = skill } )
+			table.insert( skills, { prob = totalProb, skill = skill } )
 		end
 	end
 
@@ -201,24 +259,30 @@ end
 
 ---------------------------------------
 local function Rest_Role( role )
-	local maxhp = role.fighter.vital * 10
-	local maxst = role.fighter.strength * 5
-	local maxmp = role.fighter.internal * 5
+	local maxhp = role.fighter.maxhp
+	local maxst = role.fighter.maxst
+	local maxmp = role.fighter.maxmp
 	--role.fighter.hp = math.max( role.fighter.hp, math.min( math.ceil( maxhp * 0.5 ), role.fighter.hp + math.ceil( maxhp * 0.05 ) ) )
 	role.fighter.st = math.max( role.fighter.st, math.min( math.ceil( maxst * 0.5 ), role.fighter.st + math.ceil( maxst * 0.05 ) ) )
 	role.fighter.mp = math.max( role.fighter.mp, math.min( math.ceil( maxmp * 0.5 ), role.fighter.mp + math.ceil( maxmp * 0.05 ) ) )
 end
+
+
+---------------------------------------
+local function Defend_Role( role )	
+end
+
 
 ---------------------------------------
 local function MakeTeamDuel( teams, oppTeams, duels )
 	for _, atk in ipairs( teams ) do
 		local def = FindTarget( atk, oppTeams )
 		if IsRoleAlive( def ) then
-			local priority = Random_GetInt_Sync( 1, atk.fighter.agility )
+			local priority = Random_GetInt_Sync( 1, GetValueByBuff( atk, FIGHTER_ATTR.AGILITY ) )
 
 			--determine skill
 			if not atk.fighter._usingSkill then atk.fighter._usingSkill = DetermineSkill( atk, def ) end
-			if not def.fighter_usingSkill then atk.fighter._usingSkill = DetermineSkill( def, atk ) end
+			if not def.fighter_usingSkill then def.fighter._usingSkill = DetermineSkill( def, atk ) end
 
 			table.insert( duels, { atk = atk, def = def, priority = priority } )
 			--print( "make duel", atk.follower.name, def.follower.name )
@@ -248,21 +312,6 @@ local function MakeDuels( cmp )
 end
 
 
----------------------------------------
-local function FightSystem_GetSkillElementAdd( role, element )
-	--Dump( role )
-	if not element then
-		return 0
-	elseif element == "NON" then
-		return 0
-	elseif element == "PHY" then
-		return role.fighter.strength
-	elseif element == "INT" then
-		return role.fighter.internal
-	end
-	DBG_Error( "Invalid action element" )
-end
-
 
 ---------------------------------------
 local function DealDamage_Role( role, damage )
@@ -273,14 +322,145 @@ end
 
 
 ---------------------------------------
+local function GetRoleTireness( role )
+	local r1 = role.fighter.hp / role.fighter.maxhp
+	local r2 = role.fighter.mp / role.fighter.maxmp
+	local r3 = role.fighter.st / role.fighter.maxst
+	local very_tired = 0.35
+	local tired = 0.65
+	if r1 < very_tired and r2 < very_tired and r3 < very_tired then
+		return 0.35
+	elseif r1 < tired or r2 < tired or r3 < tired then
+		return 0.5
+	end
+	return 1
+end
+
+
+---------------------------------------
+local function CanTriggerSkillBuff( role, skill )	
+	if not skill.statuses then return end
+	for _, comboeffect in ipairs( skill.comboeffects ) do
+		local match = true
+		if comboeffect.combo ~= role.fighter._hitCombo then match = false end		
+		if match then			
+			if Random_GetInt_Sync( 1, 1000 ) < comboeffect.prob then
+				--print( role.follower.name, "trigger skill buff=" .. skill.name )
+				return comboeffect
+			end
+		end
+	end
+end
+
+
+---------------------------------------
+local function AddSkillBuff( role, comboeffect, buff )
+	if not role.statuses then role.statuses = {} end
+
+	function SetStatusBuff( data, comboeffect, buff )
+		--Dump( buff, 5 )
+		data.name     = comboeffect.name
+		data.effects  = {}
+		data.duration = buff.duration or 1
+		data.effects  = MathUtil_ShallowCopy( buff.effects )
+		if not buff.duration then
+			for _, effect in ipairs( buff.effects ) do data.duration = math.max( data.duration, effect.duration ) end
+		end
+	end
+
+	for _, existStatus in ipairs( role.statuses ) do
+		--check by category
+		if existStatus.cate == comboeffect.cate then
+			--replace the status			
+			SetStatusBuff( existStatus, comboeffect, buff )
+			return
+		end
+	end
+
+	table.insert( role.statuses, {} )
+	SetStatusBuff( role.statuses[#role.statuses], comboeffect, buff )
+
+	--Dump( role.statuses, 6 )
+	--InputUtil_Pause( role.follower.name, "gain buff", status.name )
+end
+
+
+---------------------------------------
+local function TriggerSkillBuff( atk, def, comboeffect )
+	if not comboeffect.buffs then return end
+	for _, buff in ipairs( comboeffect.buffs ) do
+		if buff.target == "SELF" then
+			AddSkillBuff( atk, comboeffect, buff )
+		elseif buff.target == "TARGET" then
+			AddSkillBuff( def, comboeffect, buff )
+		end
+	end
+end
+
+
+---------------------------------------
+local function HasRoleStatus( role, statusType )
+	if not role.statuses then return end
+	for _, status in ipairs( role.statuses ) do		
+		if FIGHTER_STATUSTYPE[status.status] == statusType then
+			return status
+		end
+	end
+end
+
+
+---------------------------------------
+local function CalcRoleStatus( role, statusType )
+	if not role.statuses then 
+		--print( role.follower.name, "no status" )
+		return
+	end
+	local value = 0
+	local value_percent = 0
+	for _, status in ipairs( role.statuses ) do
+		for _, effect in ipairs( status.effects ) do
+			if FIGHTER_STATUSTYPE[effect.status] == statusType then				
+				value = math.max( value, effect.value )
+				value_percent = math.max( value_percent, effect.value_percent )
+			end			
+		end
+	end
+	if value == 0 or value_percent == 0 then return end
+	return { value=value, value_percent=value_percent }
+end
+
+
+---------------------------------------
+local function ModifyValueByBuff( value, buff, debuff )
+	--if buff or debuff then print( "before buff affected:", value ) end
+	value = value + ( buff and buff.value or 0 ) - ( debuff and debuff.value or 0 )
+	value = math.ceil( value * ( 100 + ( buff and buff.value_percent or 0 ) - ( debuff and debuff.value_percent or 0 ) ) * 0.01 )
+	--if buff or debuff then Dump( debuff ) print( "after " .. ( buff and "buff" or "debuff" ) .. " affected:", value ) end	
+	return value
+end
+
+
+---------------------------------------
+local function GetValueByBuff( role, attr )
+	if attr == FIGHTER_ATTR.INTERNAL then
+		return ModifyValueByBuff( role.fighter.internal, CalcRoleStatus( role, FIGHTER_STATUSTYPE.INTERNAL_ENHANCED ), CalcRoleStatus( role, FIGHTER_STATUSTYPE.INTERNAL_WEAKEN ) )
+	elseif attr == FIGHTER_ATTR.STRENGTH then
+		return ModifyValueByBuff( role.fighter.strength, CalcRoleStatus( role, FIGHTER_STATUSTYPE.STRENGTH_ENHNACED ), CalcRoleStatus( role, FIGHTER_STATUSTYPE.STRENGTH_WEAKEN ) )
+	elseif attr == FIGHTER_ATTR.TECHNIQUE then
+		return ModifyValueByBuff( role.fighter.technique, CalcRoleStatus( role, FIGHTER_STATUSTYPE.TECHNIQUE_ENHANCED ), CalcRoleStatus( role, FIGHTER_STATUSTYPE.TECHNIQUE_WEAKEN ) )
+	elseif attr == FIGHTER_ATTR.AGILITY then
+		return ModifyValueByBuff( role.fighter.agility, CalcRoleStatus( role, FIGHTER_STATUSTYPE.AGILITY_ENHANCED ), CalcRoleStatus( role, FIGHTER_STATUSTYPE.AGILITY_WEAKEN ) )
+	end
+end
+
+
+---------------------------------------
 local function ProcessDuel( atk, def )
 	--when target is dead, pass through
 	if def.fighter.hp <= 0 then return end
 
 	--print( atk.follower.name .. " attack " .. def.follower.name )
 
-	--Check the status
-	--  If attacker was been hit first, it won't triggeer the HIT
 	local hitCount = 0
 
 	local atkSkill = atk.fighter._usingSkill
@@ -290,59 +470,67 @@ local function ProcessDuel( atk, def )
 	UseSkill( atk, atkSkill )
 	UseSkill( def, defSkill, true )
 	
-	atk.fighter._hitTimes = 0
+	local _hitTimes = 0
+	atk.fighter._hitTries = 0
 	atk.fighter._hitCombo = 0
 	atk.fighter._skillDamage = 0
 
 	for action_idx, atkAction in ipairs( atkSkill.actions ) do
-		--calculate hit accuracy		
-
-		--[[
-		local accuracy = ( atkAction.accuracy or 0 ) + atk.fighter.technique * 2
-		local dodge = ( def.fighter.technique + def.fighter.agility )
-		local hit = math.max( 10, accuracy - dodge )
-		print( atk.follower.name .. " hit accuracy is " .. accuracy )
-		print( def.follower.name .. " dodge is " .. dodge )
-		--]]
-
-		--[[
-		local atkAccuracy = ( atk.fighter.technique + atkAction.accuracy )
-		local defDodge = ( def.fighter.technique + def.fighter.agility )
-		--print( atkAccuracy, defDodge, atkAccuracy / ( atkAccuracy + defDodge ) )
-		local hit = math.max( 10, math.ceil( atkAccuracy * 100 / ( atkAccuracy + defDodge ) ) )
-		--print( atk.follower.name .. " hit accuracy is " .. hit )
-		]]		
+		--calculate hit accuracy
 		local defAction = defSkill and defSkill.actions[action_idx]
 
-		local accuracy = atk.fighter.technique
-		local dodge    = def.fighter.technique * 0.4 + def.fighter.agility * 0.4
-		local hit      = math.max( atk.fighter._hitMod or 0, math.ceil( ( atkAction.accuracy or 0 ) + accuracy * 50 / ( accuracy + dodge ) ) )
+		local pose = FIGHT_SKILLPOSE[atkAction.element] and FIGHT_SKILLPOSE[atkAction.element][defAction.element]
+
+		local accuracy = GetValueByBuff( atk, FIGHTER_ATTR.TECHNIQUE )
+		local dodge    = GetValueByBuff( def, FIGHTER_ATTR.TECHNIQUE ) * 0.3 + GetValueByBuff( def, FIGHTER_ATTR.AGILITY ) * 0.7
+		local hit      = math.max( atk.fighter._hitMod or 0, ( pose and pose.hit or 0 ) + math.ceil( ( atkAction.accuracy * 0.5 or 0 ) + accuracy * 100 / ( accuracy + dodge ) ) ) * 100
 		--print( atk.follower.name .. " hit accurcy is " .. hit )
 
-		local isHit = Random_GetInt_Sync( 1, 100 ) < hit
+		local isHit = Random_GetInt_Sync( 1, 10000 ) < hit
+
+		atk.fighter._totalHitTries = atk.fighter._totalHitTries and atk.fighter._totalHitTries + 1 or 1
+
+		if not FIGHT_RULE.ENABLE_SAVEPOINT then
+			atk.fighter._ap = 0
+			atk.fighter._dp = 0
+		end
 
 		if isHit then			
-			local atkPow       = FightSystem_GetSkillElementAdd( atk, atkAction.element )
-			local defPow       = FightSystem_GetSkillElementAdd( def, atkAction.element )
-			local critical     = atkAction.attack + ( atk.fighter._ap or 0 )
-			local atkDamage    = atkPow * critical * 0.01
-			local defDefend    = defPow
-			--print( "atk=" .. atkDamage, "def=" .. defDefend, atkPow, critical )
+			--status modification
+			local atkPow = GetValueByBuff( atk, FIGHTER_ATTR[atkAction.element] )
+			local defPow = GetValueByBuff( def, FIGHTER_ATTR[atkAction.element] )
+			local atkSkillMod = ( atkAction.attack + ( atk.fighter._ap or 0 ) ) * GetRoleTireness( atk )
+
+			local atkTec = GetValueByBuff( atk, FIGHTER_ATTR.TECHNIQUE )
+			local defTec = GetValueByBuff( def, FIGHTER_ATTR.TECHNIQUE )
+
+			local critical     = 100
+			if FIGHT_RULE.ENABLE_CRITICAL ~= 0 then
+				local critical_prob = math.min( 90, ( atkAction.cri or 0 ) + math.ceil( ( atkTec * 1.2 - defTec * 0.8 ) * 100 / ( atkTec + defTec ) ) )
+				if Random_GetInt_Sync( 1, 10000 ) < critical_prob * 100 then
+					critical = 100 + ( pose and pose.cri or 0 )
+					atk.fighter._criticalTimes = atk.fighter._criticalTimes and atk.fighter._criticalTimes + 1 or 1
+				end
+				--print( atkSkill.name, "critical", atkAction.cri, critical_prob )
+			end			
+			local atkDamage    = atkPow * atkSkillMod * critical * 0.0001
+			local defDefend    = defPow			
 			local base_damage  = atkDamage * atkDamage / ( atkDamage + defDefend )
 			local block        = ( defAction and defAction.defense or 0 ) + ( def.fighter._dp or 0 )
 			local final_damage = math.ceil( base_damage * 10 / ( block + 100 ) )
+			--print( atkSkill.name, "finaldmg=" .. final_damage, "base_damage=" .. base_damage, "apow=" .. atkPow, "dpow=" .. defPow )
 
 			--block damage
-			if atk.fighter._shiled then
+			if atk.fighter._shield then
 				local resistDamage = 0
-				if atk.fighter._shiled > final_damage then
+				if atk.fighter._shield > final_damage then
 					resistDamage = final_damage
-					atk.fighter._shiled = atk.fighter._shiled - final_damage					
+					atk.fighter._shield = atk.fighter._shield - final_damage					
 					final_damage = 0
 				else
-					resistDamage = atk.fighter._shiled
-					final_damage = final_damage - atk.fighter._shiled
-					atk.fighter._shiled = 0
+					resistDamage = atk.fighter._shield
+					final_damage = final_damage - atk.fighter._shield
+					atk.fighter._shield = 0
 				end				
 				print( def.follower.name .. " resist damage " .. resistDamage )
 			end
@@ -351,8 +539,14 @@ local function ProcessDuel( atk, def )
 				local real_damage  = DealDamage_Role( def, final_damage )							
 				atk.fighter._dealDamage = atk.fighter._dealDamage and atk.fighter._dealDamage + real_damage or real_damage
 				atk.fighter._skillDamage = atk.fighter._skillDamage and atk.fighter._skillDamage + real_damage or real_damage
+				local statName = "_" .. atkAction.element .. "_DMG"
+				atk.fighter[statName] = atk.fighter[statName] and atk.fighter[statName] + real_damage or real_damage				
 				--print( atk.follower.name .. " deal damage " .. real_damage .. " to " .. def.follower.name .. " hp is " .. def.fighter.hp .. " now." )
 			end
+
+			--buff/debuff
+			local comboeffect = CanTriggerSkillBuff( atk, atk.fighter._usingSkill )
+			if comboeffect then TriggerSkillBuff( atk, def, comboeffect ) end
 
 			--damage
 			atk.fighter._ap = atkAction.attack * 0.5
@@ -362,8 +556,8 @@ local function ProcessDuel( atk, def )
 
 			--statistic
 			atk.fighter._totalHit = atk.fighter._totalHit and atk.fighter._totalHit + 1 or 1
-			atk.fighter._hitTimes = atk.fighter._hitTimes + 1
 			atk.fighter._hitCombo = atk.fighter._hitCombo + 1
+			_hitTimes = _hitTimes + 1
 		else
 			--no damage, full defense broken
 			--atk.fighter._ap = atkAction.attack * 0.5
@@ -371,10 +565,12 @@ local function ProcessDuel( atk, def )
 
 			def.fighter._dp = defAction and defAction.defense * 0.75 or 0
 
-			atk.fighter._hitMod = math.min( atk.fighter._hitMod and atk.fighter._hitMod + 10 or 10, 30 )
+			atk.fighter._hitMod = math.min( atk.fighter._hitMod and atk.fighter._hitMod + 5 or 5, 20 )
 
 			--stop combo
 			atk.fighter._hitCombo = 0
+
+			--print( atk.follower.name, "not hit", hit )
 		end
 
 		--print( atk.follower.name, "ap=" .. atk.fighter._ap, "dp=" .. atk.fighter._dp )
@@ -385,7 +581,7 @@ local function ProcessDuel( atk, def )
 		end
 	end
 
-	print( atk.follower.name .. " hit " .. def.follower.name ..  " " .. atk.fighter._hitTimes .. " times, deal damage=" .. atk.fighter._skillDamage )
+	print( atk.follower.name .. " hit " .. def.follower.name ..  " " .. _hitTimes .. "/" .. #atkSkill.actions .. " times, deal damage=" .. atk.fighter._skillDamage )
 end	
 
 
@@ -406,11 +602,27 @@ end
 
 
 ---------------------------------------
----------------------------------------
-FightSystem = class()
+local function PassTime_Role( role, time )
+	--reduce atb
+	role.fighter._atb = role.fighter._atb - time
+
+	--reduce
+	if role.statuses then
+		MathUtil_RemoveIf( role.statuses, function ( status )
+			status.duration = status.duration - time
+			--if status.duration <= 0 then InputUtil_Pause( "role.follower.name, remove status", status.name ) end
+			return status.duration <= 0
+		end )
+	end
+end
+
 
 ---------------------------------------
-function FightSystem:__init( ... )
+---------------------------------------
+FIGHT_SYSTEM = class()
+
+---------------------------------------
+function FIGHT_SYSTEM:__init( ... )
 	local args = ...
 	self._name = args and args.name or "FIGHT_SYSTEM"
 
@@ -420,13 +632,13 @@ end
 
 
 ---------------------------------------
-function FightSystem:Activate()
+function FIGHT_SYSTEM:Activate()
 	--print( "Activate System")
 end
 
 
 ---------------------------------------
-function FightSystem:Update( deltaTime )	
+function FIGHT_SYSTEM:Update( deltaTime )	
 	for _, fight in ipairs( self._fights ) do
 		self:ProcessFight( fight )
 	end
@@ -434,7 +646,7 @@ end
 
 
 ------------------------------ ---------
-function FightSystem:AppendFight( entityid )
+function FIGHT_SYSTEM:AppendFight( entityid )
 	table.insert( self._fights, entityid )
 	--print( "add fight", entityid )
 end
@@ -461,13 +673,13 @@ end
 
 
 ---------------------------------------
-function FightSystem:ProcessFight( fight_id )
+function FIGHT_SYSTEM:ProcessFight( fight_id )
 	local entity = ECS_FindEntity( fight_id )
 	if not entity then
 		DBG_Error( "invalid fight entity!", fight_id )
 		return
 	end
-	print( "Fight", fight_id, entity )
+	print( "[ProcessFight]", fight_id, entity )
 	local cmp = entity:GetComponent( "FIGHT_COMPONENT" )
 	local result = FIGHT_SIDE.NONE
 
@@ -479,7 +691,7 @@ function FightSystem:ProcessFight( fight_id )
 	function DetermineATB( role, action, time )
 		if not action then action = "DEFAULT" end
 		local actionTime = time and time + FIGHT_ACTIONTIME[action] or FIGHT_ACTIONTIME[action]
-		local addTime = math.floor( actionTime / ( role.fighter.agility + 100 ) )
+		local addTime = math.floor( actionTime / ( GetValueByBuff( role, FIGHTER_ATTR.AGILITY ) + 100 ) )
 		role.fighter._atb = role.fighter._atb and role.fighter._atb + addTime or addTime
 		--print( role.follower.name, "atb=" .. role.fighter._atb .. " time=" .. addTime, actionTime )
 	end
@@ -493,6 +705,7 @@ function FightSystem:ProcessFight( fight_id )
 		role.fighter._dp       = 0
 		DetermineATB( role )
 		table.insert( actionSequence, role )
+		Dump_Role( role, { "ATTRS" } )
 	end	
 
 	function SortActionSequence()
@@ -512,6 +725,7 @@ function FightSystem:ProcessFight( fight_id )
 	local result   = FIGHT_SIDE.NONE
 	local passTime = 0
 	local lastTime = 0
+	local maxTime  = 100
 	while result == FIGHT_SIDE.NONE do
 		local actionRole = table.remove( actionSequence, 1 )
 
@@ -522,33 +736,57 @@ function FightSystem:ProcessFight( fight_id )
 
 			--pass the time		
 			for _, role in ipairs( actionSequence ) do				
-				--print( role.follower.name .. " pass time=" .. actionRole.fighter._atb .. " left=" .. role.fighter._atb )
-				role.fighter._atb = role.fighter._atb - actionRole.fighter._atb
+				PassTime_Role( role, actionRole.fighter._atb )
 			end
 			passTime = passTime + actionRole.fighter._atb
 
-			actionRole.fighter._atb = 0
+			PassTime_Role( actionRole, actionRole.fighter._atb )
 
 			actionRole.fighter._actTimes = actionRole.fighter._actTimes and actionRole.fighter._actTimes + 1 or 1
 
 			--choose target
 			local target = FindTarget( actionRole, FindTeam( cmp, FindOppside( cmp, actionRole.fighter._side ) ) )
 
-			--determine action
-			actionRole.fighter._usingSkill = DetermineSkill( actionRole, target )
-			target.fighter._usingSkill     = DetermineSkill( target, actionRole, true )
+			if Random_GetInt_Sync( 1, 100 ) > GetRoleTireness( actionRole ) * 100 then
+				--print( "tireness", GetRoleTireness( actionRole ) * 100 )
+				actionRole.fighter._usingSkill = nil
+			else
+				--determine action
+				actionRole.fighter._usingSkill = DetermineSkill( actionRole, target )
+				target.fighter._usingSkill     = DetermineSkill( target, actionRole, true )
+			end
 
 			--process duel
 			if actionRole.fighter._usingSkill then
 				ProcessDuel( actionRole, target )
 
-				--Determine
+				actionRole.fighter._skillTimes = actionRole.fighter._skillTimes and actionRole.fighter._skillTimes + 1 or 1
+				if not actionRole.fighter._useSkillList then
+					actionRole.fighter._useSkillList = {}
+				end
+				if actionRole.fighter._useSkillList[actionRole.fighter._usingSkill] then
+					actionRole.fighter._useSkillList[actionRole.fighter._usingSkill] = actionRole.fighter._useSkillList[actionRole.fighter._usingSkill] + 1
+				else
+					actionRole.fighter._useSkillList[actionRole.fighter._usingSkill] = 1
+				end				
+
+				--Determine				
 				DetermineATB( actionRole, "USESKILL", actionRole.fighter._usingSkill.time )
+
+			--elseif target.fighter._usingSkill then
 			else
 				--no mp, sp
 				Rest_Role( actionRole )
 				actionRole.fighter._restTimes = actionRole.fighter._restTimes and actionRole.fighter._restTimes + 1 or 1
-				--print( actionRole.follower.name, "rest" )
+				--print( actionRole.follower.name, "rest" )				
+				DetermineATB( actionRole, "REST" )
+			--[[
+			else
+				--no skill
+				Defend_Role( action )
+				actionRole.fighter._defendTimes = actionRole.fighter._defendTimes and actionRole.fighter._defendTimes + 1 or 1
+				DetermineATB( actionRole, "DEFEND" )
+			]]
 			end
 
 			if IsRoleAlive( actionRole ) then				
@@ -561,50 +799,14 @@ function FightSystem:ProcessFight( fight_id )
 
 		result = CheckResult( cmp )
 
+		--print( "time", passTime, maxTime )
+		if passTime > maxTime then break end
 		--InputUtil_Pause()
 	end
 
-	ForeachRole( cmp._reds,  Dump_Role )
-	ForeachRole( cmp._blues, Dump_Role )
+	ForeachRole( cmp._reds,  Dump_Role, { "ATTRS", "STATS" } )
+	ForeachRole( cmp._blues, Dump_Role, { "ATTRS", "STATS" } )
 end
-
---[[
-function FightSystem:ProcessFight( fight_id )
-	local entity = ECS_FindEntity( fight_id )
-	if not entity then
-		DBG_Error( "invalid fight entity!", fight_id )
-		return
-	end
-
-	print( "Fight", fight_id, entity )
-
-	local cmp = entity:GetComponent( "FIGHT_COMPONENT" )
-
-	local result = FIGHT_SIDE.NONE
-
-	local turn   = 1
-	while result == FIGHT_SIDE.NONE do
-		--prepare
-		for _, role in ipairs( cmp._reds ) do Prepare_Role( role ) end
-		for _, role in ipairs( cmp._blues ) do Prepare_Role( role ) end
-
-		--make dule
-		local duels = MakeDuels( cmp )
-		
-		--process dule
-		ProcessDuels( duels )
-
-		--process result
-		result = CheckResult( cmp )
-
-		turn = turn + 1
-		print( "turn", turn )
-	end
-
-	ForeachRole( cmp._reds, Dump_Role )
-	ForeachRole( cmp._blues, Dump_Role )
-end
-]]
 
 
 ---------------------------------------

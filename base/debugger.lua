@@ -151,7 +151,7 @@ function Log_Create( type, isAdd )
 			fileName = "run/" .. type .. ".log" 
 		else
 			fileName = "run/" .. type .. "_" .. g_gameId .. ".log" 
-		end		
+		end
 		logger = LogUtility( fileName, LogWarningLevel.LOG, false, isAdd )
 		_logger[type] = logger
 	else

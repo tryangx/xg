@@ -53,10 +53,12 @@ function FIGHT_COMPONENT:Activate()
 				local follower = role:GetComponent( "FOLLOWER_COMPONENT" )				
 				if not follower then error( "Follower Component is invalid" ) end
 				local fighter = role:GetComponent( "FIGHTER_COMPONENT" )
-				if not fighter then error( "Fighter Component is invalid" ) end								
+				if not fighter then error( "Fighter Component is invalid" ) end
+				local template = role:GetComponent( "FIGHTERTEMPLATE_COMPONENT" )
+				if not template  then error( "FighterTemplate Component is invalid" ) end
 				--Dump( component ) print( "!!!!!!!!!!find fighter", fighter, id ) Dump( component )
 				--print( "parepare", follower.name, id )
-				table.insert( positions, { follower=follower, fighter=fighter, row=row, line=line } )
+				table.insert( positions, { follower=follower, fighter=fighter, template=template, row=row, line=line } )
 			end
 		end
 	end

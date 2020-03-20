@@ -38,6 +38,7 @@ FIGHTSKILL_WEAPONSUBTYPE =
 	PAWL    = 120,
 
 	SWORD   = 200,
+	KATANA  = 210,
 	HAMMER  = 220,
 
 	ROD     = 300,
@@ -61,6 +62,7 @@ FIGHTSKILL_POSE =
 	UPPER  = 1,
 	CENTER = 2,	
 	LOWER  = 3,
+	ALL    = 4,
 }
 
 ---------------------------------------
@@ -81,6 +83,8 @@ FIGHTSKILL_PROPERTIES =
 	weapon     = { type="OBJECT", },
 	
 	actions    = { type="OBJECT", },
+
+	statuses   = { type="OBJECT", },
 }
 
 ---------------------------------------
@@ -92,10 +96,8 @@ function FIGHTSKILL_COMPONENT:Activate()
 end
 
 function FIGHTSKILL_COMPONENT:Deactivate()
-
 end
 
 function FIGHTSKILL_COMPONENT:Update()
-
 end
 ---------------------------------------

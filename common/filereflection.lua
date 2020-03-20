@@ -143,87 +143,6 @@ function FileReflection:ImportData( data, name )
 	return object
 end
 
---[[
----------------------------------------
-function FileReflection:ImportData( object, name, data )
-	if not data or not name then print( "no name=" .. name ) return end
-	
-	--print( "set " .. name .. "=", data, object )
-
-	local t = typeof( data )
-	if t == "table" then
-		object[name] = {}
-		for k, v in pairs( data ) do			
-			t = typeof( v )
-			if t == "string" or t == "number" or t == "boolean" then
-				object[name] = data
-			else				
-				local child = self:ImportValue( nil, v )
-				if child.ecstype == "ECSENTITY" then					
-					if object.ecstype == "ECSSCENE" then
-						if object.rootEntity then DBG_Error( "Why root entity is already exist?" ) end
-						object:SetRootEntity( child )
-						print( "Add rootentity into scene", child )
-					elseif object.ecstype == "ECSENTITY" then
-						object:AddChild( child )
-						print( "Add child into entity", child )
-					end
-				else
-					object[name][k] = child
-					--print( name, k, child )
-				end
-			end
-			--table.insert( object[name], self:ImportValue( nil, v ) )
-		end
-	elseif t == "string" or t == "number" or t == "boolean" then
-		object[name] = data;
-	end
-end
-
----------------------------------------
-function FileReflection:ImportValue( parent, data )	
-	--if data then MathUtil_Dump( data, 3 ) end
-	--print( "import value", object, data )
-
-	local object
-
-	local properties
-	if data.ecstype == "ECSSCENE" then		
-		properties = ECSSceneProperties
-		object     = ECS_CreateScene( "UNKNOWN" )
-	elseif data.ecstype == "ECSENTITY" then
-		properties = ECSEntityProperties
-		object     = ECS_CreateEntity( "ECSENTITY", "UNKNOWN" )
-	elseif data.ecstype == "ECSCOMPONENT" then
-		properties = ECSProperties		
-		object     = ECS_CreateComponent( data.ecsname, "UNKNOWN" )				
-	end
-
-	if properties then	
-		--check properties
-		print( "ecstype=" .. data.ecstype )
-		--for pname, prop in pairs( properties ) do if not data[pname] then DBG_Trace( "missing prop=" .. pname ) end end
-		
-		print( "  start ecs", data.ecsname, data )
-		for k, v in pairs( data ) do
-			print( "prop=" .. k, v, v.ecstype )
-			Dump( v )
-			self:ImportData( object, k, v )
-		end
-		print( "  end ecs", data.ecsname )
-
-	elseif typeof( data ) == "table" then
-		if not parent then error( "why none data" ) end--object = {} end-- print( "init obj", data.name ) end
-		for k, v in pairs( data ) do
-			parent[k] = self:ImportValue( object, v )
-			--print( "---------------object", "name", k, object )
-		end
-	end
-	return object
-end
-
---]]
-
 ---------------------------------------
 function FileReflection:Import( object )
 	if not self._parseData then self:Read() end
@@ -269,8 +188,6 @@ function FileReflection:ExportValue( name, value )
 		if not self._isArray and name then self:Write( "\"" .. name .. "\":" ) end
 
 		--print( "name=" .. name, "isarray=" .. ( ( self._isArray == true ) and "true" or "false" ) )
-
-		--if name == "parent" then error( "" ) end
 
 		--check if it is an ecs object
 		if value._properties then

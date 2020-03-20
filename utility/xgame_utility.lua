@@ -4,6 +4,7 @@
 ---------------------------------------
 require "mathutil"
 require "randomizer"
-require "file"
+require "fileutil"
 require "logutil"
 require "inpututil"
+require "txtdatautil"
