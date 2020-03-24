@@ -6,11 +6,11 @@
 --     001001001 Shaolin Luohan Fist
 --     002002001 Wudang Fist
 --------------------------------------------------
-local GANG_DATATABLE =
+local GANGTEMPLATE_DATATABLE =
 {
 	[1] =
 	{
-		name    = "少林派",
+		name    = "少林派", 
 	},
 	[2] =
 	{
@@ -128,16 +128,15 @@ local GANG_DATATABLE =
 
 --------------------------------------------------
 --------------------------------------------------
-function GANG_DATATABLE_Get( id )
-	return GANG_DATATABLE[id]
+function GANGTEMPLATE_DATATABLE_Get( id )
+	return GANGTEMPLATE_DATATABLE[id]
 end
 
 
 --------------------------------------------------
 --------------------------------------------------
-function GANG_DATATABLE_Foreach( fn )
-	for id, role in pairs( GANG_DATATABLE ) do
-		role.id = id
-		fn( role )
-	end
+function GANGTEMPLATE_DATATABLE_Set( data )
+	GANGTEMPLATE_DATATABLE[data.id] = data
 end
+
+

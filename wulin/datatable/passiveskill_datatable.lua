@@ -1,0 +1,13 @@
+---------------------------------------
+--
+-- Passive skill
+--
+--   Movement
+--     Affect Hit/Evad/Move(Map Mode)
+--     
+--   
+--   Resident
+--     Affect Rest Efficiency
+--     Resist Debuff
+--
+---------------------------------------

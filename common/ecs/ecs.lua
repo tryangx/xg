@@ -48,9 +48,16 @@ ECSComponentProperties =
 }
 
 ---------------------------------------
+-- ECS Register Informations
 local _ecs = {}
 
 
+---------------------------------------
+local _activateScenes = {}
+
+
+---------------------------------------
+-- (Local)Register an ecs class
 ---------------------------------------
 local function ECS_Register( typeName, clz, properties )
 	if _ecs[typeName] then
@@ -76,6 +83,8 @@ end
 
 
 ---------------------------------------
+-- (Local)Create an ecs object
+---------------------------------------
 local function ECS_Create( typeName, name )
 	local data = _ecs[typeName]
 	if not data then 
@@ -95,8 +104,27 @@ local function ECS_Create( typeName, name )
 			obj.ecsname     = typeName
 			obj._properties = data.properties
 			--print( "Create component", obj.ecsname, obj.name, obj.ecstype )
+
+			--initialize
+			for propname, prop in pairs( data.properties ) do
+				if prop.type == "NUMBER" then
+					obj[propname] = prop.default or 0
+				elseif prop.type == "STRING" then
+					obj[propname] = prop.default or ""
+				elseif prop.type == "OBJECT" then
+				elseif prop.type == "ECSID" then
+				elseif prop.type == "LIST" then
+					obj[propname] = {}
+				elseif prop.type == "DICT" then
+					obj[propname] = {}
+				elseif prop.type == "LIST_ECSID" then
+					obj[propname] = {}
+				end
+				--print( propname, propvalue )
+			end
 		end
-		--print( "====Create ECS", obj.ecstype, obj.ecsname, obj.ecsid, obj )
+		--print( "====Create ECS", obj.ecstype, obj.ecsname, obj.ecsid, obj )	
+
 		return obj
 	end
 
@@ -105,21 +133,7 @@ end
 
 
 ---------------------------------------
----------------------------------------
-function ECS_Reset()
-	--reset manager	
-	for _, data in pairs( _ecs ) do
-		data.mgr:Clear()
-	end
-
-	--reset ecsid
-	ECS_ResetID()
-
-	print( "Reset ECS" )
-end
-
-
----------------------------------------
+-- (Local)Find an ecs object by type and keyname
 -- @param id scene:name, entity:id
 ---------------------------------------
 local function ECS_Find( typeName, keyname )	
@@ -141,6 +155,38 @@ local function ECS_Find( typeName, keyname )
 		end
 	end
 end
+
+
+---------------------------------------
+-- (Global)Foreach ecs objects by specified type
+---------------------------------------
+function ECS_Foreach( typeName, fn )
+	local data = _ecs[typeName]
+	if not data then 
+		DBG_Error( "ECSType=" .. typeName .. " isn't registered." )
+	elseif not data.mgr then
+		DBG_Error( "ECSType=" .. typeName .. " doesn't has manager." )
+	else
+		data.mgr:ForeachData( fn )
+	end
+end
+
+
+---------------------------------------
+-- (Global)Reset ECS enviroment
+---------------------------------------
+function ECS_Reset()
+	--reset manager	
+	for _, data in pairs( _ecs ) do
+		data.mgr:Clear()
+	end
+
+	--reset ecsid
+	ECS_ResetID()
+
+	print( "Reset ECS" )
+end
+
 
 ---------------------------------------
 --
@@ -207,6 +253,18 @@ end
 
 function ECS_FindComponent( entity, name )
 	return entity:GetComponent( name )
+end
+
+
+local _listener = {}
+function ECS_AddListener( component )
+	if component.ecstype ~= "ECSCOMPONENT" then return end
+	local list = _listener[component.ecsname]
+	if not list then
+		_listener[component.ecsname] = {}
+		list = _listener[component.ecsname]
+	end
+	--table.insert( _listener )
 end
 
 

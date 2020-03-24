@@ -9,6 +9,34 @@
 --------------------------------------------------
 local ROLE_DATATALBE = 
 {
+	[1] =
+	{
+		--FOLLOWER DATA
+		name      = "甲等弟子",
+		age       = 16,
+		template  = 1000120,
+		mentals   = {},
+		statuses  = {},
+	},
+	[2] =
+	{
+		--FOLLOWER DATA
+		name      = "乙等弟子",
+		age       = 14,
+		template  = 1000120,
+		mentals   = {},
+		statuses  = {},
+	},
+	[3] =
+	{
+		--FOLLOWER DATA
+		name      = "丙等弟子",
+		age       = 14,
+		template  = 1000120,
+		mentals   = {},
+		statuses  = {},
+	},
+
 	[1003001] =
 	{
 		--FOLLOWER DATA

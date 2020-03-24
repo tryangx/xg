@@ -122,10 +122,13 @@ function FileReflection:ImportData( data, name )
 
 	if object then
 		--print( "ecstype=" .. data.ecstype, object )
-		for itemname, item in pairs( properties ) do
-			if not data[itemname] then error( "why no property=" .. itemname ) end
+		for propname, prop in pairs( properties ) do
+			if prop.type == "ECSID" then
+				InputUtil_Pause( "ecsid" )
+			end
+			if not data[propname] then error( "why no property=" .. propname ) end
 			--print( "!!!!!!!set", itemname, data[itemname] )
-			object[itemname] = data[itemname]
+			object[propname] = data[propname]
 		end
 	else
 		object = {}
@@ -214,8 +217,9 @@ function FileReflection:ExportValue( name, value )
 				--print( "owndata", subName, prop.type, value[subName] )
 				if subValue then					
 					--self._isArray = true
-					if prop.type == "ID" then
+					if prop.type == "ECSID" then
 						if subValue.ecsid then
+							InputUtil_Pause( "export Id", subValue.ecsid )
 							if not firstValue then self:Write( "," ) end
 							self:ExportValue( subName, subValue.ecsid )
 						end

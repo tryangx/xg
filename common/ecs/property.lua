@@ -10,17 +10,15 @@
 ------------------------------------------------------------------------------
 PropertyType =
 {
-	NUMBER  = 0,
-	STRING  = 1,
-	OBJECT  = 2,	
-	POINTER = 3,
-	ID      = 4,
+	NUMBER     = 0,
+	STRING     = 1,
+	OBJECT     = 2,
+	ECSID      = 4,
 
 	--
-	LIST    = 10,
-
-	--
-	DICT    = 11,
+	LIST       = 10,	
+	DICT       = 11,
+	LIST_ECSID = 12,
 }
 
 
@@ -57,7 +55,7 @@ end
 function Prop_GetByFilter( container, name, filter )
 	if not container or not container._properties then error( "container is invalid" ) end	
 	local prop = container._properties[name]
-	if prop.type == "LIST" or prop.type == "DICT" then
+	if prop.type == "LIST" or prop.type == "DICT" or prop.type == "LIST_ECSID" then
 		for _, v in pairs( container ) do
 			if filter( v ) then
 				return v
@@ -107,15 +105,29 @@ function Prop_Add( container, name, data, id )
 	elseif prop.type == "OBJECT" then
 		container[name] = data
 	elseif prop.type == "LIST" then
-		if not container[name] then container[name] = {} end
-		table.insert( container[name], data )
+		if not container[name] then container[name] = {} end		
+		local t = typeof(data)
+		if t == "table" then
+			for _, v in ipairs( data ) do
+				table.insert( container[name], v )
+			end
+		else
+			table.insert( container[name], data )
+		end
 		--print( "insert", data, "into", name, #container[name] )
 	elseif prop.type == "DICT" then
-		if not id then 
-			table.insert( container[name], data )
+		if not id then
+			local t = typeof(data)
+			if t == "table" then
+				for id, v in pairs( data ) do
+					container[name][id] = v
+				end
+			else
+				table.insert( container[name], data )
+			end
 		else
 			container[name][id] = data
-		end		
+		end
 	else
 		DBG_Error( "Unhanlde type=" .. prop.type )
 	end

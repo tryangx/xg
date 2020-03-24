@@ -18,6 +18,24 @@ require "wulin"
 
 ---------------------------------------------
 
+--[[
+local t = { 1, 2, 3, 4, 5 }
+
+local inx = 1
+local num = #t
+while inx <= #t do
+	print( "inx" .. inx, "v=", t[inx] )
+	if t[inx] == 2 or t[inx] == 4 then
+		print( "remove inx=" .. inx, "v=" .. t[inx], #t )
+		table.remove( t, inx )
+	else
+		inx = inx + 1
+	end
+end
+Dump( t )
+]]
+
+
 --print( package.path )
 
 --require( "json_test")

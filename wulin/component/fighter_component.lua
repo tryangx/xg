@@ -16,7 +16,7 @@ FIGHTER_ELEMENT =
 }
 
 
-FIGHTER_STATUSTYPE = 
+ROLE_STATUSTYPE = 
 {
 	TIRENESS           = 1,     --Long Duration, Increase by Active Action, Reduce by Rest
 	PRESSURE           = 2,     --Long Duration, Increase by the Fight/Event 
@@ -70,17 +70,13 @@ FIGHTER_PROPERTIES =
 	lv         = { type="NUMBER" },
 	exp        = { type="NUMBER" },
 
-	--mental
-	-- valuetype: { type: string, init_value = number, post_value = number }
-	mentals    = { type="OBJECT" },
-
 	--status
 	--  valuetype: { type = FIGHTER_STATUSTYPE, effect = number, duration = number }
 	statuses   = { type="OBJECT" },
 
 	--skills
-	skills     = { type="OBJECT" },
-	passiveSkills = { type="OBJECT" },
+	skills        = { type="LIST" },
+	passiveSkills = { type="LIST" },
 }
 
 ---------------------------------------

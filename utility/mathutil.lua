@@ -338,6 +338,15 @@ function MathUtil_ShallowCopy( source, destination )
 	return destination
 end
 
+
+function MathUtil_FindByKey( source, key )
+	for k, v in pairs( source ) do
+		if k == key then
+			return v
+		end
+	end	
+end
+
 --[[
 	@return return index of the item in the table
 	
@@ -518,7 +527,6 @@ function MathUtil_Remove( list, target, name )
 	return false
 end
 
-
 --[[
 	local list = { 1, 2, 3, 4, 5 }
 	MathUtil_RemoveIf( list, function( v )
@@ -526,18 +534,13 @@ end
 	end )
 	--list will be 1=1, 2=3, 3=5.
 --]]
-function MathUtil_RemoveIf( list, fn )
-	local begin = 1
-	local findItem = true
-	while findItem do
-		findItem = false
-		for inx = begin, #list do
-			if fn( list[inx] ) then
-				table.remove( list, inx )
-				begin = inx
-				findItem = true
-				break
-			end
+function MathUtil_RemoveListItemIf( list, fn )
+	local inx = 1
+	while inx <= #list do
+		if fn( list[inx] ) then
+			table.remove( list, inx )
+		else
+			inx = inx + 1
 		end
 	end
 end

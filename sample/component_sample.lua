@@ -6,7 +6,7 @@ TestComponentProperties =
 {
 	{ type="STRING",   name="TYPE" },
 	{ type="STRING",   name="NAME" },
-	{ type="NUMBER",   name="ID" },
+	{ type="NUMBER",   name="ECSID" },
 	{ type="STRING",   name="NAME" },
 	{ type="OBJECT",   name="DATA" },
 	{ type="LIST",     name="NUMBERS" },

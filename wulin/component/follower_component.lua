@@ -9,16 +9,28 @@
 --   Agi:   
 --
 ---------------------------------------
+---------------------------------------
+FOLLOWER_JOB = 
+{
+	NONE      = 0,
+	JUNIOR    = 1,	
+	SENIOR    = 2,	
+	MASTER    = 10,
+	ELDER     = 11,
+}
+
+
+---------------------------------------
+---------------------------------------
 FOLLOWER_COMPONENT = class()
 
 ---------------------------------------
 FOLLOWER_PROPERTIES = 
 {
-	name       = { type="STRING", },
-	age        = { type="NUMBER", },
-
-	lv         = { type="NUMBER", },
-	exp        = { type="NUMBER", },
+	belong       = { type="ECSID" },
+	job          = { type="STRING" },
+	seniority    = { type="NUMBER" }, --days
+	contribution = { type="OBJECT" }, --historic, unrewarded
 }
 
 ---------------------------------------
@@ -26,16 +38,6 @@ function FOLLOWER_COMPONENT:__init()
 end
 
 ---------------------------------------
-function FOLLOWER_COMPONENT:Activate()	
-	--print( "Activate Follower")
-end
-
-
-function FOLLOWER_COMPONENT:Deactivate()
-
-end
-
-
 function FOLLOWER_COMPONENT:Update()
 
 end

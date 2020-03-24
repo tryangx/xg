@@ -1,10 +1,11 @@
 ---------------------------------------
 ---------------------------------------
-FightResult = 
+FIGHT_REUSLT = 
 {
-	DRAW     = 0,
-	RED_WIN  = 1,
-	BLUE_WIN = 2,
+	NONE     = 0,
+	DRAW     = 1,
+	RED_WIN  = 2,
+	BLUE_WIN = 3,
 }
 
 
@@ -17,20 +18,18 @@ FIGHT_PROPERTIES =
 {
 	reds       = { type="LIST" },--store the entity id of fighter
 	blues      = { type="LIST" },--store the entity id of fighter
-	state      = { type="NUMBER" },
+	result     = { type="STRING", default="NONE" },
 }
 
 ---------------------------------------
 function FIGHT_COMPONENT:__init()
 	--self.ecsname     = "FIGHT_COMPONENT"
-	--self._properties = FightProperties
+	--self._properties = FightProperties	
 end
 
 ---------------------------------------
 function FIGHT_COMPONENT:Activate()
-	--print( "activate fight_cmp eid=", self.entityid )
 	ECS_GetSystem( "FIGHT_SYSTEM" ):AppendFight( self.entityid )
-
 	--prepare datas
 
 	--get fighter datas
@@ -48,17 +47,19 @@ function FIGHT_COMPONENT:Activate()
 				line = 1
 				row = row + 1
 			end
-			local role = ECS_FindEntity( id )
-			if role then
-				local follower = role:GetComponent( "FOLLOWER_COMPONENT" )				
+			local entity = ECS_FindEntity( id )
+			if entity then
+				local role = entity:GetComponent( "ROLE_COMPONENT" )
+				if not role then error( "Role Component is invalid" ) end
+				local follower = entity:GetComponent( "FOLLOWER_COMPONENT" )
 				if not follower then error( "Follower Component is invalid" ) end
-				local fighter = role:GetComponent( "FIGHTER_COMPONENT" )
+				local fighter = entity:GetComponent( "FIGHTER_COMPONENT" )
 				if not fighter then error( "Fighter Component is invalid" ) end
-				local template = role:GetComponent( "FIGHTERTEMPLATE_COMPONENT" )
+				local template = entity:GetComponent( "FIGHTERTEMPLATE_COMPONENT" )
 				if not template  then error( "FighterTemplate Component is invalid" ) end
 				--Dump( component ) print( "!!!!!!!!!!find fighter", fighter, id ) Dump( component )
-				--print( "parepare", follower.name, id )
-				table.insert( positions, { follower=follower, fighter=fighter, template=template, row=row, line=line } )
+				--print( "parepare", role.name, id )
+				table.insert( positions, { role=role, follower=follower, fighter=fighter, template=template, row=row, line=line } )
 			end
 		end
 	end

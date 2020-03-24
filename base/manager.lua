@@ -160,6 +160,10 @@ function Manager:AddData( id, data )
 	if self._removeList then
 		DBG_Warning( "Mng", "Add data in Foreach() is not recommended! name=" .. ( self._name or "" ) )
 	end
+	if self._isLock then
+		DBG_Error( "Data is locked, failed to add new data." )
+		return
+	end
 
 	if not self._datas[id] then self._count = self._count + 1 end
 
@@ -170,12 +174,17 @@ end
 
 --------------------------------------------------------------
 function Manager:BeginTraversal()
+	if self._isLock then
+		DBG_Error( "Don't traverse recursively" )
+		return
+	end
 	self._removeList = {}
 end
 
 --------------------------------------------------------------
 function Manager:EndTraversal()
 	--remove list
+	self._isLock = false
 	if self._removeList then
 		local num = 0
 		for _, id in pairs( self._removeList ) do
@@ -193,11 +202,10 @@ end
 
 --------------------------------------------------------------
 function Manager:RemoveData( id, fn )
-	if not self._datas[id] then
-		return false
-	end
+	if not self._datas[id] then return false end
+
 	if self._removeList then
-		DBG_Warning( "Mng", "Remove data ( name=" .. ( self._name or "" ) .. ") isn't recommended when Traveling Data" )
+		DBG_Error( "Mng", "Remove data ( name=" .. ( self._name or "" ) .. ") isn't recommended when Traveling Data" )
 		if self._datas[id] then
 			table.insert( self._removeList, id )
 			--print( "put id=" .. id .. " into remove list" )
@@ -215,7 +223,8 @@ end
 --------------------------------------------------------------
 function Manager:RemoveAllData( fn )
 	if self._removeList then
-		error( "Mng", "RemoveAll isn't recommended when Traversal Data!" )
+		DBG_Error( "Mng", "RemoveAll isn't recommended when Traversal Data!" )
+		return
 	end
 	for k, data in pairs( self._datas ) do
 		if not fn or fn( data ) then
