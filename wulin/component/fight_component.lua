@@ -19,6 +19,8 @@ FIGHT_PROPERTIES =
 	reds       = { type="LIST" },--store the entity id of fighter
 	blues      = { type="LIST" },--store the entity id of fighter
 	result     = { type="STRING", default="NONE" },
+
+	remainTime = { type="NUMBER", default=100 },
 }
 
 ---------------------------------------

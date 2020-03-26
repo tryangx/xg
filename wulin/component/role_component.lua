@@ -110,3 +110,10 @@ end
 
 
 ---------------------------------------
+function ROLE_COMPONENT:Dump()
+	print( "[" .. self.name .. "]" )
+	print( "", "Age=" .. self.age )
+end
+
+
+---------------------------------------

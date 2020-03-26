@@ -81,7 +81,9 @@ FIGHT_RULE =
 
 FIGHT_PARAMS = 
 {
-	DEFEND_COST_RATE = 0.25,
+	DEFEND_COST_RATE    = 0.25,
+
+	DAMAGE_RATE         = 100,
 }
 
 ---------------------------------------
@@ -362,7 +364,6 @@ local function AddSkillBuff( role, comboeffect, buff )
 	if not role.statuses then role.statuses = {} end
 
 	function SetStatusBuff( data, comboeffect, buff )
-		--Dump( buff, 5 )
 		data.name     = comboeffect.name
 		data.effects  = {}
 		data.duration = buff.duration or 1
@@ -524,7 +525,7 @@ local function ProcessDuel( atk, def )
 			local defDefend    = defPow			
 			local base_damage  = atkDamage * atkDamage / ( atkDamage + defDefend )
 			local block        = ( defAction and defAction.defense or 0 ) + ( def.fighter._dp or 0 )
-			local final_damage = math.ceil( base_damage * 10 / ( block + 100 ) )
+			local final_damage = math.ceil( base_damage * FIGHT_PARAMS.DAMAGE_RATE / ( block + 100 ) )
 			--print( atkSkill.name, "finaldmg=" .. final_damage, "base_damage=" .. base_damage, "apow=" .. atkPow, "dpow=" .. defPow )
 
 			--block damage
@@ -539,7 +540,7 @@ local function ProcessDuel( atk, def )
 					final_damage = final_damage - atk.fighter._shield
 					atk.fighter._shield = 0
 				end				
-				print( def.role.name .. " resist damage " .. resistDamage )
+				Log_Write( "fight", def.role.name .. " resist damage " .. resistDamage )
 			end
 			
 			if final_damage > 0 then
@@ -588,7 +589,7 @@ local function ProcessDuel( atk, def )
 		end
 	end
 
-	print( atk.role.name .. " hit " .. def.role.name ..  " " .. _hitTimes .. "/" .. #atkSkill.actions .. " times, deal damage=" .. atk.fighter._skillDamage )
+	Log_Write( "fight", atk.role.name .. " hit " .. def.role.name ..  " " .. _hitTimes .. "/" .. #atkSkill.actions .. " times, deal damage=" .. atk.fighter._skillDamage )
 end	
 
 
@@ -697,8 +698,6 @@ function FIGHT_SYSTEM:CreateFight( atk_eids, def_eids )
 	entity:AddComponent( fight )
 	self._fightDataEntity:AddChild( entity )
 	entity:Activate()
-	--Dump( fight.reds, 5 )
-	--Dump( fight.blues, 5 )
 	--InputUtil_Pause( "Create fight", entity.ecsid )
 end
 
@@ -708,16 +707,16 @@ function FIGHT_SYSTEM:ProcessFight( ecsid )
 	local entity = ECS_FindEntity( ecsid )
 	if not entity then DBG_Error( "Invalid fight entity! ID=" .. ecsid ) return end
 	
-	local cmp = entity:GetComponent( "FIGHT_COMPONENT" )
+	local fight = entity:GetComponent( "FIGHT_COMPONENT" )
 
-	if cmp.result ~= "NONE" then return true end
+	if fight.result ~= "NONE" then return true end
 		
 	local result = FIGHT_SIDE.NONE
 
 	local actionSequence = {}	
 
 	--Create a shuffled sequence as roles's priority
-	local priorities = MathUtil_CreateShuffledSequence( #cmp._reds + #cmp._blues )
+	local priorities = MathUtil_CreateShuffledSequence( #fight._reds + #fight._blues )
 
 	function DetermineATB( role, action, time )
 		if not action then action = "DEFAULT" end
@@ -736,7 +735,6 @@ function FIGHT_SYSTEM:ProcessFight( ecsid )
 		role.fighter._dp       = 0
 		DetermineATB( role )
 		table.insert( actionSequence, role )
-		Dump_Role( role, { "ATTRS" } )
 	end	
 
 	function SortActionSequence()
@@ -748,15 +746,15 @@ function FIGHT_SYSTEM:ProcessFight( ecsid )
 		end )
 	end
 
-	for _, role in ipairs( cmp._reds ) do PrepareFight( role, FIGHT_SIDE.RED ) end
-	for _, role in ipairs( cmp._blues ) do PrepareFight( role, FIGHT_SIDE.BLUE ) end
+	for _, role in ipairs( fight._reds ) do PrepareFight( role, FIGHT_SIDE.RED ) end
+	for _, role in ipairs( fight._blues ) do PrepareFight( role, FIGHT_SIDE.BLUE ) end
 
 	SortActionSequence()
 
 	local result   = FIGHT_SIDE.NONE
 	local passTime = 0
 	local lastTime = 0
-	local maxTime  = 100
+	local maxTime  = fight.remainTime
 	while result == FIGHT_SIDE.NONE do
 		local actionRole = table.remove( actionSequence, 1 )		
 
@@ -776,7 +774,7 @@ function FIGHT_SYSTEM:ProcessFight( ecsid )
 			actionRole.fighter._actTimes = actionRole.fighter._actTimes and actionRole.fighter._actTimes + 1 or 1
 
 			--choose target
-			local target = FindTarget( actionRole, FindTeam( cmp, FindOppside( cmp, actionRole.fighter._side ) ) )
+			local target = FindTarget( actionRole, FindTeam( fight, FindOppside( fight, actionRole.fighter._side ) ) )
 
 			if Random_GetInt_Sync( 1, 100 ) > GetRoleTireness( actionRole ) * 100 then
 				--print( "tireness", GetRoleTireness( actionRole ) * 100 )
@@ -830,15 +828,26 @@ function FIGHT_SYSTEM:ProcessFight( ecsid )
 			end
 		end
 
-		result = CheckResult( cmp )
+		result = CheckResult( fight )
 
 		--print( "time", passTime, maxTime )
 		if passTime > maxTime then break end
 	end
 
-	ForeachRole( cmp._reds,  Dump_Role, { "ATTRS", "STATS" } )
-	ForeachRole( cmp._blues, Dump_Role, { "ATTRS", "STATS" } )
-	
+	function FightEnd( role )
+		--Dump_Role( role, { "ATTRS", "STATS" } )
+
+		if IsRoleAlive( role ) then
+			return
+		end
+
+		--dead
+		Role_Dead( role.fighter.entityid )
+	end
+
+	ForeachRole( fight._reds,  FightEnd );
+	ForeachRole( fight._blues, FightEnd );
+
 	print( "[FIGHTSYS]End", ecsid, entity )
 end
 

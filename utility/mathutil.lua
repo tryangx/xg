@@ -930,4 +930,20 @@ function MathUtil_Approximate( value, list, name, ascend )
 	return default
 end
 
+
+---------------------------------------------
+-- options: { num = }
+--
+local _letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+function MathUtil_GenRandomString( num )
+	local str = ""
+	for i = 1, num do
+		local idx = math.random( 1, #_letters )
+		str = str .. string.sub( _letters, idx, idx )
+	end
+	return str
+end
+
+
+
 Dump = MathUtil_Dump

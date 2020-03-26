@@ -27,10 +27,9 @@ FOLLOWER_COMPONENT = class()
 ---------------------------------------
 FOLLOWER_PROPERTIES = 
 {
-	belong       = { type="ECSID" },
 	job          = { type="STRING" },
 	seniority    = { type="NUMBER" }, --days
-	contribution = { type="OBJECT" }, --historic, unrewarded
+	contribution = { type="OBJECT" }, --value, unrewarded
 }
 
 ---------------------------------------

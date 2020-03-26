@@ -36,6 +36,7 @@ function ECS_UpdateSystem( deltaTime )
 	end
 end
 
+
 ---------------------------------------
 function ECS_GetSystem( name )
 	if name then
@@ -43,4 +44,12 @@ function ECS_GetSystem( name )
 	end
 end
 
+
 ---------------------------------------
+function ECS_DumpSystem()
+	for _, sys in pairs( _ecsSystems ) do
+		if sys.Dump then
+			if sys.Dump then sys:Dump() end
+		end
+	end
+end

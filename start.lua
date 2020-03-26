@@ -17,6 +17,9 @@ package.path = package.path .. ";wulin/?.lua"
 require "wulin"
 
 ---------------------------------------------
+package.path = package.path .. ";sample/?.lua"
+--require "ecs_sample"
+
 
 --[[
 local t = { 1, 2, 3, 4, 5 }
@@ -111,6 +114,3 @@ MathUtility_Dump( d )
 --]]
 
 ---------------------------------------------
---require "sample.component_sample"
-
---require "sample.ecs_sample"

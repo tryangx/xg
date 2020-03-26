@@ -16,7 +16,7 @@ FIGHTER_ELEMENT =
 }
 
 
-ROLE_STATUSTYPE = 
+FIGHTER_STATUSTYPE = 
 {
 	TIRENESS           = 1,     --Long Duration, Increase by Active Action, Reduce by Rest
 	PRESSURE           = 2,     --Long Duration, Increase by the Fight/Event 
@@ -102,12 +102,12 @@ end
 
 ---------------------------------------
 function FIGHTER_COMPONENT:Dump()
-	print( "hp=" .. self.hp .. "/" .. self.maxhp )
-	print( "mp=" .. self.mp .. "/" .. self.maxmp )
-	print( "st=" .. self.st .. "/" .. self.maxst )
-	print( "str=" .. self.strength )
-	print( "int=" .. self.internal )
-	print( "tec=" .. self.technique )
-	print( "agi=" .. self.agility )
-	print( "ski=" .. #self.skills )
+	print( "", "hp=" .. self.hp .. "/" .. self.maxhp )
+	print( "", "mp=" .. self.mp .. "/" .. self.maxmp )
+	print( "", "st=" .. self.st .. "/" .. self.maxst )
+	print( "", "str=" .. self.strength )
+	print( "", "int=" .. self.internal )
+	print( "", "tec=" .. self.technique )
+	print( "", "agi=" .. self.agility )
+	print( "", "ski=" .. #self.skills )
 end

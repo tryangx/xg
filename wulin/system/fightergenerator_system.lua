@@ -36,7 +36,7 @@ FIGHTERTEMPLATE_GENERATOR =
 function FIGHTERGENERATOR_SYSTEM:Generate( fighter, fightertemplate, id )
 	local template = self:GetTemplate( id )
 	if not template then
-		DBG_Error( "Invalid fighter template! Id=", id )
+		DBG_Error( "Invalid fighter template! Id=" .. id )
 		return
 	end
 	fightertemplate.name   = template.name

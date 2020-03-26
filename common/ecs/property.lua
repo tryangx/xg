@@ -76,7 +76,7 @@ function Prop_Set( container, name, data, id )
 	elseif prop.type == "STRING" then
 		container[name] = data
 	elseif prop.type == "OBJECT" then
-		container[name] = data		
+		--container[name] = data
 	elseif prop.type == "LIST" then
 		DBG_Error( "Shouldn't use Prop_Set() for " .. prop.type )
 	elseif prop.type == "DICT" then
@@ -145,7 +145,7 @@ function Prop_Remove( container, name, data )
 		for k, v in pairs( container[name] ) do
 			if v == data then
 				table.remove( container[name], k )
-				break
+				return true
 			end
 		end
 	else

@@ -12,26 +12,42 @@ local _ecsidCounter = _ecsidDefault
 
 _randomizer = Randomizer()
 
+
+---------------------------------------
+---------------------------------------
 function ECS_InitID()
 	_randomizer:Seed( os.time() )
 end
 
+
+---------------------------------------
+---------------------------------------
+function ECS_SetIDCounter( counter )
+
+end
+
+
+---------------------------------------
+---------------------------------------
 function ECS_ResetID()
 	_ecsidCounter = _ecsidDefault
 end
 
+
+---------------------------------------
+---------------------------------------
 function ECS_CreateID()
 	--template solution
-	--  ecsid = time_stamp + counter + random_string
-	local ecsid = "eid"
+	--  ecsid = prefix + time_stamp + counter + random_string
+	local ecsid = "i"
 
 	ecsid = ecsid .. os.time()
 
-	ecsid = ecsid .. _ecsidCounter	
+	ecsid = ecsid .. _ecsidCounter
+
+	ecsid = ecsid .. MathUtil_GenRandomString( 24 - string.len(ecsid) )
 
 	_ecsidCounter  = _ecsidCounter + 1
-
-	--_ecsids[ecsid] = ecsid
 
 	return ecsid
 end

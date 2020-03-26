@@ -1,12 +1,13 @@
 ---------------------------------------
+---------------------------------------
 ECSEntityProperties = 
 {
-	ecsid        = { type="NUMBER" },
 	components   = { type="LIST" },
 	children     = { type="LIST" },
 }
 
 
+---------------------------------------
 ---------------------------------------
 ECSEntity = class()
 
@@ -14,8 +15,10 @@ ECSEntity = class()
 ---------------------------------------
 function ECSEntity:__init()
 	self._properties = ECSEntityProperties
-	self.status      = ECSENTITYSTATUS.CREATED
-	--print( "init ecsentity" )
+	
+	--local datas
+	self.status      = ECSSTATUS.CREATED
+	self.parentid    = nil
 end
 
 ---------------------------------------
@@ -26,17 +29,26 @@ end
 --
 ---------------------------------------
 function ECSEntity:AddChild( entity )
-	if entity.parent then
+	if entity.parentid then
 		DBG_Error( "Entity already has parent" )
 		return
 	end
-	entity.parent = self
+	entity.parentid = self.ecsid
 	Prop_Add( self, "children", entity )
+	--print( entity.ecsid, "set parent=", self.ecsid )
 end
 
 
 function ECSEntity:RemoveChild( entity )
+	entity.parentid = nil
 	Prop_Remove( self, "children", entity )
+end
+
+
+function ECSEntity:RemoveFromParent()
+	local parent = ECS_FindEntity( self.parentid )
+	if not parent then DBG_Error( "Parent entity is invalid! Id=" .. parent ) end
+	parent:RemoveChild( self )	
 end
 
 
@@ -83,7 +95,7 @@ end
 
 
 function ECSEntity:RemoveComponent( component )
-	Prop_Remove( self, "components", component )
+	return Prop_Remove( self, "components", component )
 end
 
 
@@ -112,44 +124,47 @@ end
 --
 ---------------------------------------
 function ECSEntity:Activate()
-	--print( "Activate Entity" )
+	if self.status ~= ECSSTATUS.INITED and self.status ~= ECSSTATUS.DEACTIVATED then DBG_Error( "Current entity isn't initialized! Status=" .. self.status ) return end	
+	self.status = ECSSTATUS.ACTIVATING
 	entity = self
 	Prop_Foreach( self, "components", function ( component )
-		component.status = ECSENTITYSTATUS.ACTIVATING
+		component.status = ECSSTATUS.ACTIVATING
 		--Loading 
 		component.entityid = entity.ecsid
 		component.parent   = entity
 		--print( "Activate component", component.ecsname, component.Activate )
 		--Dump( component )
 		if component.Activate then component:Activate() end		
-		component.status = ECSENTITYSTATUS.ACTIVATED
+		component.status = ECSSTATUS.ACTIVATED
 	end)
 	Prop_Foreach( self, "children", function ( child )
 		child:Activate()
 	end)
+	self.status = ECSSTATUS.ACTIVATED
 end
 
 
 function ECSEntity:Deactivate()
 	--print( "Deactivate Entity" )
+	self.status = ECSSTATUS.DEACTIVATING
 	Prop_Foreach( self, "components", function ( component )
-		component.status = ECSENTITYSTATUS.DEACTIVATING
+		component.status = ECSSTATUS.DEACTIVATING
 		if component.Deactivate then component:Deactivate() end
-		component.status = ECSENTITYSTATUS.DEACTIVATED
+		component.status = ECSSTATUS.DEACTIVATED
 	end )
 	Prop_Foreach( self, "children", function ( child )
 		child:Activate()
 	end)
+	self.status = ECSSTATUS.DEACTIVATED
 end
 
 
-function ECSEntity:Update()
+function ECSEntity:Update( deltaTime )
 	Prop_Foreach( self, "components", function ( component )
-		component:Update()
+		--print( "Update component", component.ecsname )
+		if component.Update then component:Update( deltaTime ) end
 	end )
-	Prop_Foreach( self, "children", function ( child )
-		child:Update()
-	end)
+	Prop_Foreach( self, "children", function ( child ) child:Update( deltaTime ) end )
 end
 
 ---------------------------------------

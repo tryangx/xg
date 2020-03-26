@@ -13,7 +13,6 @@ function Role_CreateByTableData( roleTable )
 	--Create follower data
 	follower = create_component_bytabledata( "FOLLOWER_COMPONENT", roleTable )
 	roleEntity:AddComponent( follower )
-	follower.belong = roleEntity.ecsid
 
 	--Create fighter data
 	fighter = create_component_bytabledata( "FIGHTER_COMPONENT", roleTable )	

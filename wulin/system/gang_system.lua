@@ -1,5 +1,31 @@
 ---------------------------------------
 ---------------------------------------
+local memberidx = 1
+function Gang_AddMember( gang, entity )
+	local role = entity:GetComponent( "ROLE_COMPONENT" )
+	if not role then DBG_Error( "Can't find role component, Failed to AddMember()" ) end
+
+	Prop_Add( gang, "members", entity.ecsid )
+	--table.insert( gang.members, entity.ecsid )
+
+	role.gang = gang.entityid
+	role.name = gang.name .. role.name .. memberidx
+	memberidx = memberidx + 1
+	print( gang.name .. " recruit " .. role.name )
+end
+
+
+---------------------------------------
+---------------------------------------
+function Gang_RemoveMember( gang, ecsid )	
+	if not Prop_Remove( gang, "members", ecsid ) then
+		print( "remove member failed! ID=", ecsid )
+	end
+end
+
+
+---------------------------------------
+---------------------------------------
 function Gang_CreateByTableData( gangTable )
 	local gangEntity, gangComponent
 	
@@ -15,6 +41,7 @@ end
 
 
 ---------------------------------------
+---------------------------------------
 function Gang_RecruitMember( gang )
 	if #gang.members > 5 then return end
 
@@ -23,17 +50,12 @@ function Gang_RecruitMember( gang )
 	local id = gang.membertemplates[idx]
 	local data = ROLE_DATATABLE_Get( id )		
 	local entity = Role_CreateByTableData( data )
-	table.insert( gang.members, entity.ecsid )
-
-	local role = entity:GetComponent( "ROLE_COMPONENT" )
-	if role then
-		role.name = gang.name .. role.name
-	end
-
-	print( gang.name .. " recruit " .. entity.ecsid )
+	Data_AddEntity( "ROLE_DATA", entity )
+	Gang_AddMember( gang, entity )
 end
 
 
+---------------------------------------
 ---------------------------------------
 local GANG_PARAMS = 
 {
@@ -49,8 +71,8 @@ local GANG_PARAMS =
 
 
 function Gang_UpdateActionPoints( gang )
-	if not gang.master then return end
-	local entity = ECS_FindEntity( gang.master )	
+	if not gang.masterid or gang.masterid == "" then return end
+	local entity = ECS_FindEntity( gang.masterid )	
 	if not entity then DBG_TraceBug( "Gang master is invalid!" ) return end
 	local role = entity:GetComponent( "ROLE_COMPONENT" )
 	if not role then DBG_Error( "No role component" ) end
@@ -68,20 +90,23 @@ end
 --
 ---------------------------------------
 function Gang_SelectMaster( gang )
+	if gang.masterid ~= "" then print( "has master", gang.masterid ) end
+
 	local list
 	local HighestJob
 	local totalProb = 0
 
 	function CalcMasterProb( follower )
-		return ( follower.seniority or 0 ) + ( follower.contribution or 0 )
+		return ( follower.seniority or 0 ) + ( follower.contribution and follower.contribution.value or 0 )
 	end
 
+	--print( "select master")
 	MathUtil_Foreach( gang.members, function ( key, ecsid )
 		local entity = ECS_FindEntity( ecsid )
 		if not entity then DBG_Error( "Role entity is invalid! Id=" .. ecsid ) end
 		local follower = entity:GetComponent( "FOLLOWER_COMPONENT" )
 		if not follower then DBG_Error( "Not follower component" ) end
-		
+
 		if not HighestJob or HighestJob < follower.job then
 			HighestJob = follower.job
 			list = {}
@@ -98,7 +123,8 @@ function Gang_SelectMaster( gang )
 	local prob = Random_GetInt_Sync( 1, totalProb )
 	for _, data in ipairs( list ) do
 		if prob < data.prob then
-			return data.entity
+			gang.masterid = data.entity.ecsid
+			return
 		end		
 	end
 end
@@ -113,6 +139,7 @@ function Gang_ListRoles( gang, status_includes, status_excludes )
 	end )
 	return roles
 end
+
 
 ---------------------------------------
 ---------------------------------------
@@ -159,12 +186,14 @@ GANG_SYSTEM = class()
 
 
 ---------------------------------------
+---------------------------------------
 function GANG_SYSTEM:__init( ... )
 	local args = ...
 	self._name = args and args.name or "GANG_SYSTEM"
 end
 
 
+---------------------------------------
 ---------------------------------------
 function GANG_SYSTEM:HoldMeeting()
 	--arrange follower schedule
@@ -181,14 +210,24 @@ end
 
 
 ---------------------------------------
-function GANG_SYSTEM:Update()	
-	print( "update gang")
+---------------------------------------
+function GANG_SYSTEM:Update()
+	--print( "update gang" )
 	local sys = self
 	ECS_Foreach( "GANG_COMPONENT", function ( gang )		
 		Gang_UpdateActionPoints( gang )
 		Gang_SelectMaster( gang )
 		Gang_Attack( gang )
 		Gang_RecruitMember( gang )
+		--gang:Dump()
+	end )
+end
+
+
+---------------------------------------
+---------------------------------------
+function GANG_SYSTEM:Dump()
+	ECS_Foreach( "GANG_COMPONENT", function ( gang )
 		gang:Dump()
 	end )
 end

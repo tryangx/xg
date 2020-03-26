@@ -24,15 +24,15 @@ end
 
 ---------------------------------------
 function Reflection_Export( reflection, object )
-	if not object then DBG_TraceBug( "object is invalid to export" ) return end
+	if not object then DBG_Error( "object is invalid to export" ) return end
 	if object._properties then
-		--print( "Object=", object._type or object.name or "", " has properties" )
+		print( "Object=", object._type or object.name or "", " has properties" )
 		reflection:ExportBegin( object.TYPE, REFLECTION_SEPERATOR.OBJECT )
 		reflection:ExportValue( object.type or object.name or "", object )
 		reflection:ExportEnd( object.TYPE, REFLECTION_SEPERATOR.OBJECT )
 	else
 		--object doesn't has properties, it seems not component, just hanlde it with the normal way
-		--print( "Object=", object._type or object.name or "", " has no properties, use the default method" )
+		print( "Object=", object._type or object.name or "", " has no properties, use the default method" )
 		reflection:ExportBegin( object.TYPE )
 		reflection:ExportValue( object.type or object.name or "", object )
 		reflection:ExportEnd( object.TYPE )		

@@ -61,11 +61,11 @@ GANG_PROPERTIES =
 	statuses  = { type="DICT" },
 
 	--roles
-	members   = { type="OBJECT", }, --list of role entity id
-	master    = { type="STRING", }, --role entity id
+	members   = { type="LIST", }, --list of role entity id
+	masterid  = { type="ECSID", }, --role entity id
 
 	--action points
-	actionpts = { type="OBJECT" },
+	actionpts = { type="DICT" },
 
 	--template
 	membertemplates = { type="LIST" }, --list of number
@@ -73,9 +73,6 @@ GANG_PROPERTIES =
 
 ---------------------------------------
 function GANG_COMPONENT:__init()
-	self.actionpts       = {}
-	self.members         = {}
-	self.membertemplates = {}
 end
 
 
@@ -93,6 +90,7 @@ end
 function GANG_COMPONENT:Update()
 
 end
+
 
 ---------------------------------------
 function GANG_COMPONENT:Dump()

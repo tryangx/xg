@@ -1,3 +1,34 @@
+
+
+---------------------------------------
+-- Enum declarations
+---------------------------------------
+ECSSTATUS =
+{
+	CREATED      = 0,
+	INITED       = 1,
+	ACTIVATING   = 2,
+	ACTIVATED    = 3,
+	DEACTIVATING = 4,
+	DEACTIVATED  = 5,
+}
+
+
+ECSPROPERTIES = 
+{
+	ecstype  = { type="STRING" },
+	ecsname  = { type="STRING" },
+	ecsid    = { type="STRING" },
+}
+
+
+ECSCOMPONENTPROPERTIES = 
+{
+	ecstype  = { type="STRING" },
+	ecsname  = { type="STRING" },
+}
+
+
 ---------------------------------------
 ---------------------------------------
 require "scene"
@@ -9,59 +40,36 @@ require "system"
 require "ecsid"
 
 ---------------------------------------
--- Enum declarations
----------------------------------------
-ECSSCENESTATUS =
-{
-	CREATED      = 0,
-	INITED       = 1,
-	ACTIVATING   = 2,
-	ACTIVATED    = 3,
-	DEACTIVATING = 4,
-	DEACTIVATED  = 5,
-}
-
-
-ECSENTITYSTATUS =
-{
-	CREATED      = 0,
-	INITED       = 1,
-	ACTIVATING   = 2,
-	ACTIVATED    = 3,
-	DEACTIVATING = 4,
-	DEACTIVATED  = 5,
-}
-
-
-ECSProperties = 
-{
-	ecstype  = { type="STRING" },
-	ecsname  = { type="STRING" },
-	ecsid    = { type="STRING" },
-}
-
-
-ECSComponentProperties = 
-{
-	ecstype  = { type="STRING" },
-	ecsname  = { type="STRING" },
-}
-
----------------------------------------
 -- ECS Register Informations
 local _ecs = {}
 
 
 ---------------------------------------
 local _activateScenes = {}
+local _currentScene
+
+
+---------------------------------------
+---------------------------------------
+local function ECS_GetDataManager( typeName )
+	local data = _ecs[typeName]
+	if not data then 
+		DBG_Error( "ECSType=" .. typeName .. " isn't registered." )
+		return
+	elseif not data.mgr then
+		DBG_Error( "ECSType=" .. typeName .. " doesn't has manager." )
+		return
+	end
+	return data
+end
 
 
 ---------------------------------------
 -- (Local)Register an ecs class
 ---------------------------------------
-local function ECS_Register( typeName, clz, properties )
+local function ECS_Register( typeName, clz, properties )	
 	if _ecs[typeName] then
-		DBG_Error( "ECSType=" .. typeName .. " is already registered." )
+		DBG_Error( "ECSType=" .. typeName .. " is already registered." )		
 		return
 	elseif not clz or not properties then
 		DBG_Error( "ECSType=" .. typeName .. "'s register infomation is invalid" )
@@ -86,49 +94,45 @@ end
 -- (Local)Create an ecs object
 ---------------------------------------
 local function ECS_Create( typeName, name )
-	local data = _ecs[typeName]
-	if not data then 
-		DBG_Error( "ECSType=" .. typeName .. " isn't registered." )
-	elseif not data.mgr then
-		DBG_Error( "ECSType=" .. typeName .. " doesn't has manager." )
+	local data = ECS_GetDataManager( typeName )
+	local obj = data.mgr:NewData()
+	if data.ecstype then
+		--create ecsid
+		obj.ecsid       = ECS_CreateID()
+		obj.ecstype     = data.ecstype
+		obj.ecsname     = name
 	else
-		local obj = data.mgr:NewData()
-		if data.ecstype then
-			--create ecsid
-			obj.ecsid       = ECS_CreateID()
-			obj.ecstype     = data.ecstype
-			obj.ecsname     = name
-		else
-			--create component
-			obj.ecstype     = "ECSCOMPONENT"
-			obj.ecsname     = typeName
-			obj._properties = data.properties
-			--print( "Create component", obj.ecsname, obj.name, obj.ecstype )
+		--create component
+		obj.ecstype     = "ECSCOMPONENT"
+		obj.ecsname     = typeName
+		obj._properties = data.properties
+		--print( "Create component", obj.ecsname, obj.name, obj.ecstype, obj.id )
 
-			--initialize
-			for propname, prop in pairs( data.properties ) do
-				if prop.type == "NUMBER" then
-					obj[propname] = prop.default or 0
-				elseif prop.type == "STRING" then
-					obj[propname] = prop.default or ""
-				elseif prop.type == "OBJECT" then
-				elseif prop.type == "ECSID" then
-				elseif prop.type == "LIST" then
-					obj[propname] = {}
-				elseif prop.type == "DICT" then
-					obj[propname] = {}
-				elseif prop.type == "LIST_ECSID" then
-					obj[propname] = {}
-				end
-				--print( propname, propvalue )
+		--initialize
+		for propname, prop in pairs( data.properties ) do
+			if prop.type == "NUMBER" then
+				obj[propname] = prop.default or 0
+			elseif prop.type == "STRING" then
+				obj[propname] = prop.default or ""
+			elseif prop.type == "OBJECT" then
+				--obj[propname] = {}
+			elseif prop.type == "ECSID" then
+				obj[propname] = ""
+			elseif prop.type == "LIST" then
+				obj[propname] = {}
+			elseif prop.type == "DICT" then
+				obj[propname] = {}
+			elseif prop.type == "LIST_ECSID" then
+				obj[propname] = {}
 			end
+			--print( propname, propvalue )
 		end
-		--print( "====Create ECS", obj.ecstype, obj.ecsname, obj.ecsid, obj )	
-
-		return obj
 	end
 
-	DBG_Error( "Create ecstype=" .. typeName .. " failed!", DBGLevel.FATAL )
+	obj.status = ECSSTATUS.INITED
+	--print( "====Create ECS", obj.ecstype, obj.ecsname, obj.ecsid, obj )	
+
+	return obj
 end
 
 
@@ -137,22 +141,16 @@ end
 -- @param id scene:name, entity:id
 ---------------------------------------
 local function ECS_Find( typeName, keyname )	
-	local data = _ecs[typeName]
-	if not data then 
-		DBG_Error( "ECSType=" .. typeName .. " isn't registered." )
-	elseif not data.mgr then
-		DBG_Error( "ECSType=" .. typeName .. " doesn't has manager." )
+	local data = ECS_GetDataManager( typeName )
+	local obj = data.mgr:GetData( keyname )		
+	if typeName == "ECSCOMPONENT" then
+		--keyname is id
+		--use a filter to find the name			
+		return data.mgr:GetDataByFilter( function( target )
+				return target.ecsname == keyname 
+			end )
 	else
-		local obj = data.mgr:GetData( keyname )		
-		if typeName == "ECSCOMPONENT" then
-			--keyname is id
-			--use a filter to find the name			
-			return data.mgr:GetDataByFilter( function( target )
-					return target.ecsname == keyname 
-				end )
-		else
-			return data.mgr:GetDataByAttr( "ecsid", keyname )
-		end
+		return data.mgr:GetDataByAttr( "ecsid", keyname )
 	end
 end
 
@@ -161,14 +159,8 @@ end
 -- (Global)Foreach ecs objects by specified type
 ---------------------------------------
 function ECS_Foreach( typeName, fn )
-	local data = _ecs[typeName]
-	if not data then 
-		DBG_Error( "ECSType=" .. typeName .. " isn't registered." )
-	elseif not data.mgr then
-		DBG_Error( "ECSType=" .. typeName .. " doesn't has manager." )
-	else
-		data.mgr:ForeachData( fn )
-	end
+	local data = ECS_GetDataManager( typeName )
+	data.mgr:ForeachData( fn )
 end
 
 
@@ -177,9 +169,7 @@ end
 ---------------------------------------
 function ECS_Reset()
 	--reset manager	
-	for _, data in pairs( _ecs ) do
-		data.mgr:Clear()
-	end
+	for _, data in pairs( _ecs ) do data.mgr:Clear() end
 
 	--reset ecsid
 	ECS_ResetID()
@@ -203,7 +193,7 @@ end
 
 function ECS_RegisterComponent( name, clz, properties )
 	--append component's properties into the owner's	
-	--ECS_Register( name, clz, MathUtil_MergeDict( properties, ECSComponentProperties ) )
+	--ECS_Register( name, clz, MathUtil_MergeDict( properties, ECSCOMPONENTPROPERTIES ) )
 	ECS_Register( name, clz, properties )
 end
 
@@ -221,6 +211,42 @@ end
 
 function ECS_CreateEntity( name )
 	return ECS_Create( "ECSENTITY", name )
+end
+
+
+---------------------------------------
+--
+-- Destroy Interfaces
+--
+---------------------------------------
+function ECS_DestroyEntity( entity )
+	if not entity then return end
+	local data = ECS_GetDataManager( "ECSENTITY" )
+
+	--remove components first
+	if entity.components then
+		for _, component in ipairs( entity.components ) do
+			--print( "remove cmp", component.id )
+			ECS_DestroyComponent( component )
+		end
+	end
+
+	--remove children
+	if entity.children then
+		for _, child in ipairs( entity.children ) do
+			--print( "remove child", child.ecsid )
+			ECS_DestroyEntity( child )
+		end
+	end
+
+	data.mgr:RemoveData( entity.id )
+end
+
+
+function ECS_DestroyComponent( component )
+	if not component then return end
+	local data = ECS_GetDataManager( component.ecsname )
+	data.mgr:RemoveData( component.id )
 end
 
 
@@ -251,8 +277,9 @@ function ECS_FindEntity( id )
 end
 
 
-function ECS_FindComponent( entity, name )
-	return entity:GetComponent( name )
+function ECS_FindComponent( entityid, name )
+	local entity = ECS_FindEntity( entityid )	
+	return entity and entity:GetComponent( name )
 end
 
 
@@ -276,8 +303,43 @@ end
 --
 ---------------------------------------
 function ECS_Update( deltaTime )
+	--update scenes, entities, components
+	for _, scene in ipairs( _activateScenes ) do scene:Update( deltaTime ) end
+
 	--update system
 	ECS_UpdateSystem( deltaTime )
+
+	return _currentScene
+end
+
+
+---------------------------------------
+--
+---------------------------------------
+function ECS_SwitchScene( scene )
+	_currentScene = scene
+	table.insert( _activateScenes, scene )
+end
+
+
+function ECS_PushScene( scene )
+	if not _currentScene then _currentScene = scene end
+	scene:Activate()
+	table.insert( _activateScenes, scene )
+end
+
+
+function ECS_LeaveScene( scene )
+	if not scene then scene = _currentScene end	
+	MathUtil_Remove( _activateScenes, scene )
+	if scene == _currentScene then _currentScene = nil print( _currentScene, #_activateScenes ) end
+end
+
+
+function ECS_ForeachScene( fn )
+	for _, scene in ipairs( _activateScenes ) do
+		fn( scene )
+	end
 end
 
 

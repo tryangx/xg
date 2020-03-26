@@ -4,12 +4,14 @@ package.path = package.path .. ";wulin/component/?.lua"
 package.path = package.path .. ";wulin/system/?.lua"
 package.path = package.path .. ";wulin/datatable/?.lua"
 
+
 --data table
 require "fightskill_datatable"
 require "fightskilltemplate_datatable"
 require "role_datatable"
 require "roletemplate_datatable"
 require "gang_datatable"
+
 
 --component
 require "fight_component"
@@ -19,6 +21,9 @@ require "fightskill_component"
 require "fightertemplate_component"
 require "follower_component"
 require "gang_component"
+require "game_component"
+require "data_component"
+
 
 --system
 require "rolecreator_system"
@@ -27,11 +32,15 @@ require "fightskillcreator_system"
 require "role_system"
 require "gang_system"
 require "fight_system"
+require "data_system"
+require "game_system"
 
 
 ---------------------------------------------------
 ---------------------------------------------------
 --register component
+ECS_RegisterComponent( "GAME_COMPONENT",               GAME_COMPONENT,               GAME_PROPERTIES )
+ECS_RegisterComponent( "DATA_COMPONENT",               DATA_COMPONENT,               DATA_PROPERTIES )
 ECS_RegisterComponent( "GANG_COMPONENT",               GANG_COMPONENT,               GANG_PROPERTIES )
 ECS_RegisterComponent( "ROLE_COMPONENT",               ROLE_COMPONENT,               ROLE_PROPERTIES )
 ECS_RegisterComponent( "FOLLOWER_COMPONENT",           FOLLOWER_COMPONENT,           FOLLOWER_PROPERTIES )
@@ -44,11 +53,18 @@ ECS_RegisterComponent( "FIGHTERTEMPLATE_COMPONENT",    FIGHTERTEMPLATE_COMPONENT
 ---------------------------------------------------
 ---------------------------------------------------
 --register system
+RoleSystem = ROLE_SYSTEM()
+ECS_RegisterSystem( RoleSystem )
+
 GangSystem = GANG_SYSTEM()
 ECS_RegisterSystem( GangSystem )
 
 FightSystem = FIGHT_SYSTEM()
 ECS_RegisterSystem( FightSystem )
+
+GameSystem = GAME_SYSTEM()
+ECS_RegisterSystem( GameSystem )
+
 
 FighterGeneratorSystem = FIGHTERGENERATOR_SYSTEM()
 FightSkillCreatorSystem = FIGHTSKILLCREATOR_SYSTEM()
@@ -56,17 +72,14 @@ FightSkillCreatorSystem = FIGHTSKILLCREATOR_SYSTEM()
 
 ---------------------------------------------------
 ---------------------------------------------------
-function run()	
-	g_curTurn = 1
-	g_endTurn = 5
-	function IsGameEnd()
-		if g_curTurn >= g_endTurn then return true end
-		g_curTurn = g_curTurn + 1
+function run()
+	while ECS_Update( 1 ) do
+		if pause_menu()	then return end
 	end
 
-	while not IsGameEnd() do
-		ECS_Update()
-	end
+	ECS_DumpSystem()
+
+	Stat_Dump( StatType.LIST )
 end
 
 ---------------------------------------------------
@@ -88,11 +101,41 @@ function load_data( filename )
 	local file = Reflection_Import( ImportFileReflection )
 	if file then
 		data = MathUtil_GetDataByIndex( file )
-		--ECS_Dump( data )
+		ECS_Dump( data )
 		--Dump( data )
 		return data
 	end
 end
+
+
+---------------------------------------------------
+function save( filename )
+	print( "[SAVE]Try to save file=" .. filename )
+	ExportFileReflection:SetFile( filename )
+	ECS_ForeachScene( function ( scene )
+		print( "[SAVE]Save Scene=" .. scene.ecsname )
+		--ECS_Dump( scene )
+		Reflection_Export( ExportFileReflection, scene )
+	end)	
+	Reflection_Flush( ExportFileReflection )
+	InputUtil_Pause( "[SAVE]End to save file=" .. filename )
+end
+
+
+---------------------------------------------------
+function load( filename )
+	print( "[LOAD]Load from file=" .. filename )
+	ImportFileReflection:SetFile( filename )
+	local file = Reflection_Import( ImportFileReflection )
+	if not file then return end
+	local scene = MathUtil_GetDataByIndex( file )
+	--ECS_Dump( data )
+	InputUtil_Pause( "[LOAD]End to load file=" .. filename )
+
+	--need to process data entities
+	ECS_PushScene( scene )
+end
+
 
 ---------------------------------------------------
 function create_fightskill( id )
@@ -227,46 +270,12 @@ function test_addcomponent2entity_fromfile()
 end
 test_addcomponent2entity_fromfile()
 ]]
----------------------------------------------------
-local function InitFighterGenerator()	
-	local roletemplates = TxtDataUtil_Parse( "data/wuxia.csv" )
-	FighterGeneratorSystem:SetTemplateData( roletemplates )
-	--for _, template in ipairs( roletemplates ) do ( roletemplate ) end
-end
-
-
-local function InitFightSkillCreator()
-	FIGHTSKILL_DATATABLE_Foreach( function ( skill )
-		FightSkillCreatorSystem:Create( skill, skill.template )
-	end)
-end
-
-
-local function InitGangs( scene )
-	local gangDataEntity = ECS_CreateEntity( "GangData" )
-	GANG_DATATABLE_Foreach( function ( gangTable ) gangDataEntity:AddChild( Gang_CreateByTableData( gangTable ) ) end )
-	scene:GetRootEntity():AddChild( gangDataEntity )
-	return gangDataEntity
-end
-
-
-local function InitRoles( scene )
-	local roleDataEntity = ECS_CreateEntity( "RoleData" )
-	ROLE_DATATABLE_Foreach( function ( role ) roleDataEntity:AddChild( Role_CreateByTableData( roleTable ) ) end )
-	scene:GetRootEntity():AddChild( roleDataEntity )
-	return roleDataEntity
-end
-
-
-local function InitFight( scene )
-	local fightDataEntity = ECS_CreateEntity( "FightData" )
-	scene:GetRootEntity():AddChild( fightDataEntity )
-	FightSystem:SetFightDataEntity( fightDataEntity )
-end
 
 ---------------------------------------------------
 --!!!test fightsystem
 function test_fightsystem()
+	Init_Table()
+
 	--create scene
 	local scene = ECS_CreateScene( "battlefield" )
 
@@ -290,20 +299,52 @@ function test_fightsystem()
 	--save_data( bfscene, "test.scene" )
 end
 
-function test_gangrunning()
-	local scene = ECS_CreateScene( "gangrunning" )
+--test_fightsystem()
+--new_game()
 
-	local gangDataEntity = InitGangs( scene )
 
-	local fightDataEntity = InitFight( scene )
-
-	scene:Activate()
-
+---------------------------------------------------
+---------------------------------------------------
+function new_game()
+	local scene = InitScene()
+	ECS_PushScene( scene )
 	run()
 end
 
 
-InitFighterGenerator()
-InitFightSkillCreator()
---test_fightsystem()
-test_gangrunning()
+local _savefile = "testsave.sav"
+---------------------------------------------------
+---------------------------------------------------
+function pause_menu()
+	local cmp = ECS_FindComponent( Data_GetRoot( "GAME_DATA" ).ecsid, "GAME_COMPONENT" )
+	cmp:ToString()
+	return Menu_PopupMenu(
+					{
+						{ c = "1", content = 'SAVE',   fn = function () save( _savefile ) end },
+						{ c = "2", content = 'LOAD',   fn = function () load( _savefile ) end }, 
+						{ c = "3", content = 'EXIT',   ret = 1, fn = function () end }, 
+						{ c = "", content = 'RESUME',  fn = function () end },
+					}
+				, "Pause Menu" )
+end
+
+
+---------------------------------------------------
+---------------------------------------------------
+function main_menu()
+	Init_Table()
+
+	Menu_PopupMenu( 
+					{
+						{ c = "1", content = 'NEW',  fn = function () new_game() end },
+						{ c = "2", content = 'LOAD', fn = function () load( _savefile ) run() end }, 
+						{ c = "3", content = 'EXIT', fn = function () end },
+					}
+				, "Main Menu" )
+end
+
+
+---------------------------------------------------
+---------------------------------------------------
+main_menu()
+--new_game()
