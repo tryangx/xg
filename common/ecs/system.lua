@@ -24,12 +24,13 @@ function ECS_RegisterSystem( sys )
 	end	
 	table.insert( _ecsSystems, sys )
 	_ecsSystemDict[sys._name] = sys
-	print( "Register System=", sys._name )
+	print( "Register System=" .. sys._name )
 end
 
 ---------------------------------------
-function ECS_UpdateSystem( deltaTime )
+function ECS_UpdateSystem( deltaTime )	
 	for _, sys in pairs( _ecsSystems ) do
+		print( "Update Sys=" .. sys._name )
 		if sys.Update then
 			sys:Update( deltaTime )
 		end

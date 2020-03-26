@@ -91,15 +91,61 @@ function GANG_COMPONENT:Update()
 
 end
 
+---------------------------------------
+--
+-- @return default value is 0
+--
+---------------------------------------
+function GANG_COMPONENT:GetStatusValue( type )
+	return self.statuses[type] or 0
+end
+
+
+function GANG_COMPONENT:IncStatusValue( type, value )
+	self.statuses[type] = self.statuses[type] and self.statuses[type] + value or value
+	--InputUtil_Pause( self.name, "inc status", self.statuses[type], value )
+end
+
+
+function GANG_COMPONENT:DecStatusValue( type, value )
+	self.statuses[type] = self.statuses[type] and math.max( 0, self.statuses[type] - value ) or 0
+	--InputUtil_Pause( self.name, "dec status", self.statuses[type], value )
+end
+
+---------------------------------------
+function GANG_COMPONENT:ToString()
+	local content = ""
+	content = content .. "[" .. self.name .. "]"
+	content = content .. " " .. "Member=" .. #self.members
+	if #self.members > 0 then
+		content = content .. "["
+		local num = 0
+		for _, ecsid in ipairs( self.members ) do
+			local entity = ECS_FindEntity( ecsid )
+			local role = entity and entity:GetComponent( "ROLE_COMPONENT" )
+			if role then
+				if num > 0 then content = content .. "," end
+				content = content .. role.name
+				num = num + 1
+			end
+		end
+		content = content .. "]"
+	end
+
+	--actionpts
+	for type, pts in pairs( self.actionpts ) do
+		content = content .. " " .. type .. "=" .. pts
+	end
+
+	--statues
+	for type, status in pairs( self.statuses ) do
+		content = content .. " " .. type .. "=" .. status
+	end
+
+	return content
+end
 
 ---------------------------------------
 function GANG_COMPONENT:Dump()
-	print( "", "Level=" .. ( self.level or 0 ) )
-	print( "", "Member=" .. #self.members )
-	for _, ecsid in ipairs( self.members ) do
-		local entity = ECS_FindEntity( ecsid )
-		local role = entity and entity:GetComponent( "ROLE_COMPONENT" )
-		if role then print( "", "", role.name ) end
-	end
-	if #self.actionpts > 0 then Dump( self.actionpts ) end
+	print( self:ToString() )	
 end

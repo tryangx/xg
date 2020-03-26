@@ -142,12 +142,12 @@ end
 local _logger = {}
 
 -----------------------------------
-function Log_Create( type, isAdd )
+function Log_Create( type, single )
 	if not isAdd then isAdd = false end
 	local logger = _logger[type]
 	if not logger then
 		local fileName
-		if isAdd then
+		if not single then
 			fileName = "run/" .. type .. ".log" 
 		else
 			fileName = "run/" .. type .. "_" .. g_gameId .. ".log" 
@@ -160,16 +160,9 @@ function Log_Create( type, isAdd )
 	return logger
 end
 
------------------------------------
-function Log_Add( type, content )
-	local logger = Log_Create( type, true )
-	if logger then
-		logger:WriteLog( content )
-	end
-end
 
 -----------------------------------
-function Log_Write( type, content )
+function Log_Write( type, content, single )
 	local logger = Log_Create( type )
 	if logger then
 		logger:WriteLog( content )

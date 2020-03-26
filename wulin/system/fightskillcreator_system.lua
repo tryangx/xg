@@ -125,6 +125,6 @@ function FIGHTSKILLCREATOR_SYSTEM:Create( skill, id )
 	end
 	skill.cost = { st=tot_st, mp=tot_mp }
 
-	print( "Create Skill", skill.name, "by Template=" .. template.name )
+	print( "Create Skill " .. skill.name, "", "by Template=" .. template.name )
 	--Dump( skill, 6 ) 	InputUtil_Pause()
 end

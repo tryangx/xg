@@ -47,12 +47,10 @@ function Role_Dead( ecsid )
 	role.statuses["DEAD"] = 1
 
 	--remove from gang
-	local gang = ECS_FindComponent( role.gang, "GANG_COMPONENT" )
+	local gang = ECS_FindComponent( role.gangid, "GANG_COMPONENT" )
 	if not gang then DBG_Error( "Gang component is invalid!" ) end
 
 	Gang_RemoveMember( gang, ecsid )
-
-	entity:RemoveFromParent()
 
 	ECS_DestroyEntity( entity )
 

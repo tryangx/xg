@@ -8,7 +8,7 @@ function Gang_AddMember( gang, entity )
 	Prop_Add( gang, "members", entity.ecsid )
 	--table.insert( gang.members, entity.ecsid )
 
-	role.gang = gang.entityid
+	role.gangid = gang.entityid
 	role.name = gang.name .. role.name .. memberidx
 	memberidx = memberidx + 1
 	print( gang.name .. " recruit " .. role.name )
@@ -37,6 +37,22 @@ function Gang_CreateByTableData( gangTable )
 	gangEntity:AddComponent( gang )
 
 	return gangEntity
+end
+
+
+---------------------------------------
+---------------------------------------
+function Gang_TrainFollower()
+	-- body
+end
+
+
+function Gang_EducateFollwer()
+end
+
+
+function Gang_MakeSchedule()
+
 end
 
 
@@ -146,24 +162,41 @@ end
 function Gang_Attack( gang )
 	if #gang.members == 0 then return end
 
-	if gang.statuses["UNDER_ATTACK"] == 1 then return end	
+	--print( gang.name .. " has member=" .. #gang.members )
+
+	if gang:GetStatusValue( "UNDER_ATTACK" ) > 0 then
+		--print( gang.name .. " is under attack! Cann't attack other!" )
+		return
+	end
 
 	local list = {}
 	ECS_Foreach( "GANG_COMPONENT", function ( target )
 		if gang == target then return end
-		if target.statuses["UNDER_ATTACK"] == 1 then return end
+		if target:GetStatusValue( "UNDER_ATTACK" ) > 0 then
+			--print( target.name .. "is under attack! Cann't be the target" )
+			return
+		end
 		table.insert( list, target )
 	end )
 	local num = #list
-	if num == 0 then return end
+	if num == 0 then
+		--print( gang.name .. "doesn't have activate target" )
+		return
+	end
 	local index = Random_GetInt_Sync( 1, num )
 	local target = list[index]
 
 	--choice follower to attack
 	local atk_eids = Gang_ListRoles( gang, {}, { "OUTING" } )
-	local def_eids = Gang_ListRoles( target, {}, { "OUTING" } )	
+	local def_eids = Gang_ListRoles( target, {}, { "OUTING" } )
 
-	print( gang.name .. "(" .. #atk_eids ..  ")"  .. " attack " .. target.name .. "(".. #def_eids .. ")" )
+	if #atk_eids == 0 then
+		print( target.name .. "doesn't have enough followr to attack" )
+		return
+	end
+
+	print( gang.name .. "(" .. #atk_eids ..  ") "  .. "attack" .. " " .. target.name .. "(".. #def_eids .. ")" )
+	
 	--[[
 	print( "atk eids", #atk_eids )
 	Dump( atk_eids )
@@ -172,11 +205,13 @@ function Gang_Attack( gang )
 	--]]
 
 	--process status
-	target.statuses["UNDER_ATTACK"] = 1
+	target:IncStatusValue( "UNDER_ATTACK", 1 )
 	for _, ecsid in ipairs( atk_eids ) do Role_SetStatus( ecsid, { BUSY=1, OUTING=1 } ) end
 	for _, ecsid in ipairs( def_eids ) do Role_SetStatus( ecsid, { BUSY=1 } ) end
 
-	ECS_GetSystem( "FIGHT_SYSTEM" ):CreateFight( atk_eids, def_eids )
+	ECS_GetSystem( "FIGHT_SYSTEM" ):CreateFight( gang.entityid, target.entityid, atk_eids, def_eids )
+
+	--print( target.name .. " is been attack by " .. gang.name )
 end
 
 
@@ -212,15 +247,16 @@ end
 ---------------------------------------
 ---------------------------------------
 function GANG_SYSTEM:Update()
-	--print( "update gang" )
+	--print( "update gang", ECS_GetNum( "GANG_COMPONENT" ) )
 	local sys = self
 	ECS_Foreach( "GANG_COMPONENT", function ( gang )		
+		print( "[GANG]" .. gang.name .. " action......" )
 		Gang_UpdateActionPoints( gang )
 		Gang_SelectMaster( gang )
 		Gang_Attack( gang )
 		Gang_RecruitMember( gang )
-		--gang:Dump()
 	end )
+	print( "end gang", ECS_GetNum( "GANG_COMPONENT" ) )
 end
 
 

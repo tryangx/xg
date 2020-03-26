@@ -14,7 +14,8 @@ end
 ---------------------------------------
 ---------------------------------------
 function GAME_SYSTEM:Update()
-	ECS_Foreach( "GAME_COMPONENT", function ( game )		
+	ECS_Foreach( "GAME_COMPONENT", function ( game )
+		game:Dump()
 		if game:IsGameOver() then
 			InputUtil_Pause( "game end" )
 			ECS_LeaveScene()

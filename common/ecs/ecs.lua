@@ -76,6 +76,13 @@ local function ECS_Register( typeName, clz, properties )
 		return
 	end
 
+	--check properties
+	for _, value in pairs( properties ) do
+		if not MathUtil_FindByKey( PROPERTY_TYPE, value.type ) then
+			DBG_Error( "properties has invalid type=" .. value.type )
+		end
+	end
+
 	local data = { mgr = Manager( typeName, clz ), properties = properties }
 	if typeName == "ECSSCENE" or typeName == "ECSENTITY" then
 		data.ecstype = typeName
@@ -115,21 +122,22 @@ local function ECS_Create( typeName, name )
 			elseif prop.type == "STRING" then
 				obj[propname] = prop.default or ""
 			elseif prop.type == "OBJECT" then
-				--obj[propname] = {}
+				obj[propname] = {}
 			elseif prop.type == "ECSID" then
 				obj[propname] = ""
 			elseif prop.type == "LIST" then
 				obj[propname] = {}
 			elseif prop.type == "DICT" then
 				obj[propname] = {}
-			elseif prop.type == "LIST_ECSID" then
-				obj[propname] = {}
+			else
+				error( "Unhandle type=" .. prop.type )
 			end
 			--print( propname, propvalue )
 		end
 	end
 
 	obj.status = ECSSTATUS.INITED
+	
 	--print( "====Create ECS", obj.ecstype, obj.ecsname, obj.ecsid, obj )	
 
 	return obj
@@ -152,6 +160,13 @@ local function ECS_Find( typeName, keyname )
 	else
 		return data.mgr:GetDataByAttr( "ecsid", keyname )
 	end
+end
+
+
+---------------------------------------
+function ECS_GetNum( typeName )
+	local data = ECS_GetDataManager( typeName )
+	return data.mgr:GetCount()
 end
 
 
@@ -192,8 +207,6 @@ end
 
 
 function ECS_RegisterComponent( name, clz, properties )
-	--append component's properties into the owner's	
-	--ECS_Register( name, clz, MathUtil_MergeDict( properties, ECSCOMPONENTPROPERTIES ) )
 	ECS_Register( name, clz, properties )
 end
 
@@ -202,8 +215,8 @@ function ECS_CreateScene( name )
 	local scene = ECS_Create( "ECSSCENE", name )
 	
 	--create role data root entity
-	local rootEntity = ECS_CreateEntity( "RootEntity" )
-	scene:SetRootEntity( rootEntity )
+	--local rootEntity = ECS_CreateEntity( "RootEntity" )
+	--scene:SetRootEntity( rootEntity )
 
 	return scene
 end
@@ -222,6 +235,9 @@ end
 function ECS_DestroyEntity( entity )
 	if not entity then return end
 	local data = ECS_GetDataManager( "ECSENTITY" )
+
+	--remove from parent
+	entity:RemoveFromParent()
 
 	--remove components first
 	if entity.components then
@@ -332,7 +348,10 @@ end
 function ECS_LeaveScene( scene )
 	if not scene then scene = _currentScene end	
 	MathUtil_Remove( _activateScenes, scene )
-	if scene == _currentScene then _currentScene = nil print( _currentScene, #_activateScenes ) end
+	if scene == _currentScene then
+		_currentScene = nil
+		--print( "CurrentScene=",  _currentScene, "ActiveScene=" .. #_activateScenes )
+	end
 end
 
 
@@ -391,5 +410,5 @@ end
 -- Preprocess
 --
 ---------------------------------------
-ECS_Register( "ECSSCENE", ECSScene, ECSSceneProperties )
-ECS_Register( "ECSENTITY", ECSEntity, ECSEntityProperties )
+ECS_Register( "ECSSCENE", ECSScene, ECSSCENEPROPERTIES )
+ECS_Register( "ECSENTITY", ECSEntity, ECSENTITYPROPERTIES )

@@ -6,13 +6,15 @@ TEST_COMPONENT = class()
 TEST_PROPERTIES = 
 {
 	name      = { type="STRING", },
+	number    = { type="NUMBER", },
+	assets    = { type="OBJECT", },
+	id        = { type="ECSID", },
+	schedule  = { type="LIST", },
+	books     = { type="DICT", },
 }
 
 ---------------------------------------
 function TEST_COMPONENT:__init()
-	self.actionpts       = {}
-	self.members         = {}
-	self.membertemplates = {}
 end
 
 
@@ -24,27 +26,32 @@ test_mode = 2
 --test save
 if test_mode == 1 then
 	--create scene
-	bs = ECS_CreateScene( "battlefield" )
-	
-	gang_entity = bs:GetRootEntity()
+	scene = ECS_CreateScene( "battlefield" )
+	scene:SetRootEntity( ECS_CreateEntity( "RootEntity" ) )
 
+	local entity1 = ECS_CreateEntity( "Parent" )
+	scene:GetRootEntity():AddChild( entity1 )
+	
 	--create component
-	gang_component = gang_entity:CreateComponent( "TEST_COMPONENT" )	
-	gang_component.level = 99
+	component = entity1:CreateComponent( "TEST_COMPONENT" )	
+	component.name = "abc"
+	component.number = 123
+	component.assets = { "a", "b", "c" }
+	component.id = ECS_CreateID()
+	component.schedule = { 1, 4, 7 }
+	component.books = { GOOD=1, BAD=2 }
+
+	Dump( component, 5 )
 
 	--create follow entity
-	follow_entity = ECS_CreateEntity( "follower" )
-	gang_entity:AddChild( follow_entity )
-
-	--create master
-	m = { name = "master", age="50" }
-	gang_component.master = m
+	local entity2 = ECS_CreateEntity( "Son" )
+	entity1:AddChild( entity2 )
 
 	--Reflection_Export( DumpReflection, s )
 	--Reflection_Flush( DumpReflection )
 
-	ExportFileReflection:SetFile( "bf.json" )
-	Reflection_Export( ExportFileReflection, bs )
+	ExportFileReflection:SetFile( "test.json" )
+	Reflection_Export( ExportFileReflection, scene )
 	Reflection_Flush( ExportFileReflection )
 
 	--print( "json:" )
@@ -54,8 +61,8 @@ end
 
 --test load
 if test_mode == 2 then
-	--load from bf.json
-	ImportFileReflection:SetFile( "bf.json" )
+	--load from 0
+	ImportFileReflection:SetFile( "test.json" )
 	local t = Reflection_Import( ImportFileReflection )	
 
 	--print( "load=", t )	MathUtil_Dump( t, 10 )
@@ -72,6 +79,8 @@ end
 --test create and destroy scene/entity/component
 if test_mode == 3 then
 	scene = ECS_CreateScene( "ROOTSCENE" )
+	scene:SetRootEntity( ECS_CreateEntity( "RootEntity" ) )
+	
 	entity1 = ECS_CreateEntity( "ENTITY1" )
 	scene:GetRootEntity():AddChild( entity1 )
 	entity1_1 = ECS_CreateEntity( "ENTITY1_1" )

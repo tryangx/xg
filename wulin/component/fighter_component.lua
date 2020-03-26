@@ -101,13 +101,21 @@ function FIGHTER_COMPONENT:Update()
 end
 
 ---------------------------------------
-function FIGHTER_COMPONENT:Dump()
-	print( "", "hp=" .. self.hp .. "/" .. self.maxhp )
-	print( "", "mp=" .. self.mp .. "/" .. self.maxmp )
-	print( "", "st=" .. self.st .. "/" .. self.maxst )
-	print( "", "str=" .. self.strength )
-	print( "", "int=" .. self.internal )
-	print( "", "tec=" .. self.technique )
-	print( "", "agi=" .. self.agility )
-	print( "", "ski=" .. #self.skills )
+function FIGHTER_COMPONENT:ToString( ... )
+	local content = "	"
+	content = content .. " " .. "lv=" .. self.lv
+	content = content .. " " .. "hp=" .. self.hp .. "/" .. self.maxhp
+	content = content .. " " .. "mp=" .. self.mp .. "/" .. self.maxmp
+	content = content .. " " .. "st=" .. self.st .. "/" .. self.maxst
+	content = content .. " " .. "str=" .. self.strength
+	content = content .. " " .. "int=" .. self.internal
+	content = content .. " " .. "tec=" .. self.technique
+	content = content .. " " .. "agi=" .. self.agility
+	content = content .. " " .. "ski=" .. #self.skills
+	return content
+end
+
+---------------------------------------
+function FIGHTER_COMPONENT:Dump()	
+	print( self:ToString() )
 end

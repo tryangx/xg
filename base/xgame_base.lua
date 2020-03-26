@@ -6,4 +6,4 @@ require "debugger"
 require "manager"
 
 ---------------------------------------
-g_gameId = 0
+g_gameId = 1

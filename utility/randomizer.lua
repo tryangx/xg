@@ -26,32 +26,31 @@ function Randomizer:GetInt( min, max )
 end
 
 -------------------------------------------
-
 local _randomizer       = Randomizer()
 local _unsyncRandomizer = Randomizer()
 local _constRandomizer  = Randomizer()
 
 function Random_Result()
-	Log_Add( "random", "seed1=" .. _randomizer:GetSeed() .. "+" .. _randomizer.times )
-	--Log_Add( "random", "seed2=" .. _unsyncRandomizer:GetSeed() .. "+" .. _unsyncRandomizer.times )
-	--Log_Add( "random", "seed3=" .. _constRandomizer:GetSeed() .. "+" .. _constRandomizer.times )
+	Log_Write( "random", "seed1=" .. _randomizer:GetSeed() .. "+" .. _randomizer.times )
+	--Log_Write( "random", "seed2=" .. _unsyncRandomizer:GetSeed() .. "+" .. _unsyncRandomizer.times )
+	--Log_Write( "random", "seed3=" .. _constRandomizer:GetSeed() .. "+" .. _constRandomizer.times )
 end
 
 function Random_SetSeed_Sync( seed )
-	Log_Add( "random", "seed1_init=" .. seed )
+	Log_Write( "random", "seed1_init=" .. seed )
 	_randomizer:SetSeed( seed )
 end
 function Random_SetSeed_Unsync( seed )
-	Log_Add( "random", "seed2_init=" .. seed )
+	Log_Write( "random", "seed2_init=" .. seed )
 	_unsyncRandomizer:SetSeed( seed )
 end
 function Random_SetSeed( seed )
-	Log_Add( "random", "gameid=" .. g_gameId )
+	Log_Write( "random", "gameid=" .. g_gameId )
 	Random_SetSeed_Sync( seed )
 end
 function Random_GetInt_Sync( min, max, desc )
 	if desc then
-		--Log_Add( "random", "time=" .. _randomizer.times .. " seed=" .. _randomizer.seed .. " min=" .. min .. " max=" .. max .. ( desc and " desc=" .. desc or "" ) )
+		--Log_Write( "random", "time=" .. _randomizer.times .. " seed=" .. _randomizer.seed .. " min=" .. min .. " max=" .. max .. ( desc and " desc=" .. desc or "" ) )
 	end
 	local ret = _randomizer:GetInt( min, max )	
 	return ret

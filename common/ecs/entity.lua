@@ -1,9 +1,23 @@
 ---------------------------------------
 ---------------------------------------
-ECSEntityProperties = 
+local function ImportComponent( entity )
+	for _, component in ipairs( entity.components ) do
+		component.entityid = entity.ecsid
+		--print( "import component", entity.ecsid )
+	end
+end
+
+local function ImportChild( entity )
+	for _, child in ipairs( entity.children ) do
+		child.parentid = entity.ecsid
+		--print( "import child", entity.ecsid )
+	end
+end
+
+ECSENTITYPROPERTIES = 
 {
-	components   = { type="LIST" },
-	children     = { type="LIST" },
+	components   = { type="LIST", import=ImportComponent },
+	children     = { type="LIST", import=ImportChild },
 }
 
 
@@ -14,7 +28,7 @@ ECSEntity = class()
 ---------------------------------------
 ---------------------------------------
 function ECSEntity:__init()
-	self._properties = ECSEntityProperties
+	self._properties = ECSENTITYPROPERTIES
 	
 	--local datas
 	self.status      = ECSSTATUS.CREATED
@@ -47,7 +61,7 @@ end
 
 function ECSEntity:RemoveFromParent()
 	local parent = ECS_FindEntity( self.parentid )
-	if not parent then DBG_Error( "Parent entity is invalid! Id=" .. parent ) end
+	if not parent then DBG_Error( "Parent entity is invalid! Id=" .. self.parentid ) end
 	parent:RemoveChild( self )	
 end
 
@@ -132,8 +146,7 @@ function ECSEntity:Activate()
 		--Loading 
 		component.entityid = entity.ecsid
 		component.parent   = entity
-		--print( "Activate component", component.ecsname, component.Activate )
-		--Dump( component )
+		--print( "Activate component", component.ecsname )
 		if component.Activate then component:Activate() end		
 		component.status = ECSSTATUS.ACTIVATED
 	end)
@@ -147,7 +160,7 @@ end
 function ECSEntity:Deactivate()
 	--print( "Deactivate Entity" )
 	self.status = ECSSTATUS.DEACTIVATING
-	Prop_Foreach( self, "components", function ( component )
+	Prop_Foreach( self, "components", function ( component )		
 		component.status = ECSSTATUS.DEACTIVATING
 		if component.Deactivate then component:Deactivate() end
 		component.status = ECSSTATUS.DEACTIVATED

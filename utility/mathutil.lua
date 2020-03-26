@@ -191,7 +191,7 @@ function MathUtil_Dump( source, depth, indent )
 		--print( "Depth too high" )
 		return
 	end
---	print( source )
+	--	print( source )
 	DumpWithTab( "{", indent )		
 	for k, v in pairs( source ) do		
 		local key

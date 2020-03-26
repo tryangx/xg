@@ -8,7 +8,7 @@
 --    pattern: container[key] = data
 --    
 ------------------------------------------------------------------------------
-PropertyType =
+PROPERTY_TYPE =
 {
 	NUMBER     = 0,
 	STRING     = 1,
@@ -68,21 +68,25 @@ end
 
 ---------------------------------------
 function Prop_Set( container, name, data, id )
-	print( "set", name, data, id )
+	--print( "set", name, data, id )
 	if not container or not container._properties then error( "container is invalid" ) end	
 	local prop = container._properties[name]
 	if prop.type == "NUMBER" then
 		container[name] = data
 	elseif prop.type == "STRING" then
 		container[name] = data
+	elseif prop.type == "ECSID" then
+		container[name] = data
 	elseif prop.type == "OBJECT" then
-		--container[name] = data
+		container[name] = data
 	elseif prop.type == "LIST" then
 		DBG_Error( "Shouldn't use Prop_Set() for " .. prop.type )
 	elseif prop.type == "DICT" then
 		DBG_Error( "Shouldn't use Prop_Set() for " .. prop.type )
+	elseif prop.type == "LIST_ECSID" then
+		DBG_Error( "Shouldn't use Prop_Set() for " .. prop.type )
 	else
-		DBG_Error( "Unhanlde type=" .. prop.type )		
+		DBG_Error( "Unhanlde type=" .. prop.type )	
 	end
 end
 

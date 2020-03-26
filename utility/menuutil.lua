@@ -73,17 +73,15 @@ local function Menu_SingleSelect()
 	print( "[MENU]MAKE YOUR CHOICE:" )
 	local c = InputUtil_ReceiveInput()
 	for _, option in pairs( _options ) do
-		if _defaultKey and c == "" then
-			_defaultoption.fn( key )
-			return _defaultoption.ret or false
+		if _defaultKey and c == "" then			
+			return _defaultoption.fn( key )
 		elseif option.c then
-			if c == string.upper( option.c ) or c == string.lower( option.c ) then
-				option.fn( key )
-				return option.ret or false
+			if c == string.upper( option.c ) or c == string.lower( option.c ) then				
+				return option.fn( key )
 			end
 		end
 	end
-	print( "[MENU]Invalid input!" )
+	--print( "[MENU]Invalid input!" )
 	return Menu_SingleSelect()
 end
 
@@ -94,11 +92,11 @@ local function Menu_MultiSelect()
 	if #_options == 0 then return end
 	Menu_ShowMultiMenu( true )
 	print( "[MENU]MAKE YOU CHOICES:" )
+	print( "========== Single Menu ===========" )
 	local c = InputUtil_ReceiveInput()
 	for _, option in pairs( _options ) do
 		if c == string.upper( option.c ) or c == string.lower( option.c ) then
 			option.fn( option )
-			--print( _checks[k] )
 			if not _checks[k] or _checks[k] == 0 then
 				_checks[k] = 1
 			elseif _checks[k] == 1 then
@@ -112,13 +110,13 @@ local function Menu_MultiSelect()
 				if check == 1 then count = count + 1 end
 			end
 			if count < _minSelection then
-				print( "At least choice [" .. _minSelection .. "] selection" )
+				print( "[MENU]Please choice at least " .. _minSelection .. " selection" )
 				return Menu_MultiSelect()
 			end
 			return false
 		end
 	end
-	print( "[MENU]Invalid input!" )
+	--print( "[MENU]Invalid input!" )
 	return Menu_MultiSelect()
 end
 
@@ -128,7 +126,6 @@ end
 ----------------------------------
 function Menu_PopupMenu( keys, title, params )
 	if #keys <= 0 then DBG_Error( "Menu needs at least one option" ) return end
-	print( "1")
 	print( "========== Single Menu ===========" )
 	if title then print( "### " .. title .. " ###" ) end	
 	if _hint then print( _hint ) end

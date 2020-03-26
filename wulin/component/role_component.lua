@@ -85,6 +85,8 @@ ROLE_PROPERTIES =
 	age        = { type="NUMBER", },
 	sex        = { type="NUMBER", }, --0:male, 1:female
 
+	gangid     = { type="ECSID", },
+
 	category   = { type="NUMBER", }, --0
 
 	statuses   = { type="LIST" },
@@ -95,7 +97,7 @@ ROLE_PROPERTIES =
 
 	--common skill
 	--{ {type=ROLE_COMMONSKILL, value=evaluation} }
-	commonSkills = { type="OBJECT" }, 
+	commonSkills = { type="LIST" }, 
 }
 
 ---------------------------------------
@@ -108,11 +110,23 @@ function ROLE_COMPONENT:Update()
 
 end
 
+---------------------------------------
+function ROLE_COMPONENT:ToString()
+	local content = ""
+	content = content .. "[" .. self.name .. "]"
+	content = content .. " " .. "Age=" .. self.age
+	if self.gangid then
+		local entity = ECS_FindEntity( self.gangid )
+		if entity then
+			content = content .. " " .. "Gang=" .. entity:GetComponent( "GANG_COMPONENT" ).name
+		end
+	end
+	return content
+end
 
 ---------------------------------------
 function ROLE_COMPONENT:Dump()
-	print( "[" .. self.name .. "]" )
-	print( "", "Age=" .. self.age )
+	print( self:ToString() )
 end
 
 

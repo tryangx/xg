@@ -74,12 +74,12 @@ FightSkillCreatorSystem = FIGHTSKILLCREATOR_SYSTEM()
 ---------------------------------------------------
 function run()
 	while ECS_Update( 1 ) do
-		if pause_menu()	then return end
+		if pause_menu() then return end
 	end
 
-	ECS_DumpSystem()
+	--ECS_DumpSystem()
 
-	Stat_Dump( StatType.LIST )
+	--Stat_Dump( StatType.LIST )
 end
 
 ---------------------------------------------------
@@ -277,7 +277,8 @@ function test_fightsystem()
 	Init_Table()
 
 	--create scene
-	local scene = ECS_CreateScene( "battlefield" )
+	local scene = ECS_CreateScene( "battlefield" )	
+	scene:SetRootEntity( ECS_CreateEntity( "RootEntity" ) )
 
 	--create role-data entity
 	local roleDataEntity = InitRoles( scene )	
@@ -312,17 +313,23 @@ function new_game()
 end
 
 
+function view_data()
+	ECS_GetSystem( "GANG_SYSTEM" ):Dump()
+	ECS_GetSystem( "ROLE_SYSTEM" ):Dump()
+	ECS_GetSystem( "FIGHT_SYSTEM" ):Dump()
+end
+
 local _savefile = "testsave.sav"
 ---------------------------------------------------
 ---------------------------------------------------
 function pause_menu()
 	local cmp = ECS_FindComponent( Data_GetRoot( "GAME_DATA" ).ecsid, "GAME_COMPONENT" )
-	cmp:ToString()
 	return Menu_PopupMenu(
 					{
-						{ c = "1", content = 'SAVE',   fn = function () save( _savefile ) end },
+						{ c = "1", content = 'SAVE',   fn = function () save( _savefile ) pause_menu() end },
 						{ c = "2", content = 'LOAD',   fn = function () load( _savefile ) end }, 
-						{ c = "3", content = 'EXIT',   ret = 1, fn = function () end }, 
+						{ c = "x", content = 'EXIT',   fn = function () return true end },
+						{ c = "v", content = 'VIEW',   fn = function () view_data() pause_menu() end },
 						{ c = "", content = 'RESUME',  fn = function () end },
 					}
 				, "Pause Menu" )
@@ -333,12 +340,11 @@ end
 ---------------------------------------------------
 function main_menu()
 	Init_Table()
-
 	Menu_PopupMenu( 
 					{
 						{ c = "1", content = 'NEW',  fn = function () new_game() end },
 						{ c = "2", content = 'LOAD', fn = function () load( _savefile ) run() end }, 
-						{ c = "3", content = 'EXIT', fn = function () end },
+						{ c = "x", content = 'EXIT', fn = function () end },
 					}
 				, "Main Menu" )
 end
@@ -347,4 +353,3 @@ end
 ---------------------------------------------------
 ---------------------------------------------------
 main_menu()
---new_game()

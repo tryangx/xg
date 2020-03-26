@@ -1,5 +1,17 @@
 ---------------------------------------
 ---------------------------------------
+local function ImportRootEntity( scene )
+	scene.rootEntity.sceneid = scene.ecsid
+end
+
+ECSSCENEPROPERTIES = 
+{
+	rootEntity   = { type="OBJECT", import=ImportRootEntity },
+}
+
+
+---------------------------------------
+---------------------------------------
 --[[
 	Scene 
 
@@ -9,37 +21,32 @@
 
 --]]
 ---------------------------------------
----------------------------------------
 ECSScene = class()
 
 
 ---------------------------------------
-ECSSceneProperties = 
-{
-	rootentity   = { type="OBJECT" },
-}
-
-
----------------------------------------
 function ECSScene:__init()
-	self._properties = ECSSceneProperties
+	self._properties = ECSSCENEPROPERTIES
 	--self.status = CREATED
 	self.status = ECSSTATUS.CREATED
 end
 
 ---------------------------------------
 function ECSScene:GetRootEntity()
-	local entity = Prop_Get( self, "rootentity" )
-	if not entity then Prop_Set( self, "rootentity", ECS_CreateEntity( "RootEntity" ) ) end
+	local entity = Prop_Get( self, "rootEntity" )
+	if not entity then
+		InputUtil_Pause( "it isn't recommended" )
+		Prop_Set( self, "rootEntity", ECS_CreateEntity( "RootEntity" ) )
+	end
 	return entity
 end
 
 ---------------------------------------
 function ECSScene:SetRootEntity( entity )
 	--should remove the exist one
-	if self.rootentity then DBG_Error( "Root entity is already exist!" ) return end
-	entity.scene    = self
-	self.rootentity = entity
+	if self.rootEntity then DBG_Error( "Root entity is already exist!" ) return end
+	entity.sceneid  = self.ecsid
+	self.rootEntity = entity
 end
 
 ---------------------------------------
@@ -76,4 +83,3 @@ function ECSScene:Update( deltaTime )
 end
 
 
----------------------------------------

@@ -35,7 +35,6 @@ local function InitFight( scene )
 	local entity = ECS_CreateEntity( "FIGHT_DATA" )
 	scene:GetRootEntity():AddChild( entity )
 	entity:CreateComponent( "DATA_COMPONENT" ).type = "FIGHT_DATA"
-	FightSystem:SetFightDataEntity( entity )
 end
 
 
@@ -56,7 +55,8 @@ end
 
 
 function InitScene()
-	local scene = ECS_CreateScene( "mainscene" )
+	local scene = ECS_CreateScene( "mainscene" )	
+	scene:SetRootEntity( ECS_CreateEntity( "RootEntity" ) )
 
 	InitGame( scene )
 	InitGangs( scene )
@@ -64,16 +64,6 @@ function InitScene()
 	InitFight( scene )
 
 	return scene
-end
-
-
-function InitSceneByData( scene )
-	--[[
-	_dataRoots["GAME_DATA"]  = ecs_fiN
-	_dataRoots["GANG_DATA"]  = InitGangs( scene )
-	_dataRoots["ROLE_DATA"]  = InitRoles( scene )
-	_dataRoots["FIGHT_DATA"] = InitFight( scene )
-	]]
 end
 
 

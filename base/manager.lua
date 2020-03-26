@@ -206,10 +206,7 @@ function Manager:RemoveData( id, fn )
 
 	if self._removeList then
 		DBG_Error( "Mng", "Remove data ( name=" .. ( self._name or "" ) .. ") isn't recommended when Traveling Data" )
-		if self._datas[id] then
-			table.insert( self._removeList, id )
-			--print( "put id=" .. id .. " into remove list" )
-		end
+		if self._datas[id] then table.insert( self._removeList, id ) end
 		return
 	end
 	if not fn or fn( self._datas[id] ) then

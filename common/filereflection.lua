@@ -13,7 +13,15 @@ FileReflectionMode =
 local function debugmsg( ... )
 	--if true then
 	if nil then
-		print( ... )
+		local content = ""
+		local args = { ... }
+		for i = 1, #args do
+			local type = typeof( args[i] )
+			if type == "string" or type == "number" then
+				content = content .. args[i] .. " "
+			end
+		end	
+		Log_Write( "reflection", content )
 	end
 end
 
@@ -118,45 +126,83 @@ function FileReflection:ImportData( data, name )
 		return data		
 	end
 
+	local ecsproperties
 	local properties
 	--check ecs object
-	local object	
+	local object
 	if data.ecstype == "ECSSCENE" then				
-		properties = ECSPROPERTIES
-		object     = ECS_CreateScene( "UNKNOWN" )
+		ecsproperties = ECSPROPERTIES
+		properties    = ECSSCENEPROPERTIES
+		object        = ECS_CreateScene( "UNKNOWN" )
 		debugmsg( "creat scene", object )
 	elseif data.ecstype == "ECSENTITY" then		
-		properties = ECSPROPERTIES
-		object     = ECS_CreateEntity( "ECSENTITY", "UNKNOWN" )
+		ecsproperties = ECSPROPERTIES
+		properties    = ECSENTITYPROPERTIES
+		object        = ECS_CreateEntity( "ECSENTITY", "UNKNOWN" )
 		debugmsg( "creat entity", object )
 	elseif data.ecstype == "ECSCOMPONENT" then
-		properties = ECSCOMPONENTPROPERTIES
-		object     = ECS_CreateComponent( data.ecsname, "UNKNOWN" )
+		ecsproperties = ECSCOMPONENTPROPERTIES
+		object        = ECS_CreateComponent( data.ecsname, "UNKNOWN" )
 		debugmsg( "creat component", object )
 	end
+	
+	local excludes = {}
 
-	--process with ecs object
+--[[
 	if object then
+		--process with ECS properties in common
 		debugmsg( "ecstype=" .. data.ecstype, object )
-		for propname, prop in pairs( properties ) do
-			if prop.type == "ECSID" then InputUtil_Pause( "ecsid" )	end
+		for propname, prop in pairs( ecsproperties ) do
+			table.insert( excludes, propname )
 			if not data[propname] then error( "why no property=" .. propname ) end
 			debugmsg( "!!!!!!!set " .. propname .. "=", data[propname] )
 			object[propname] = data[propname]
 		end
+
+		--process with ECS properties by its own
+		if properties then
+			for propname, prop in pairs( properties ) do
+				table.insert( excludes, propname )
+				if not data[propname] then debugmsg( "no property=" .. propname ) end			
+				if prop.type == "LIST" or prop.type == "DICT" then
+					if data[propname] then
+						debugmsg( propname, data[propname] )
+						object[propname] = self:ImportData( data[propname], propname )
+					end
+				else
+					debugmsg( "!!!!!!!set " .. propname .. "=", data[propname] )
+					object[propname] = data[propname]
+				end			
+			end
+		end
 	else
 		object = {}
 	end
-	
-	--Load datas
+	]]
+	if not object then object = {} end
+
+	--Dump( excludes )
+	--InputUtil_Pause( key )
+	--process with other data( include ECS properties and its properties )
 	debugmsg( "Data has children=" .. MathUtil_GetSize( data ) )
-	for key, value in pairs( data ) do		
-		debugmsg( "prop=" .. key, value, object[key] )		
-		--if not object[key] then
-		if not properties or not MathUtil_FindByKey( properties, key ) then
-			debugmsg( "process key=", key )
-			local child = self:ImportData( value, key )			
-			object[key] = child
+	for name, value in pairs( data ) do
+		if ecsproperties and MathUtil_FindByKey( ecsproperties, name, "type" ) then
+			--ECS properties in common
+			if not data[name] then error( "Invalid data format! Name=" .. name ) end
+			debugmsg( "!!!!!!!set " .. name .. "=", data[name] )			
+			object[name] = data[name]
+		else
+			if properties then
+				--ECS own properties, like entity's components, entity's children
+				if not properties[name] then error( "Invalid data format! Name=" .. name ) end
+				object[name] = self:ImportData( value, name )
+				if not properties[name].import then error( "No import callback! Name=" .. name ) end
+				properties[name].import( object )
+			else
+				debugmsg( "process key=", name )
+				local child = self:ImportData( value, name )
+				object[name] = child
+			end
 		end
 	end
 
@@ -234,16 +280,8 @@ function FileReflection:ExportValue( name, value )
 				debugmsg( "owndata", subName, prop.type, value[subName] )
 				if subValue then					
 					--self._isArray = true
-					if prop.type == "ECSID" then
-						if subValue.ecsid then
-							InputUtil_Pause( "export Id", subValue.ecsid )
-							if not firstValue then self:Write( "," ) end
-							self:ExportValue( subName, subValue.ecsid )
-						end
-					else
-						if not firstValue then self:Write( "," ) end
-						self:ExportValue( subName, subValue )
-					end
+					if not firstValue then self:Write( "," ) end
+					self:ExportValue( subName, subValue )
 					firstValue = false
 				end				
 			end

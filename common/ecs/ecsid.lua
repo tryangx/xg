@@ -37,7 +37,6 @@ end
 ---------------------------------------
 ---------------------------------------
 function ECS_CreateID()
-	--template solution
 	--  ecsid = prefix + time_stamp + counter + random_string
 	local ecsid = "i"
 

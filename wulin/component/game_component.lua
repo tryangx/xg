@@ -7,6 +7,7 @@ GAME_PROPERTIES =
 {
 	scenario = { type="NUMBER" },
 
+	curTime  = { type="NUMBER" },
 	startTime= { type="NUMBER" },
 	endTime  = { type="NUMBER", default = 1 },
 }
@@ -15,18 +16,22 @@ GAME_PROPERTIES =
 function GAME_COMPONENT:__init()
 end
 
-
 ---------------------------------------
 function GAME_COMPONENT:Update( deltaTime )
-	self.startTime = self.startTime + deltaTime
+	self.curTime = self.curTime + deltaTime
 end
 
 ---------------------------------------
 function GAME_COMPONENT:IsGameOver( ... )
-	return self.startTime >= self.endTime
+	return self.curTime >= self.endTime
 end
 
 ---------------------------------------
 function GAME_COMPONENT:ToString()
-	print( "GameTime:" .. self.startTime .. "/" .. self.endTime )
+	local content = "GameTime:" .. self.curTime .. "/" .. self.endTime
+	return content	
+end
+
+function GAME_COMPONENT:Dump()
+	print( self:ToString() )
 end
