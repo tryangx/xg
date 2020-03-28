@@ -89,11 +89,11 @@ local function ECS_Register( typeName, clz, properties )
 	end
 	_ecs[typeName] = data
 
-	if not clz.Activate then DBG_Trace( typeName .. " hasn't Activate()" ) end
-	if not clz.Deactivate then DBG_Trace( typeName .. " hasn't Deactivate()" ) end
-	if not clz.Update then DBG_Trace( typeName .. " hasn't Update()" ) end
+	if not clz.Activate then DBG_TraceBug( typeName .. " hasn't Activate()" ) end
+	if not clz.Deactivate then DBG_TraceBug( typeName .. " hasn't Deactivate()" ) end
+	if not clz.Update then DBG_TraceBug( typeName .. " hasn't Update()" ) end
 
-	DBG_Trace( "ECSType=" .. typeName .. " registered." )
+	DBG_TraceBug( "ECSType=" .. typeName .. " registered." )
 end
 
 
@@ -124,7 +124,7 @@ local function ECS_Create( typeName, name )
 			elseif prop.type == "OBJECT" then
 				obj[propname] = {}
 			elseif prop.type == "ECSID" then
-				obj[propname] = ""
+				obj[propname] = nil
 			elseif prop.type == "LIST" then
 				obj[propname] = {}
 			elseif prop.type == "DICT" then

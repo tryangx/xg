@@ -25,7 +25,7 @@ function Role_CreateByTableData( roleTable )
 
 	--Generate datas
 	if not roleTable.template then DBG_Error( "Role data needs template" ) end
-	FighterGeneratorSystem:Generate( fighter, fightertemplate, roleTable.template )
+	ECS_GetSystem( "FIGHTER_SYSTEM" ):Generate( fighter, fightertemplate, roleTable.template )
 
 	return roleEntity
 end

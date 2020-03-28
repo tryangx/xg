@@ -1,16 +1,16 @@
 --------------------------------------------------
 -- ID: xxx-yyy
 --     xxx scenario id
---     yyy gang
+--     yyy group
 -- e.g.
 --     001001001 Shaolin Luohan Fist
 --     002002001 Wudang Fist
 --------------------------------------------------
-local GANG_DATATABLE =
+local GROUPTEMPLATE_DATATABLE =
 {
 	[1] =
 	{
-		name    = "少林派",
+		name    = "少林派", 
 	},
 	[2] =
 	{
@@ -128,16 +128,15 @@ local GANG_DATATABLE =
 
 --------------------------------------------------
 --------------------------------------------------
-function GANG_DATATABLE_Get( id )
-	return GANG_DATATABLE[id]
+function GROUPTEMPLATE_DATATABLE_Get( id )
+	return GROUPTEMPLATE_DATATABLE[id]
 end
 
 
 --------------------------------------------------
 --------------------------------------------------
-function GANG_DATATABLE_Foreach( fn )
-	for id, role in pairs( GANG_DATATABLE ) do
-		role.id = id
-		fn( role )
-	end
+function GROUPTEMPLATE_DATATABLE_Set( data )
+	GROUPTEMPLATE_DATATABLE[data.id] = data
 end
+
+

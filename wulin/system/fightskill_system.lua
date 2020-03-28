@@ -1,14 +1,14 @@
-FIGHTSKILLCREATOR_SYSTEM = class()
+FIGHTSKILL_SYSTEM = class()
 
 ---------------------------------------
-function FIGHTSKILLCREATOR_SYSTEM:__init( ... )
+function FIGHTSKILL_SYSTEM:__init( ... )
 	local args = ...
-	self._name = args and args.name or "FIGHTSKILLCREATOR_SYSTEM"
+	self._name = args and args.name or "FIGHTSKILL_SYSTEM"
 end
 
 
 ---------------------------------------
-function FIGHTSKILLCREATOR_SYSTEM:Create( skill, id )
+function FIGHTSKILL_SYSTEM:Create( skill, id )
 	if not id then return end
 
 	local template = FIGHTSKILLTEMPLATE_DATATABLE_Get( id )
@@ -19,7 +19,7 @@ function FIGHTSKILLCREATOR_SYSTEM:Create( skill, id )
 		{
 			id     = id,
 			name   = "Luohan Fist",
-			gang   = 1,--shao lin
+			groupidx= 1,--shao lin
 			lv     = 1, --			
 			weapon = { range="CLOSE", subtype="FIST" },
 			step   = { min=5, max=8 },
@@ -38,7 +38,7 @@ function FIGHTSKILLCREATOR_SYSTEM:Create( skill, id )
 		return
 	end
 
-	skill.gang     = template.gang
+	skill.groupidx = template.groupidx
 	skill.lv       = template.lv
 	skill.template = template.id
 	skill.weapon   = MathUtil_ShallowCopy( template.weapon )
@@ -83,7 +83,7 @@ function FIGHTSKILLCREATOR_SYSTEM:Create( skill, id )
 				end
 			end
 			local prob = Random_GetInt_Unsync( 1, totalprob )
-			for _, item in ipairs( list ) do if prob < item.prob then return item.type end end
+			for _, item in ipairs( list ) do if prob <= item.prob then return item.type end end
 			DBG_Error( "why no pose" )
 			return "NONE"
 		end
@@ -103,7 +103,7 @@ function FIGHTSKILLCREATOR_SYSTEM:Create( skill, id )
 				end
 			end
 			local prob = Random_GetInt_Unsync( 1, totalprob )
-			for _, item in ipairs( list ) do if prob < item.prob then return item.type end end
+			for _, item in ipairs( list ) do if prob <= item.prob then return item.type end end
 			DBG_Error( "why no elem" )
 			return "STRENGTH"
 		end

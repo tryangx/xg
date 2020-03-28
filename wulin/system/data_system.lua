@@ -2,22 +2,22 @@
 ---------------------------------------------------
 local _dataRoots = {}
 
-local function InitFighterGenerator()	
+local function InitFighter()	
 	local roletemplates = TxtDataUtil_Parse( "data/wuxia.csv" )
-	FighterGeneratorSystem:SetTemplateData( roletemplates )
+	ECS_GetSystem( "FIGHTER_SYSTEM" ):SetTemplateData( roletemplates )
 end
 
 
-local function InitFightSkillCreator()
-	FIGHTSKILL_DATATABLE_Foreach( function ( skill ) FightSkillCreatorSystem:Create( skill, skill.template ) end )
+local function InitFightSkill()
+	FIGHTSKILL_DATATABLE_Foreach( function ( skill ) ECS_GetSystem( "FIGHTSKILL_SYSTEM" ):Create( skill, skill.template ) end )
 end
 
 
-local function InitGangs( scene )
-	local entity = ECS_CreateEntity( "GANG_DATA" )
-	GANG_DATATABLE_Foreach( function ( gangTable ) entity:AddChild( Gang_CreateByTableData( gangTable ) ) end )
+local function InitGroups( scene )
+	local entity = ECS_CreateEntity( "GROUP_DATA" )
+	GROUP_DATATABLE_Foreach( function ( groupTable ) entity:AddChild( Group_CreateByTableData( groupTable ) ) end )
 	scene:GetRootEntity():AddChild( entity )
-	entity:CreateComponent( "DATA_COMPONENT" ).type = "GANG_DATA"
+	entity:CreateComponent( "DATA_COMPONENT" ).type = "GROUP_DATA"
 	return entity
 end
 
@@ -49,8 +49,8 @@ end
 
 
 function Init_Table()	
-	InitFighterGenerator()
-	InitFightSkillCreator()
+	InitFighter()
+	InitFightSkill()
 end
 
 
@@ -59,9 +59,12 @@ function InitScene()
 	scene:SetRootEntity( ECS_CreateEntity( "RootEntity" ) )
 
 	InitGame( scene )
-	InitGangs( scene )
+	InitGroups( scene )
 	InitRoles( scene )
 	InitFight( scene )
+
+	--initialized
+	
 
 	return scene
 end

@@ -2,7 +2,7 @@
 --
 -- ID: xxx-yyy-zz
 --     xxx is the scenario id
---     yyy is the gang
+--     yyy is the group
 --     zz is the index
 --
 --

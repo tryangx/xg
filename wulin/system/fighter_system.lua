@@ -1,14 +1,14 @@
-FIGHTERGENERATOR_SYSTEM = class()
+FIGHTER_SYSTEM = class()
 
 ---------------------------------------
-function FIGHTERGENERATOR_SYSTEM:__init( ... )
+function FIGHTER_SYSTEM:__init( ... )
 	local args = ...
-	self._name = args and args.name or "FIGHTERGENERATOR_SYSTEM"
+	self._name = args and args.name or "FIGHTER_SYSTEM"
 end
 
 
 ---------------------------------------
-function FIGHTERGENERATOR_SYSTEM:SetTemplateData( templates )
+function FIGHTER_SYSTEM:SetTemplateData( templates )
 	self.templates = {}
 	for _, template in ipairs( templates ) do
 		self.templates[template.id] = template
@@ -17,7 +17,7 @@ end
 
 
 ---------------------------------------
-function FIGHTERGENERATOR_SYSTEM:GetTemplate( id )
+function FIGHTER_SYSTEM:GetTemplate( id )
 	return self.templates and self.templates[id]
 end
 
@@ -33,7 +33,7 @@ FIGHTERTEMPLATE_GENERATOR =
 	[6]={ skill={max=8}, lv={min=85, max=100}, hp={ base=250,mod=90 }, st={ base=150,mod=75 }, mp={ base=120,mod=75 }, str={ base=120,mod=9 },  int={ base=100,mod=9 }, agi={ base=120,mod=9 }, tec={ base=140,mod=9 }, },
 }
 
-function FIGHTERGENERATOR_SYSTEM:Generate( fighter, fightertemplate, id )
+function FIGHTER_SYSTEM:Generate( fighter, fightertemplate, id )
 	local template = self:GetTemplate( id )
 	if not template then
 		DBG_Error( "Invalid fighter template! Id=" .. id )
@@ -48,19 +48,10 @@ function FIGHTERGENERATOR_SYSTEM:Generate( fighter, fightertemplate, id )
 	--Determine potential
 	local data                = FIGHTERTEMPLATE_GENERATOR[fightertemplate.grade]	
 	fightertemplate.potential = math.min( data.lv.max, ( traits.lv_max or 0 ) + Random_GetInt_Sync( data.lv.min, data.lv.max ) )
-	local lv                  = fightertemplate.potential
-
-	--Determine initial level
-	if traits.init_lv then
-		fighter.lv = traits.init_lv
-	elseif not fighter.lv or fighter.lv == 0 then
-		fighter.lv = Random_GetInt_Sync( traits.init_lv or 1, fightertemplate.potential )
-	end
-	--test
-	--fighter.lv = 75
 
 	--Initialize template attributes( )
 	--Value = Base + Max_Bonus + ( Mod + Lv_Up ) * Lv * Rate
+	local lv                  = fightertemplate.potential
 	fightertemplate.hp        = math.ceil( ( traits.hp_max or 0 )  + ( data.hp.base or 0 )  + ( data.hp.mod  + ( traits.hp_lvup or 0 ) )  * lv * ( traits.hp_rate or 1 ) )
 	fightertemplate.mp        = math.ceil( ( traits.mp_max or 0 )  + ( data.mp.base or 0 )  + ( data.mp.mod  + ( traits.mp_lvup or 0 ) )  * lv * ( traits.mp_rate or 1 ) )
 	fightertemplate.st        = math.ceil( ( traits.st_max or 0 )  + ( data.st.base or 0 )  + ( data.st.mod  + ( traits.st_lvup or 0 ) )  * lv * ( traits.st_rate or 1 ) )
@@ -69,12 +60,21 @@ function FIGHTERGENERATOR_SYSTEM:Generate( fighter, fightertemplate, id )
 	fightertemplate.technique = math.ceil( ( traits.tec_max or 0 ) + ( data.tec.base or 0 ) + ( data.tec.mod + ( traits.tec_lvup or 0 ) ) * lv * ( traits.tec_rate or 1 ) )
 	fightertemplate.agility   = math.ceil( ( traits.agi_max or 0 ) + ( data.agi.base or 0 ) + ( data.agi.mod + ( traits.agi_lvup or 0 ) ) * lv * ( traits.agi_rate or 1 ) )
 
-	--fighter's attributes
-	self:LevelUp( fighter, fightertemplate, fighter.lv )
+	--Determine initial level
+	fighter.lv = 0
+	if traits.init_lv then
+		lv = traits.init_lv
+	elseif not fighter.lv or fighter.lv == 0 then
+		lv = Random_GetInt_Sync( traits.init_lv or 1, fightertemplate.potential )
+	end
+	--test
+	--lv = 75
+
+	--initialize fighter's attributes
+	self:LevelUp( fighter, fightertemplate, lv )
 
 	--fighter's skills
 	if fighter.skills and #fighter.skills > 0 then
-		--already has skills
 		print( "Already has skills" )
 	else
 		fighter.skills = {}
@@ -122,19 +122,19 @@ function FIGHTERGENERATOR_SYSTEM:Generate( fighter, fightertemplate, id )
 	fighter.mp = fighter.maxmp
 	fighter.st = fighter.maxst
 
-	--print( "generate", follower.name, roleTable.name, roleTable.template )
-
 	--fighter:Dump() 	Dump( template ) 	InputUtil_Pause()
 end
 
 
 ---------------------------------------
-function FIGHTERGENERATOR_SYSTEM:LevelUp( target, template, lv )
-	if not lv then lv = 1 end
-	lv = math.min( template.potential, lv )
+function FIGHTER_SYSTEM:LevelUp( target, template, lv )
+	if not lv or lv == 0 then return end
+	if lv == target.lv then return end
+	target.lv        = math.min( template.potential, lv )
+	lv = target.lv
 	local data       = FIGHTERTEMPLATE_GENERATOR[template.grade]
-	local traits = template.traits
-	target.maxhp     = math.min( template.hp,        math.ceil( ( traits.hp_max or 0 )  + ( data.hp.base or 0 )  + ( data.hp.mod  + ( traits.hp_lvup or 0 ) )  * lv * ( traits.hp_rate or 1 ) )	)
+	local traits     = template.traits
+	target.maxhp     = math.min( template.hp,        math.ceil( ( traits.hp_max or 0 )  + ( data.hp.base or 0 )  + ( data.hp.mod  + ( traits.hp_lvup or 0 ) )  * lv * ( traits.hp_rate or 1 ) ))
 	target.maxmp     = math.min( template.mp,        math.ceil( ( traits.mp_max or 0 )  + ( data.mp.base or 0 )  + ( data.mp.mod  + ( traits.mp_lvup or 0 ) )  * lv * ( traits.mp_rate or 1 ) ) )
 	target.maxst     = math.min( template.st,        math.ceil( ( traits.st_max or 0 )  + ( data.st.base or 0 )  + ( data.st.mod  + ( traits.st_lvup or 0 ) )  * lv * ( traits.sp_rate or 1 ) ) )
 	target.strength  = math.min( template.strength,  math.ceil( ( traits.str_max or 0 ) + ( data.str.base or 0 ) + ( data.str.mod + ( traits.str_lvup or 0 ) ) * lv * ( traits.str_rate or 1 ) ) )

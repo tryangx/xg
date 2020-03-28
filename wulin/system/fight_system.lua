@@ -31,9 +31,9 @@ function FIGHT_SYSTEM:Update( deltaTime )
 		--clear the under attack status
 		local entity = ECS_FindEntity( ecsid )
 		local fight = entity:GetComponent( "FIGHT_COMPONENT" )
-		local gangentity = ECS_FindEntity( fight.bluegang )		
-		local gang = gangentity:GetComponent( "GANG_COMPONENT" )
-		gang:DecStatusValue( "UNDER_ATTACK", 1 )
+		local groupentity = ECS_FindEntity( fight.bluegroupid )		
+		local group = groupentity:GetComponent( "GROUP_COMPONENT" )
+		group:DecStatusValue( "UNDER_ATTACK", 1 )
 
 		ECS_DestroyEntity( entity )
 
@@ -54,11 +54,11 @@ end
 
 
 ---------------------------------------
-function FIGHT_SYSTEM:CreateFight( atkgang, defgang, atk_eids, def_eids )
+function FIGHT_SYSTEM:CreateFight( atkgroup, defgroup, atk_eids, def_eids )
 	local entity = ECS_CreateEntity( "FightData" )	
 	local fight = ECS_CreateComponent( "FIGHT_COMPONENT" )
-	Prop_Set( fight, "redgang", atkgang )
-	Prop_Set( fight, "bluegang", defgang )
+	Prop_Set( fight, "redgroupid", atkgroup )
+	Prop_Set( fight, "bluegroupid", defgroup )
 	Prop_Add( fight, "reds",  atk_eids )
 	Prop_Add( fight, "blues", def_eids )
 	entity:AddComponent( fight )

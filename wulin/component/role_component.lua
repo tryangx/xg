@@ -1,81 +1,5 @@
 ---------------------------------------
 ---------------------------------------
-ROLE_SEX =
-{
-	MALE      = 0,
-	FEMALE    = 1,
-	ANIMAL    = 2,
-}
-
-
-ROLE_CATEGORY = 
-{
-	FICTION   = 0,
-	IMPORTANT = 1,
-}
-
-
-ROLE_MENTAL = 
-{
-	MOOD            = 1,  --changing easy, visible, when it reach maximum, it'll leads buff / debuff, the latter is more often.
-	DISSATISFACTION = 2,  --changing moderate, invisible, when it reach maximum, it'll leads betray or revolt, resist
-	LAZY            = 3,  --changing moderate, invisible, it'll leads low efficiency in training/learning
-	RESIST          = 4,  --changing moderate, invisible, it'll leads low efficiency in executing task
-	TIRENESS        = 5,  --changing easy, visible, it'll leads SICK
-	SICK            = 6,  --changing moderate, visible, it'll hurt
-	HURT            = 7,  --changing hard, visible, it'll leads DEATH
-	AMBITION        = 10, --changing hard, invisible, it'll leads betray or revolt
-	AGGRESION       = 11, --changing hard, invisible, it'll leads conflict in training or event
-}
-
-
-ROLE_TRAITS = 
-{
-	--social
-	FRIENDLY        = 100,
-	LONELY          = 101,
-}
-
-
-ROLE_COMMONSKILL = 
-{
-	--Master	
-	MANAGEMENT  = 20,
-	STRATEGIC   = 30,  --Increase strategic points
-	TACTIC      = 40,  --Increase tactic points
-
-	--Survive
-	COLLLECTING = 100,
-	FISHER      = 100,
-	FARMER      = 100,
-	MINER       = 100,
-	BLACKSMITH  = 100,
-	TOOLMAKER   = 100,
-	BUILDER     = 100,
-	TAILOR      = 100,
-	CARPENTER   = 100,
-	HERDSMAN    = 100,
-	STOCKMAN    = 100,
-	GROWER      = 100,
-	MEDIC       = 100,
-	APOTHECARIES= 100,
-
-	LEADERSHIP  = 200,  --Increase Management points
-
-	LOBBYIST    = 300, --Works when as a envy to negotiate to a strong gang for a weak gang
-	NEGOTIATION = 301, --Works when as a envy to negotiate to a weak gang for a strong gang 
-	CHEATER     = 302, --Workds when as a envy to negotiate to non-gang target
-}
-
-
-ROLE_STATUS = 
-{
-	BUSY        = 1,
-	OUTING      = 2,
-}
-
----------------------------------------
----------------------------------------
 ROLE_COMPONENT = class()
 
 ---------------------------------------
@@ -85,7 +9,7 @@ ROLE_PROPERTIES =
 	age        = { type="NUMBER", },
 	sex        = { type="NUMBER", }, --0:male, 1:female
 
-	gangid     = { type="ECSID", },
+	groupid     = { type="ECSID", },
 
 	category   = { type="NUMBER", }, --0
 
@@ -95,9 +19,14 @@ ROLE_PROPERTIES =
 	-- valuetype: { type: string, init_value = number, post_value = number }
 	mentals    = { type="LIST" },
 
+	traits     = { type="LIST" },
+
 	--common skill
 	--{ {type=ROLE_COMMONSKILL, value=evaluation} }
 	commonSkills = { type="LIST" }, 
+
+	--AI
+	instruction = { type="OBJECT" },	
 }
 
 ---------------------------------------
@@ -111,14 +40,58 @@ function ROLE_COMPONENT:Update()
 end
 
 ---------------------------------------
+---------------------------------------
+function ROLE_COMPONENT:IsMatch( params )
+	if params.status_includes then
+		for _, status in pairs( status_includes ) do
+			local ret = self.statuses[status]
+			if not ret or ret == 0 then return false end
+		end
+	end
+
+	if params.status_includes then
+		for _, status in pairs( status_excludes ) do
+			local ret = self.statuses[status]
+			if ret and ret ~= 0 then return false end
+		end
+	end
+end
+
+
+---------------------------------------
+-- @return default as 0
+---------------------------------------
+function ROLE_COMPONENT:GetMentalValue( type )
+	local ret = self.mentals[type]
+	return ret or 0
+end
+
+
+function ROLE_COMPONENT:GetTraitValue( type )
+	local ret = self.traits[type]
+	return ret or 0
+end
+
+
+---------------------------------------
+function ROLE_COMPONENT:SetStatus( statuses)
+	if not self.statuses then return end
+	for status, value in pairs( statuses ) do
+		--print( role.name, "status=" .. status, "value=" .. value )
+		role.statuses[status] = value
+	end
+end
+
+
+---------------------------------------
 function ROLE_COMPONENT:ToString()
 	local content = ""
 	content = content .. "[" .. self.name .. "]"
 	content = content .. " " .. "Age=" .. self.age
-	if self.gangid then
-		local entity = ECS_FindEntity( self.gangid )
+	if self.groupid then
+		local entity = ECS_FindEntity( self.groupid )
 		if entity then
-			content = content .. " " .. "Gang=" .. entity:GetComponent( "GANG_COMPONENT" ).name
+			content = content .. " " .. "group=" .. entity:GetComponent( "GROUP_COMPONENT" ).name
 		end
 	end
 	return content

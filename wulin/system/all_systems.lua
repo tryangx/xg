@@ -1,0 +1,8 @@
+require "rolecreator_system"
+require "fighter_system"
+require "fightskill_system"
+require "role_system"
+require "group_system"
+require "fight_system"
+require "data_system"
+require "game_system"

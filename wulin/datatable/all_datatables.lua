@@ -1,0 +1,5 @@
+require "fightskill_datatable"
+require "fightskilltemplate_datatable"
+require "role_datatable"
+require "roletemplate_datatable"
+require "group_datatable"

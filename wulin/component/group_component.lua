@@ -1,5 +1,4 @@
 ---------------------------------------
----------------------------------------
 --[[
 	
 	type:  门派帮会
@@ -10,53 +9,19 @@
 	action points:
 	Management Point: Use to change schedule, reward
 	Strategic Point : Use to send envy
-	Tacic Point     : Use to execute task, recon
+	Tacic Point     : Use to execute task, recon	
 --]]
 ---------------------------------------
----------------------------------------
-GANG_TYPE = 
-{
-	GANG_MAIN   = 0,
-	GANG_BRANCH = 1,	
-}
-
-
-GANG_SIZE = 
-{
-	FAMILY     = 1,
-	SMALL      = 2,
-	MID        = 3,
-	BIG        = 4, --branch
-	HUGE       = 5,	--
-}
-
-
-GANG_ACTIONPOINT = 
-{
-	MANAGEMENT = 1,
-	STRATEGIC  = 2,
-	TACTIC     = 3,
-}
-
-
-GANG_STATUS = 
-{
-	UNDER_ATTACK = 1,
-}
-
+GROUP_COMPONENT = class()
 
 ---------------------------------------
----------------------------------------
-GANG_COMPONENT = class()
-
----------------------------------------
-GANG_PROPERTIES = 
+GROUP_PROPERTIES = 
 {
 	type      = { type="NUMBER", },
 
 	name      = { type="STRING", },
 	
-	size      = { type="STRING", },
+	size      = { type="STRING", default="FAMILY" },
 
 	statuses  = { type="DICT" },
 
@@ -72,23 +37,32 @@ GANG_PROPERTIES =
 }
 
 ---------------------------------------
-function GANG_COMPONENT:__init()
+function GROUP_COMPONENT:__init()
 end
 
 
 ---------------------------------------
-function GANG_COMPONENT:Activate()	
+function GROUP_COMPONENT:Activate()	
 end
 
 
 ---------------------------------------
-function GANG_COMPONENT:Deactivate()
+function GROUP_COMPONENT:Deactivate()
 end
 
 
 ---------------------------------------
-function GANG_COMPONENT:Update()
+function GROUP_COMPONENT:Update()
 
+end
+
+---------------------------------------
+function GROUP_COMPONENT:FindMember( fn )
+	local roles = {}
+	MathUtil_Foreach( group.members, function ( _, ecsid )
+		if fn( ecsid ) == true then table.insert( roles, ecsid ) end
+	end )
+	return roles
 end
 
 ---------------------------------------
@@ -96,24 +70,24 @@ end
 -- @return default value is 0
 --
 ---------------------------------------
-function GANG_COMPONENT:GetStatusValue( type )
+function GROUP_COMPONENT:GetStatusValue( type )
 	return self.statuses[type] or 0
 end
 
 
-function GANG_COMPONENT:IncStatusValue( type, value )
+function GROUP_COMPONENT:IncStatusValue( type, value )
 	self.statuses[type] = self.statuses[type] and self.statuses[type] + value or value
 	--InputUtil_Pause( self.name, "inc status", self.statuses[type], value )
 end
 
 
-function GANG_COMPONENT:DecStatusValue( type, value )
+function GROUP_COMPONENT:DecStatusValue( type, value )
 	self.statuses[type] = self.statuses[type] and math.max( 0, self.statuses[type] - value ) or 0
 	--InputUtil_Pause( self.name, "dec status", self.statuses[type], value )
 end
 
 ---------------------------------------
-function GANG_COMPONENT:ToString()
+function GROUP_COMPONENT:ToString()
 	local content = ""
 	content = content .. "[" .. self.name .. "]"
 	content = content .. " " .. "Member=" .. #self.members
@@ -146,6 +120,6 @@ function GANG_COMPONENT:ToString()
 end
 
 ---------------------------------------
-function GANG_COMPONENT:Dump()
+function GROUP_COMPONENT:Dump()
 	print( self:ToString() )	
 end

@@ -1,39 +1,21 @@
 ---------------------------------------------------
 ---------------------------------------------------
+package.path = package.path .. ";wulin/constant/?.lua"
 package.path = package.path .. ";wulin/component/?.lua"
+package.path = package.path .. ";wulin/ai/?.lua"
 package.path = package.path .. ";wulin/system/?.lua"
 package.path = package.path .. ";wulin/datatable/?.lua"
 
-
+--constant
+require "all_constants"
 --data table
-require "fightskill_datatable"
-require "fightskilltemplate_datatable"
-require "role_datatable"
-require "roletemplate_datatable"
-require "gang_datatable"
-
-
+require "all_datatables"
 --component
-require "fight_component"
-require "role_component"
-require "fighter_component"
-require "fightskill_component"
-require "fightertemplate_component"
-require "follower_component"
-require "gang_component"
-require "game_component"
-require "data_component"
-
-
+require "all_components"
+--ai
+require "all_ais"
 --system
-require "rolecreator_system"
-require "fightergenerator_system"
-require "fightskillcreator_system"
-require "role_system"
-require "gang_system"
-require "fight_system"
-require "data_system"
-require "game_system"
+require "all_systems"
 
 
 ---------------------------------------------------
@@ -41,7 +23,7 @@ require "game_system"
 --register component
 ECS_RegisterComponent( "GAME_COMPONENT",               GAME_COMPONENT,               GAME_PROPERTIES )
 ECS_RegisterComponent( "DATA_COMPONENT",               DATA_COMPONENT,               DATA_PROPERTIES )
-ECS_RegisterComponent( "GANG_COMPONENT",               GANG_COMPONENT,               GANG_PROPERTIES )
+ECS_RegisterComponent( "GROUP_COMPONENT",              GROUP_COMPONENT,              GROUP_PROPERTIES )
 ECS_RegisterComponent( "ROLE_COMPONENT",               ROLE_COMPONENT,               ROLE_PROPERTIES )
 ECS_RegisterComponent( "FOLLOWER_COMPONENT",           FOLLOWER_COMPONENT,           FOLLOWER_PROPERTIES )
 ECS_RegisterComponent( "FIGHT_COMPONENT",              FIGHT_COMPONENT,              FIGHT_PROPERTIES )
@@ -53,28 +35,19 @@ ECS_RegisterComponent( "FIGHTERTEMPLATE_COMPONENT",    FIGHTERTEMPLATE_COMPONENT
 ---------------------------------------------------
 ---------------------------------------------------
 --register system
-RoleSystem = ROLE_SYSTEM()
-ECS_RegisterSystem( RoleSystem )
-
-GangSystem = GANG_SYSTEM()
-ECS_RegisterSystem( GangSystem )
-
-FightSystem = FIGHT_SYSTEM()
-ECS_RegisterSystem( FightSystem )
-
-GameSystem = GAME_SYSTEM()
-ECS_RegisterSystem( GameSystem )
-
-
-FighterGeneratorSystem = FIGHTERGENERATOR_SYSTEM()
-FightSkillCreatorSystem = FIGHTSKILLCREATOR_SYSTEM()
+ECS_RegisterSystem( GAME_SYSTEM() )
+ECS_RegisterSystem( GROUP_SYSTEM() )
+ECS_RegisterSystem( ROLE_SYSTEM() )
+ECS_RegisterSystem( FIGHT_SYSTEM() )
+ECS_RegisterSystem( FIGHTER_SYSTEM() )
+ECS_RegisterSystem( FIGHTSKILL_SYSTEM() )
 
 
 ---------------------------------------------------
 ---------------------------------------------------
 function run()
 	while ECS_Update( 1 ) do
-		if pause_menu() then return end
+		if pause_menu() == true then return end
 	end
 
 	--ECS_DumpSystem()
@@ -314,7 +287,7 @@ end
 
 
 function view_data()
-	ECS_GetSystem( "GANG_SYSTEM" ):Dump()
+	ECS_GetSystem( "GROUP_SYSTEM" ):Dump()
 	ECS_GetSystem( "ROLE_SYSTEM" ):Dump()
 	ECS_GetSystem( "FIGHT_SYSTEM" ):Dump()
 end

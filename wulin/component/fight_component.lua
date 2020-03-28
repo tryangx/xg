@@ -16,8 +16,8 @@ FIGHT_COMPONENT = class()
 ---------------------------------------
 FIGHT_PROPERTIES = 
 {
-	redgang    = { type="ECSID" },
-	bluegang   = { type="ECSID" },
+	redgroupid = { type="ECSID" },
+	bluegroupid= { type="ECSID" },
 	reds       = { type="LIST" },--store the entity id of fighter
 	blues      = { type="LIST" },--store the entity id of fighter
 	result     = { type="STRING", default="NONE" },
@@ -84,9 +84,9 @@ end
 ---------------------------------------
 function FIGHT_COMPONENT:ToString()
 	local content = ""
-	local atk = ECS_FindEntity( self.redgang )
-	local def = ECS_FindEntity( self.bluegang )
-	content = content .. "FIGHT BETWEEN [" .. atk:GetComponent( "GANG_COMPONENT" ).name .."] VS [".. def:GetComponent( "GANG_COMPONENT" ).name .. "]"
+	local atk = ECS_FindEntity( self.redgroupid )
+	local def = ECS_FindEntity( self.bluegroupid )
+	content = content .. "FIGHT BETWEEN [" .. atk:GetComponent( "GROUP_COMPONENT" ).name .."] VS [".. def:GetComponent( "GROUP_COMPONENT" ).name .. "]"
 	return content
 end
 
