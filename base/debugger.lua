@@ -55,13 +55,13 @@ end
 --
 -- @usage
 --		local cond = true
---		DBG_Trace( cond, "is valid" )
+--		DBG_Assert( cond, "is valid" )
 --		cond = false
---		DBG_Trace( cond, "is invalid" )
---      DBG_Trace( cond, "warning", DBGLevel.FATAL )
+--		DBG_Assert( cond, "is invalid" )
+--      DBG_Assert( cond, "warning", DBGLevel.FATAL )
 --
 --
-function DBG_Trace( content, cond, lv )
+function DBG_Assert( content, cond, lv )
 	if not lv then lv = DBGLevel.IMPORTANT end	
 	if not cond or cond == false then
 		if lv >= _level then
@@ -75,7 +75,15 @@ function DBG_Trace( content, cond, lv )
 end
 
 -----------------------------------
-function DBG_TraceBug( content )
+function DBG_Trace( ... )
+	local content = StringUtil_Concat( ... )
+	print( content )
+	Log_Write( "trace", content )
+end
+
+-----------------------------------
+function DBG_TraceBug( ... )
+	local content = StringUtil_Concat( ... )
 	Log_Write( "tracebug", content )
 end
 

@@ -78,7 +78,8 @@ end
 function Track_Table( name, t )
 	for k, v in pairs( t ) do
 		local n = name .. "_" .. k
-		if typeof(v) == "number" then
+		local t = typeof(v)
+		if t == "number" then
 			if _trackerCaches[n] then
 				_trackerCaches[n].current = v
 			else
@@ -87,6 +88,7 @@ function Track_Table( name, t )
 				_trackerCaches[n].current = v
 				--print( n, _trackerCaches[n].init, _trackerCaches[n].current )
 			end
+		elseif t == "table" then
 		end
 	end
 end

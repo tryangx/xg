@@ -3,7 +3,7 @@
 local _dataRoots = {}
 
 local function InitFighter()	
-	local roletemplates = TxtDataUtil_Parse( "data/wuxia.csv" )
+	local roletemplates = TxtDataUtil_Parse( "data/wuxia.csv" )	
 	ECS_GetSystem( "FIGHTER_SYSTEM" ):SetTemplateData( roletemplates )
 end
 
@@ -48,7 +48,7 @@ local function InitGame( scene )
 end
 
 
-function Init_Table()	
+function Init_Table()
 	InitFighter()
 	InitFightSkill()
 end
@@ -62,9 +62,6 @@ function InitScene()
 	InitGroups( scene )
 	InitRoles( scene )
 	InitFight( scene )
-
-	--initialized
-	
 
 	return scene
 end
@@ -85,6 +82,8 @@ end
 function Data_SetRootEntity( type, ecsid )
 	local entity = ECS_FindEntity( ecsid )
 	_dataRoots[type] = entity
+
+	print( "Data=" .. type, "Root=" .. ecsid )
 end
 
 
@@ -105,4 +104,16 @@ end
 
 
 ---------------------------------------------------
+--
+-- Prepare the data
+--
+-- !!This should be called after scene is activated
+-- and before gameloop running.
+--
 ---------------------------------------------------
+function Data_Prepare()
+	ECS_Foreach( "GROUP_COMPONENT", function ( group )
+		--initialized the necessary datas
+		Group_Prepare( group )
+	end )
+end

@@ -30,11 +30,15 @@ end
 ---------------------------------------
 function ECS_UpdateSystem( deltaTime )	
 	for _, sys in pairs( _ecsSystems ) do
-		print( "Update Sys=" .. sys._name )
+		--print( "Update Sys=" .. sys._name )
 		if sys.Update then
 			sys:Update( deltaTime )
 		end
 	end
+end
+
+---------------------------------------
+function ECS_ResetSystem()
 end
 
 

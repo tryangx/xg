@@ -17,27 +17,33 @@ GROUP_COMPONENT = class()
 ---------------------------------------
 GROUP_PROPERTIES = 
 {
-	type      = { type="NUMBER", },
+	type            = { type="NUMBER", },
 
-	name      = { type="STRING", },
-	
-	size      = { type="STRING", default="FAMILY" },
+	name            = { type="STRING", },
 
-	statuses  = { type="DICT" },
+	size            = { type="STRING", default="FAMILY" },
 
-	--roles
-	members   = { type="LIST", }, --list of role entity id
-	masterid  = { type="ECSID", }, --role entity id
+	statuses        = { type="DICT" },
 
-	--action points
-	actionpts = { type="DICT" },
+	members         = { type="LIST", }, --list of role entity id
+	masterid        = { type="ECSID", }, --role entity id
 
-	--template
+	assets          = { type="LIST" },
+
+	resources       = { type="LIST" },
+
+	actionpts       = { type="DICT" },
+
 	membertemplates = { type="LIST" }, --list of number
+
+	constructions   = { type="LIST" },
+
+	affairs         = { type="LIST" }, 
 }
 
 ---------------------------------------
 function GROUP_COMPONENT:__init()
+	self._attrs = {}
 end
 
 
@@ -66,6 +72,79 @@ function GROUP_COMPONENT:FindMember( fn )
 end
 
 ---------------------------------------
+function GROUP_COMPONENT:GetNumOfAffairs( type )
+	local num = 0
+	for _, affair in ipairs( self.affairs ) do
+		if affair.type == type then
+			num = num + 1
+		end
+	end
+	return num
+end
+
+---------------------------------------
+-- 
+-- Get number of the exist constructions
+-- @params type can be nil, has higher priority than id
+-- @params id can be nil
+--
+---------------------------------------
+function GROUP_COMPONENT:GetNumOfConstruction( type, id )
+	if type and id then DBG_Error( "Only one condition works at the same time" ) end
+	local num = 0
+	if type then id = nil end
+	for _, cid in ipairs( self.constructions ) do
+		if cid == id then
+			num = num + 1
+		else
+			local constr = CONSTRUCTION_DATATABLE_Get( cid )
+			if constr and constr.type == type then num = num + 1 end
+		end
+	end
+	return num
+end
+
+
+---------------------------------------
+function GROUP_COMPONENT:UseAssets( type, value )
+	if not group.assets[type] then group.assets[type] = 0 end
+	if value > 0 then
+		if group.assets[type] < value then
+			Dump( group.assets )
+			DBG_Error( group.name .. " doesn't have " .. type .. "=" .. math.abs( value ) )
+			group.assets[type] = 0
+		end
+	else
+		group.assets[type] = group.assets[type] + value
+	end
+end
+
+---------------------------------------
+function GROUP_COMPONENT:UseResources( type, value )
+	if not group.resources[type] then group.resources[type] = 0 end
+	if value > 0 then
+		if group.resources[type] < value then
+			Dump( group.resources )
+			DBG_Error( group.name .. " doesn't have " .. type .. "=" .. math.abs( value ) )
+			group.resources[type] = 0
+		end
+	else
+		group.resources[type] = group.resources[type] + value
+	end
+end
+
+---------------------------------------
+function GROUP_COMPONENT:CompleteConstruction( id )
+	table.insert( self.constructions, id )
+end
+
+
+function GROUP_COMPONENT:DestroyConstruction( id )
+	MathUtil_Remove( self.constructions, id )
+end
+
+
+---------------------------------------
 --
 -- @return default value is 0
 --
@@ -84,6 +163,15 @@ end
 function GROUP_COMPONENT:DecStatusValue( type, value )
 	self.statuses[type] = self.statuses[type] and math.max( 0, self.statuses[type] - value ) or 0
 	--InputUtil_Pause( self.name, "dec status", self.statuses[type], value )
+end
+
+
+---------------------------------------
+-- @param attr references to GROUP_ATTR
+---------------------------------------
+function GROUP_COMPONENT:GetAttr( attr )
+	if self._attrs[attr] then return self._attrs[attr] end
+	return 0
 end
 
 ---------------------------------------
@@ -116,10 +204,17 @@ function GROUP_COMPONENT:ToString()
 		content = content .. " " .. type .. "=" .. status
 	end
 
+	--constructions
+	content = content .. "constructions=["
+	for inx, id in ipairs( self.constructions ) do
+		content = content .. ( inx > 1 and "," or "" ) .. CONSTRUCTION_DATATABLE_Get( id ).name
+	end
+	content = content .. "]"
+
 	return content
 end
 
 ---------------------------------------
 function GROUP_COMPONENT:Dump()
-	print( self:ToString() )	
+	print( self:ToString() )
 end

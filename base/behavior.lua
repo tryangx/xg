@@ -1,8 +1,8 @@
 ------------------------------
 ------------------------------
 local function debugmsg( content )
-	if true then
-	--if nil then
+	--if true then
+	if nil then
 		print( content )
 	end
 end

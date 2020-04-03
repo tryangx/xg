@@ -7,15 +7,15 @@ function Role_CreateByTableData( roleTable )
 	roleEntity = ECS_CreateEntity( "Role" )
 
 	--create role
-	role = create_component_bytabledata( "ROLE_COMPONENT", roleTable )
+	role = DataTable_CreateComponent( "ROLE_COMPONENT", roleTable )
 	roleEntity:AddComponent( role )
 
 	--Create follower data
-	follower = create_component_bytabledata( "FOLLOWER_COMPONENT", roleTable )
+	follower = DataTable_CreateComponent( "FOLLOWER_COMPONENT", roleTable )
 	roleEntity:AddComponent( follower )
 
 	--Create fighter data
-	fighter = create_component_bytabledata( "FIGHTER_COMPONENT", roleTable )	
+	fighter = DataTable_CreateComponent( "FIGHTER_COMPONENT", roleTable )	
 	--fighter = ECS_CreateComponent( "FIGHTER_COMPONENT" )
 	roleEntity:AddComponent( fighter )
 

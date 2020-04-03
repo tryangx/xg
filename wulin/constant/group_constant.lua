@@ -16,6 +16,33 @@ GROUP_SIZE =
 	HUGE       = 5,	--
 }
 
+GROUP_ASSET = 
+{
+	LAND       = 2, --determine how many construction can build
+	REPUTATION = 3, --determine command
+	INFLUENCE  = 4, --determine diplomacy success
+	MONEY      = 5,	
+}
+
+
+GROUP_RESOURCE = 
+{
+	CLOTH      = 10,
+	FOOD       = 20,
+	MEAT       = 21,
+	WOOD       = 30,
+	LEATHER    = 40,
+	STONE      = 50,
+	IRON_ORE   = 51,
+	DRAKSTEEL  = 52,
+}
+
+
+GROUP_ATTR =
+{
+	MAX_MEMBER       = 1,
+	MAX_CONSTRUCTION = 2,
+}
 
 GROUP_ACTIONPOINT = 
 {
@@ -30,6 +57,16 @@ GROUP_STATUS =
 	UNDER_ATTACK = 1,
 }
 
+
+GROUP_AFFAIRS = 
+{
+	--constructions
+	BUILD_CONSTRUCTION   = 10,
+	UPGRADE_CONSTRUCTION = 11,
+	DESTROY_CONSTRUCTION = 12,
+
+	--
+}
 
 ---------------------------------------
 ---------------------------------------

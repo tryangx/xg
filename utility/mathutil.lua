@@ -1,16 +1,29 @@
-MathCompareMethod =
+---------------------------------------------
+MATH_COMPAREMETHOD =
 {
-	EQUALS = 0,
-	
-	MORE_THAN = 1,
-	
-	LESS_THAN = 2,
-	
-	MORE_THAN_AND_EQUALS = 3,
-	
-	LESS_THAN_AND_EQUALS = 4,
+	EQUAL                = 0,	
+	NOT_EQUAL            = 1,
+	MORE_THAN            = 2,
+	LESS_THAN            = 3,
+	MORE_THAN_AND_EQUALS = 4,
+	LESS_THAN_AND_EQUALS = 5,
+	NEGATE               = 6,
 }
 
+function MathUtil_Compare( l, r, method )
+	if not l or not r or not method then return false end
+	if method == "EQUAL" then return l == r
+	elseif method == "NOT_EQUAL" then return l ~= r
+	elseif method == "MORE_THAN" then return l > r
+	elseif method == "LESS_THAN" then return l < r
+	elseif method == "MORE_THAN_AND_EQUALS" then return l >= r 
+	elseif method == "LESS_THAN_AND_EQUALS" then return l <= r
+	elseif method == "NEGATE" then return l == -r
+	else error( "unhandled method=", method) end
+	return false
+end
+
+---------------------------------------------
 function MathUtil_GetSize( dict )
 	local size = 0
 	for _, _ in pairs( dict ) do

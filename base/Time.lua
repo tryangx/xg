@@ -1,9 +1,8 @@
---------------------------
+----------------------------------------------------
 --
---        Time
+--  Time
 --
---------------------------
-
+----------------------------------------------------
 MONTH_IN_YEAR     = 12
 MONTH_IN_HALFYEAR = 6
 MONTH_IN_SEASON   = 3
@@ -13,6 +12,9 @@ DAY_IN_HALF_YEAR  = math.floor( MONTH_IN_YEAR * DAY_IN_MONTH * 0.5 )
 DAY_IN_YEAR       = MONTH_IN_YEAR * DAY_IN_MONTH
 HOUR_IN_DAY       = 24
 
+
+----------------------------------------------------
+----------------------------------------------------
 Simple_DayPerMonth = 
 {
 	[1]  = 30,
@@ -45,6 +47,9 @@ Normal_DayPerMonth =
 	[12] = 31,
 }
 
+
+----------------------------------------------------
+----------------------------------------------------
 Time = class()
 
 function Time:__init()
@@ -84,6 +89,14 @@ function Time:SetDate( year, month, day, hour, beforeChrist )
 	end
 end
 
+
+----------------------------------------------------
+--
+-- Get the day in month
+--
+-- @return how many day in the current month.
+--
+----------------------------------------------------
 function Time:GetDayInMonth()
 	if self.daysInMonth and self.daysInMonth[self.month] then
 		return self.daysInMonth[self.month]
@@ -91,11 +104,24 @@ function Time:GetDayInMonth()
 	return DAY_IN_MONTH
 end
 
+
+----------------------------------------------------
+--
+-- Get the year
+--
+----------------------------------------------------
 function Time:GetYear()
 	return self.year
 end
 
---month from 1 ~ 12
+
+----------------------------------------------------
+--
+-- Get the day
+--
+-- @return the month's range is 1 ~ 12
+--
+----------------------------------------------------
 function Time:GetMonth( delta )
 	local month = self.month
 	if delta then
@@ -107,22 +133,45 @@ function Time:GetMonth( delta )
 	return month
 end
 
---day from 1~31
+
+----------------------------------------------------
+--
+-- Get the day
+--
+-- @return the day's range is 1~31
+--
+----------------------------------------------------
 function Time:GetDay()
 	return self.day
 end
 
---Important getter
+
+----------------------------------------------------
+--
+-- Get the value of the time data
+--
+-- @return a huge number
+--
+----------------------------------------------------
 function Time:GetDateValue()
 	return self:ConvertDateValue( self.year, self.month, self.day, self.beforeChrist )
 end
 
-function Time:ConvertDateValue( year, month, day, beforeChrist )
+----------------------------------------------------
+-- 
+-- Set the time
+--
+--   There're two way to set the time.
+--   1. By specified year, month, day
+--   2. By a date value which means a huge number
+--
+----------------------------------------------------
+function Time:SetTime( year, month, day, beforeChrist )
 	local ret = year * 100000 + month * 1000 + day * 10 + ( beforeChrist == true and 1 or 0 )
 	return ret
 end
 
-function Time:ConvertFromDateValue( dateValue )
+function Time:SetTimeByValue( dateValue )
 	local year  = math.floor( dateValue / 100000 )
 	local month = math.floor( ( dateValue % 100000 ) / 1000 )
 	local day   = math.floor( ( dateValue % 1000 ) / 10 )
@@ -131,7 +180,13 @@ function Time:ConvertFromDateValue( dateValue )
 	return year, month, day, beforeChrist == 1
 end
 
---default by year
+----------------------------------------------------
+-- 
+-- Create time description
+--
+--   Return in different formats, such as YYMMDD
+--
+----------------------------------------------------
 function Time:CreateDesc( byDay, byMonth )
 	return self:CreateDateDesc( self.year, self.month, self.day, self.beforeChrist, byDay, byMonth )
 end
@@ -148,6 +203,7 @@ function Time:CreateDateDesc( year, month, day, beforeChrist, byDay, byMonth )
 	return content
 end
 
+
 function Time:CreateDateDescByValue( dateValue, byDay, byMonth )
 	if not dateValue then return "" end
 	if not byMonth then byMonth = true end
@@ -156,19 +212,24 @@ function Time:CreateDateDescByValue( dateValue, byDay, byMonth )
 	return self:CreateDateDesc( year, month, day, beforeChrist, byDay, byMonth )
 end
 
+
 function Time:CreateCurrentDateDesc( byDay, byMonth )
 	if not byMonth then byMonth = true end
 	if not byDay then byDay = true end
 	return self:CreateDateDesc( self.year, self.month, self.day, self.beforeChrist, byDay, byMonth )
 end
 
+
 function Time:ToString()
 	return self:CreateCurrentDateDesc()
 end
 
------------------------------
--- Operation method
 
+----------------------------------------------------------
+--
+-- Time operation, pass some days
+--
+----------------------------------------------------------
 function Time:ElapseDay( elapsedDay )
 	self.passMonth = false
 	self.passYear  = false
@@ -179,6 +240,12 @@ function Time:ElapseDay( elapsedDay )
 	end
 end
 
+
+----------------------------------------------------
+--
+-- Time operation, pass a month
+--
+----------------------------------------------------
 function Time:ElapseAMonth()
 	self.passYear  = false
 	self.passMonth = true
@@ -199,25 +266,52 @@ function Time:ElapseAMonth()
 	end
 end
 
+
+----------------------------------------------------
+--
+-- Time operation, pass a day
+--
+----------------------------------------------------
 function Time:ElapseADay()	
 	self.hour = self.hour - HOUR_IN_DAY + 1
 	self.day  = self.day + 1
 	if self.day > self:GetDayInMonth() then	self:ElapseAMonth() end
 end
 
+
+----------------------------------------------------
+--
+-- Time operation, pass a hour
+--
+----------------------------------------------------
 function Time:ElapseAHour()
 	self.hour = self.hour + 1
 	if self.hour > HOUR_IN_DAY - 1 then self:ElapseADay() end
 end
 
---------------------------------------
--- Calculate difference between two date
 
+----------------------------------------------------
+--
+-- Time operation, calculate the year value by pass
+-- a specified years
+--
+-- @return year of the new time
+--
+----------------------------------------------------
 function Time:CalcNewYear( passYear )
 	local year = self.beforeChrist and -self.year or self.year
 	return year + passYear
 end
 
+
+----------------------------------------------------
+--
+-- Calculate the difference years between the given
+-- year and current time.
+--
+-- @return number of the difference years
+--
+----------------------------------------------------
 function Time:CalcDiffYear( year, beforeChrist )
 	year = math.abs( year )
 	if beforeChrist ~= self.beforeChrist then
@@ -226,12 +320,30 @@ function Time:CalcDiffYear( year, beforeChrist )
 	return math.abs( year - self.year )
 end
 
+
+----------------------------------------------------
+--
+-- Calculate the difference years between the given
+-- time and current time.
+--
+-- @return number of the difference years
+--
+----------------------------------------------------
 function Time:CalcDiffYearByDate( dateValue )
 	if not dateValue then return 0 end
 	local year, month, day, beforeChrist = self:ConvertFromDateValue( dateValue )
 	return self:CalcDiffYear( year, month, day, beforeChrist )
 end
 
+
+----------------------------------------------------
+--
+-- Calculate the difference months between the given
+-- time and current time.
+--
+-- @return number of the difference months
+--
+----------------------------------------------------
 function Time:CalcDiffMonthByDate( dateValue )	
 	if not dateValue then return 0 end
 	local year, month, day, beforeChrist = self:ConvertFromDateValue( dateValue )
@@ -252,6 +364,12 @@ function Time:CalcDiffMonthByDate( dateValue )
 	return math.abs( totalMonth2 - totalMonth1 )
 end
 
+
+----------------------------------------------------
+--
+-- calculate the difference days between two time
+--
+----------------------------------------------------
 local function CalcDayDiffByDate( y1, m1, d1, b1, y2, m2, d2, b2 )
 	local diffDays = 0
 
@@ -272,12 +390,29 @@ local function CalcDayDiffByDate( y1, m1, d1, b1, y2, m2, d2, b2 )
 	return math.abs( totalDays2 - totalDays1 )
 end
 
+
+----------------------------------------------------
+--
+-- Calculate the difference days between the given 
+-- time and current time.
+--
+-- @return number of the difference days
+--
+----------------------------------------------------
 function Time:CalcDiffDayByDate( dateValue )
 	if not dateValue then return 0 end
 	local year, month, day, beforeChrist = self:ConvertFromDateValue( dateValue )
 	return CalcDayDiffByDate( self.year, self.month, self.day, self.beforeChrist, year, month, day, beforeChrist )
 end
 
+
+----------------------------------------------------
+--
+-- Calculate the difference days between two times
+--
+-- @return number of the difference days
+--
+----------------------------------------------------
 function Time:CalcDiffDayByDates( dateValue1, dateValue2 )
 	local year1, month1, day1, beforeChrist1 = self:ConvertFromDateValue( dateValue1 )
 	local year2, month2, day2, beforeChrist2 = self:ConvertFromDateValue( dateValue2 )

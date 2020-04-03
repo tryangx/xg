@@ -13,14 +13,7 @@ FileReflectionMode =
 local function debugmsg( ... )
 	--if true then
 	if nil then
-		local content = ""
-		local args = { ... }
-		for i = 1, #args do
-			local type = typeof( args[i] )
-			if type == "string" or type == "number" then
-				content = content .. args[i] .. " "
-			end
-		end	
+		local content = StringUtil_Concat( ... )
 		Log_Write( "reflection", content )
 	end
 end

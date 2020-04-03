@@ -46,6 +46,8 @@ ECS_RegisterSystem( FIGHTSKILL_SYSTEM() )
 ---------------------------------------------------
 ---------------------------------------------------
 function run()
+	Data_Prepare()
+
 	while ECS_Update( 1 ) do
 		if pause_menu() == true then return end
 	end
@@ -92,11 +94,14 @@ function save( filename )
 	end)	
 	Reflection_Flush( ExportFileReflection )
 	InputUtil_Pause( "[SAVE]End to save file=" .. filename )
+	print( "===============================================")
 end
 
 
 ---------------------------------------------------
 function load( filename )
+	ECS_Reset()
+
 	print( "[LOAD]Load from file=" .. filename )
 	ImportFileReflection:SetFile( filename )
 	local file = Reflection_Import( ImportFileReflection )
@@ -104,9 +109,10 @@ function load( filename )
 	local scene = MathUtil_GetDataByIndex( file )
 	--ECS_Dump( data )
 	InputUtil_Pause( "[LOAD]End to load file=" .. filename )
+	print( "===============================================")
 
 	--need to process data entities
-	ECS_PushScene( scene )
+	ECS_PushScene( scene )	
 end
 
 
@@ -131,40 +137,6 @@ function create_follower( id )
 	save_data( fighter, "follower_" .. id .. ".json" )	
 end
 
-
-function create_component_bytabledata( componentType, tabledata )
-	local component = ECS_CreateComponent( componentType )
-	if tabledata then
-		--use properties	
-		--print( "properties", component._properties )
-		for name, _ in pairs( component._properties ) do
-			if tabledata[name] then
-				component[name] = MathUtil_ShallowCopy( tabledata[name] )
-				--print( "set", name, component[name] )
-			end			
-		end
-	end
-	--MathUtil_ShallowCopy( getter( id ), component )	
-	return component
-end
-
-
-function create_component_bydatatableid( componentType, getter, id )
-	local component = ECS_CreateComponent( componentType )
-	local tabledata = getter( id )
-	if tabledata then
-		--use properties	
-		--print( "properties", component._properties )
-		for name, _ in pairs( component._properties ) do
-			if tabledata[name] then
-				component[name] = MathUtil_ShallowCopy( tabledata[name] )
-				--print( "set", name, component[name] )
-			end			
-		end
-	end
-	--MathUtil_ShallowCopy( getter( id ), component )	
-	return component
-end
 
 ---------------------------------------------------
 ---------------------------------------------------
@@ -280,8 +252,8 @@ end
 ---------------------------------------------------
 ---------------------------------------------------
 function new_game()
-	local scene = InitScene()
-	ECS_PushScene( scene )
+	local scene = InitScene()	
+	ECS_PushScene( scene )	
 	run()
 end
 
@@ -312,7 +284,6 @@ end
 ---------------------------------------------------
 ---------------------------------------------------
 function main_menu()
-	Init_Table()
 	Menu_PopupMenu( 
 					{
 						{ c = "1", content = 'NEW',  fn = function () new_game() end },
@@ -324,5 +295,11 @@ end
 
 
 ---------------------------------------------------
+-- Initialize global table/data
 ---------------------------------------------------
-main_menu()
+Init_Table()
+
+
+---------------------------------------------------
+--main_menu()
+new_game()

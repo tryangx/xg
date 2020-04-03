@@ -40,6 +40,11 @@ function Role_Dead( ecsid )
 end
 
 
+---------------------------------------
+--
+-- Role Command
+--
+---------------------------------------
 local function Role_Idle( role )
 	print( role.name, "idle" )
 end
@@ -49,13 +54,22 @@ local function Role_Rest( role )
 	print( role.name, "rest" )
 end
 
+local function Role_Stroll( role )
+	--trigger event
+	print( role.name, "stroll" )
+end
+
+local function Role_Travel( role )
+
+end
+
 local function Role_Drill( role )
 	local fighter = ECS_FindComponent( role.entityid, "FIGHTER_COMPONENT" )
 	if not fighter then DBG_Error( "No fighter component" ) return end
 	local min = 100 - fighter.lv
 	local max = role:GetTraitValue( "HARD_WORK" ) + role:GetTraitValue( "CONCENTRATION" ) + role:GetTraitValue( "INSPIRATION" )
 	local exp = Random_GetInt_Sync( min, max )
-	fighter.exp = math.min( 10000, fighter.exp + exp )
+	fighter.exp = math.min( min, fighter.exp + exp )
 	if fighter.exp >= 100 then
 		local fightertemplate = ECS_FindComponent( role.entityid, "FIGHTERTEMPLATE_COMPONENT" )
 		if not fightertemplate then DBG_Error( "No fightertemplate component" ) return end
@@ -63,11 +77,29 @@ local function Role_Drill( role )
 		Track_Table( "fighter", fighter )
 		ECS_GetSystem( "FIGHTER_SYSTEM" ):LevelUp( fighter, fightertemplate, 30 )
 		Track_Table( "fighter", fighter )
-		Track_Dump( nil, true )
-		fighter.exp = 0
+		--Track_Dump( nil, true )
+		--InputUtil_Pause( role.name, "drill, gain exp=" .. fighter.exp .. "+" .. exp )
 		Log_Write( "role", role.name .. " LevelUp to " .. fighter.lv )
-		InputUtil_Pause( role.name, "drill, gain exp=" .. fighter.exp .. "+" .. exp )
+		fighter.exp = 0
 	end	
+end
+
+local function Role_Teach( role )
+	local fighter = ECS_FindComponent( role.entity, "FIGHTER_COMPONENT" )
+	if not fighter then DBG_Error( "No fighter component" ) return end
+
+end
+
+local function Role_Scirimmage( role )
+	
+end
+
+local function Role_Championship( role )
+
+end
+
+local function Role_Produce( role )
+
 end
 
 local function Role_Act( role )
@@ -80,8 +112,7 @@ local function Role_Act( role )
 			print( role.name, "Disobey" )
 		end
 	end
-	if not cmd then
-		print( role.name, "is thinking" )
+	if not cmd then		
 		AI_DetermineAction( role.entityid, { target=ecsid } )
 		cmd = role.instruction
 	end
@@ -90,15 +121,33 @@ local function Role_Act( role )
 
 	if cmd.type == "IDLE" then
 		Role_Idle( role )
+	
 	elseif cmd.type == "REST" then
 		Role_Rest( role )
+	elseif cmd.type == "STROLL" then
+		Role_Stroll( role )
+	elseif cmd.type == "TRAVEL" then
+		Role_Travel( role )
+
 	elseif cmd.type == "DRILL" then
 		Role_Drill( role )
+	elseif cmd.type == "TEACH" then
+		Role_Teach( role )
+	elseif cmd.type == "SECLUDE" then
+		Role_Seclude( role )
+
+	elseif cmd.type == "SKIRIMMAGE" then
+		Role_Scirimmage( role )
+	elseif cmd.type == "CHAMPIONSHIP" then
+		Role_Championship( role )
+	elseif cmd.type == "PRODUCE" then
+
 	else
 		Dump( cmd )
-		DBG_TraceBug( "Unhandle command type=", cmd.type )
+		print( role.name .. " unhandle command type=", cmd.type )
+		DBG_TraceBug( role.name .. " unhandle command type=", cmd.type )
 		Role_Idle( role )
-	end	
+	end
 end
 
 

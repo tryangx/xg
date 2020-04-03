@@ -183,13 +183,21 @@ end
 -- (Global)Reset ECS enviroment
 ---------------------------------------
 function ECS_Reset()
+	--reset scenes
+	_currentScene = nil
+	_activateScenes = {}
+
 	--reset manager	
 	for _, data in pairs( _ecs ) do data.mgr:Clear() end
 
 	--reset ecsid
 	ECS_ResetID()
 
-	print( "Reset ECS" )
+	ECS_Foreach( "GAME_COMPONENT", function ( game )
+		game:Dump()
+	end )
+
+	print( "=========Reset ECS==========" )
 end
 
 

@@ -3,10 +3,13 @@ local _behavior = Behavior()
 
 local _roleEntity
 local _roleCmp
+local _roleGroupCmp
 local _targetEntity
 local _targetGroupCmp
 local _targetRoleCmp
 local _targetFighterCmp
+
+local _variables = {}
 
 local _decision
 
@@ -25,7 +28,7 @@ local function MakeDecision( params )
 
 	_roleCmp.instruction = _decision
 	
-	--InputUtil_Pause( "make decision", params.cmd )
+	print( _roleCmp.name .. " make decision=" .. params.cmd )
 end
 
 
@@ -429,8 +432,116 @@ local _GroupProduce =
 
 
 ----------------------------------------
+local function AddAffair( params )
+	if params.type == "BUILD_CONSTRUCTION" then
+		Group_StartBuildingConstruction( _roleGroupCmp, _variables.construction )		
+	elseif params.type == "UPGRADE_CONSTRUCTION" then
+		Group_StartUpgradingConstruction( _roleGroupCmp, _variables.construction, _variables.target )
+	end
+end
+
+
 ----------------------------------------
-local _ScheduleArrangement = 
+local function GroupNeedToBuildConstruction()
+	if _roleGroupCmp:GetNumOfAffairs( "BUILD_CONSTRUCTION" ) > 0 or
+		_roleGroupCmp:GetNumOfAffairs( "UPGRADE_CONSTRUCTION" ) > 0 or
+		_roleGroupCmp:GetNumOfAffairs( "DESTROY_CONSTRUCTION" ) > 0 then
+		return false
+	end
+
+	--find all constructions can be built
+	local list = CONSTRUCTION_DATATABLE_Find( nil, _roleGroupCmp )
+	local num = #list
+	if num == 0 then return false end
+
+	--Dump( list )
+	local index = Random_GetInt_Sync( 1, num )
+	local id = list[index].id
+	_variables.construction = id
+	return true
+end
+
+
+local function GroupNeedToUpgradeConstruction()
+	if _roleGroupCmp:GetNumOfAffairs( "BUILD_CONSTRUCTION" ) > 0 or
+		_roleGroupCmp:GetNumOfAffairs( "UPGRADE_CONSTRUCTION" ) > 0 or
+		_roleGroupCmp:GetNumOfAffairs( "DESTROY_CONSTRUCTION" ) > 0 then
+		return false
+	end
+
+	local list = CONSTRUCTION_DATATABLE_Find( nil, _roleGroupCmp, true )
+	local num = #list
+	if num == 0 then return false end
+
+	local index = Random_GetInt_Sync( 1, num )
+	local id = list[index].id
+	_variables.construction = id
+
+	local constr = CONSTRUCTION_DATATABLE_Get( id )
+
+	index = Random_GetInt_Sync( 1, #constr.conditions.upgrades )
+	_variables.target = constr.conditions.upgrades[index]
+
+	return true
+end
+
+
+local function GroupNeedToDestroyConstruction()
+	if _roleGroupCmp:GetNumOfAffairs( "BUILD_CONSTRUCTION" ) > 0 or
+		_roleGroupCmp:GetNumOfAffairs( "UPGRADE_CONSTRUCTION" ) > 0 or
+		_roleGroupCmp:GetNumOfAffairs( "DESTROY_CONSTRUCTION" ) > 0 then
+		return false
+	end
+
+	--for priority construction in ai_tendency
+
+	return false
+end
+
+
+local _GroupBuildConstruction = 
+{
+	type = "SEQUENCE", desc="", children =
+	{
+		{ type = "FILTER", condition = GroupNeedToBuildConstruction },
+		{ type = "ACTION", action = AddAffair, params = { type="BUILD_CONSTRUCTION" } },
+	}
+}
+
+local _GroupUpgradeConstruction = 
+{
+	type = "SEQUENCE", desc="", children =
+	{
+		{ type = "FILTER", condition = GroupNeedToUpgradeConstruction },
+		{ type = "ACTION", action = AddAffair, params = { type="UPGRADE_CONSTRUCTION" } },
+	}
+}
+
+local _GroupDestroyConstruction = 
+{
+	type = "SEQUENCE", desc="", children =
+	{
+		{ type = "FAILURE" },
+	}
+}
+
+----------------------------------------
+----------------------------------------
+local GroupAffair = 
+{
+	type = "SELECTOR", desc = "scheudle_arrangement", children = 
+	{
+		--_GroupBuildConstruction,
+		_GroupUpgradeConstruction,
+		_GroupDestroyConstruction,
+	}
+}
+_groupAffairTree = BehaviorNode( true )
+_groupAffairTree:BuildTree( GroupAffair )
+
+----------------------------------------
+----------------------------------------
+local ScheduleArrangement = 
 {
 	--find the right one
 	type = "SELECTOR", desc = "scheudle_arrangement", children = 
@@ -442,14 +553,13 @@ local _ScheduleArrangement =
 		_DefaultDecision,
 	}
 }
-
 _scheduleTree = BehaviorNode( true )
-_scheduleTree:BuildTree( _ScheduleArrangement )
+_scheduleTree:BuildTree( ScheduleArrangement )
 
 
 ----------------------------------------
 ----------------------------------------
-local _DetermineAction = 
+local DetermineAction = 
 {
 	type = "SELECTOR", desc = "scheudle_arrangement", children = 
 	{
@@ -460,16 +570,15 @@ local _DetermineAction =
 		_DefaultDecision,
 	}
 }
-
 _actionTree = BehaviorNode( true )
-_actionTree:BuildTree( _DetermineAction )
+_actionTree:BuildTree( DetermineAction )
 
 ----------------------------------------
 ----------------------------------------
 local function InitBehavior( role_ecsid, params )
 	_roleEntity   = ECS_FindEntity( role_ecsid )
 
-	if not _roleEntity then print( "[AI]Role ecsid is invalid! ID=", role_ecsid ) return end
+	if not _roleEntity then print( "[AI]Role ecsid is invalid! ID=", role_ecsid ) error("") return end
 
 	if params and params.target then
 		_targetEntity = ECS_FindEntity( params.target )
@@ -478,6 +587,8 @@ local function InitBehavior( role_ecsid, params )
 	end
 
 	_roleCmp          = _roleEntity:GetComponent( "ROLE_COMPONENT" )
+	_roleGroupCmp     = ECS_FindComponent( _roleCmp.groupid, "GROUP_COMPONENT" )
+
 	_targetRoleCmp    = _targetEntity:GetComponent( "ROLE_COMPONENT" )
 	_targetFighterCmp = _targetEntity:GetComponent( "FIGHTER_COMPONENT" )
 	_targetGroupCmp   = ECS_FindComponent( _targetRoleCmp.groupid, "GROUP_COMPONENT" )
@@ -489,29 +600,44 @@ end
 
 
 ----------------------------------------
---
--- Group master suggest follower to do
---
+-- Group master
+----------------------------------------
+function AI_DetermineGroupAffair( role_ecsid, params )
+	if not InitBehavior( role_ecsid, params ) then DBG_TraceBug( "Init role's ai failed" ) return end
+
+	if not _targetGroupCmp then DBG_Error( "Target isn't in group!" ) end
+
+	DBG_Trace( _roleCmp.name, "is thinking about group affairs" )
+	Stat_Add( "RoleAI@Run_Times", nil, StatType.TIMES )
+	Log_Write( "roleai", _roleCmp.name .. " is thinking schedule" )
+
+	return _behavior:Run( _groupAffairTree )
+end
+
+
+----------------------------------------
+-- Group master
 ----------------------------------------
 function AI_DetermineSchedule( role_ecsid, params )	
 	if not InitBehavior( role_ecsid, params ) then DBG_TraceBug( "Init role's ai failed" ) return end
 
 	if not _targetGroupCmp then DBG_Error( "Target isn't in group!" ) end
 
+	DBG_Trace( _roleCmp.name, "is thinking about schedule" )
 	Stat_Add( "RoleAI@Run_Times", nil, StatType.TIMES )
-
-	Log_Write( "roleai", _roleCmp.name .. " is thinking schedule" )
 
 	return _behavior:Run( _scheduleTree )
 end
 
 
+----------------------------------------
+-- All roles
+----------------------------------------
 function AI_DetermineAction( role_ecsid, params )
 	if not InitBehavior( role_ecsid, params ) then DBG_TraceBug( "Init role's ai failed" ) return end
 
+	DBG_Trace( _roleCmp.name, "is thinking about action" )
 	Stat_Add( "RoleAI@Run_Times", nil, StatType.TIMES )
-
-	Log_Write( "roleai", _roleCmp.name .. " is thinking action" )
 
 	return _behavior:Run( _actionTree )
 end

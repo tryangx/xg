@@ -17,6 +17,11 @@ function GAME_COMPONENT:__init()
 end
 
 ---------------------------------------
+function GAME_COMPONENT:Deactivate()
+	InputUtil_Pause( "Deactivated", self:ToString() )
+end
+
+---------------------------------------
 function GAME_COMPONENT:Update( deltaTime )
 	self.curTime = self.curTime + deltaTime
 end

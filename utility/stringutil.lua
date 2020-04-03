@@ -37,6 +37,7 @@ function StringUtil_Trim( str, finalLength, curLength )
 	return ret
 end
 
+------------------------------------------
 function StringUtil_Abbreviate( str, length )
 	local ret = ""
 	local len = string.len( str )
@@ -61,4 +62,17 @@ function StringUtil_Abbreviate( str, length )
 		ret = ret .. " "
 	end
 	return ret
+end
+
+------------------------------------------
+function StringUtil_Concat( ... )
+	local content = ""
+	local args = { ... }
+	for i = 1, #args do
+		local type = typeof( args[i] )
+		if type == "string" or type == "number" then
+			content = content .. args[i] .. " "
+		end
+	end
+	return content
 end

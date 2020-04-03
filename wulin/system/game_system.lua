@@ -13,7 +13,7 @@ end
 
 ---------------------------------------
 ---------------------------------------
-function GAME_SYSTEM:Update()
+function GAME_SYSTEM:Update( deltaTime )
 	ECS_Foreach( "GAME_COMPONENT", function ( game )
 		game:Dump()
 		if game:IsGameOver() then
