@@ -21,9 +21,8 @@ GROUP_ASSET =
 	LAND       = 2, --determine how many construction can build
 	REPUTATION = 3, --determine command
 	INFLUENCE  = 4, --determine diplomacy success
-	MONEY      = 5,	
+	MONEY      = 5,
 }
-
 
 GROUP_RESOURCE = 
 {
@@ -54,7 +53,12 @@ GROUP_ACTIONPOINT =
 
 GROUP_STATUS = 
 {
-	UNDER_ATTACK = 1,
+	--temporary
+	HAS_DRILL_FOLLOWER = 1,
+	HAS_SECLUDE_MEMBER = 2,
+
+	--
+	UNDER_ATTACK       = 100,
 }
 
 

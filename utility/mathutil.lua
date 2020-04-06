@@ -679,9 +679,7 @@ end
 ]]
 function MathUtil_CreateRandomIndexs( min, max, num )
 	local len = math.abs( max - min )
-	if max < min then
-		min, max = max, min
-	end
+	if max < min then min, max = max, min end
 	local try = 0
 	local array = {}
 	repeat
@@ -862,7 +860,7 @@ function MathUtil_ConvertKey2ID( oldDatas, enumlist )
 end
 
 
---Permutation a list
+--Make permutation by a list of elements
 --@usage
 --  local list = { "A", "B", "C" }
 --  MathUtil_Permutation( list, 1, #a, function() print( MathUtil_ToString( list ) ) end )
@@ -872,7 +870,7 @@ end
 --  B,C,A
 --  C,B,A
 --  C,A,B
-function MathUtil_Permutation( list, first, last, fn )
+function MathUtil_MakePermutation( list, first, last, fn )
 	if first == last then
 		fn( list )
 		return		

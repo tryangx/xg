@@ -1,13 +1,4 @@
 ----------------------------------
---
--- Fight Attributes
---
---   Hp:    VITAL, Hit points
---   Atk:   HARD, Damage 
---   Def:   INTERNAL, Damage Resist
---   Skill: SOFT, Extra Direct Damage 
---   Agi:   
---
 ---------------------------------------
 FOLLOWER_COMPONENT = class()
 
@@ -15,6 +6,7 @@ FOLLOWER_COMPONENT = class()
 FOLLOWER_PROPERTIES = 
 {
 	job          = { type="STRING" },
+	rank         = { type="STRING" },
 	seniority    = { type="NUMBER" }, --days
 	contribution = { type="OBJECT" }, --value, unrewarded
 }

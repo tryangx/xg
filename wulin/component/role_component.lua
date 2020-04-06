@@ -9,7 +9,7 @@ ROLE_PROPERTIES =
 	age        = { type="NUMBER", },
 	sex        = { type="NUMBER", }, --0:male, 1:female
 
-	groupid     = { type="ECSID", },
+	groupid    = { type="ECSID", },
 
 	category   = { type="NUMBER", }, --0
 
@@ -23,10 +23,7 @@ ROLE_PROPERTIES =
 
 	--common skill
 	--{ {type=ROLE_COMMONSKILL, value=evaluation} }
-	commonSkills = { type="LIST" }, 
-
-	--AI
-	instruction = { type="OBJECT" },	
+	commonSkills = { type="LIST" },
 }
 
 ---------------------------------------

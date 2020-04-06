@@ -1,8 +1,10 @@
 ---------------------------------------
 package.path = package.path .. ";common/ecs/?.lua"
+package.path = package.path .. ";common/map/?.lua"
 
 ---------------------------------------
 require "ecs"
+require "map"
 ---------------------------------------
 require "filereflection"
 

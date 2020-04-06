@@ -1,4 +1,5 @@
 require "fightskill_constant"
 require "fighter_constant"
+require "follower_constant"
 require "role_constant"
 require "group_constant"

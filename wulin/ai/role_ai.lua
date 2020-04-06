@@ -11,7 +11,6 @@ local _targetFighterCmp
 
 local _variables = {}
 
-local _decision
 
 ----------------------------------------
 -- Tree data
@@ -21,14 +20,38 @@ local function NearDistrct( params )
 end
 
 
+local function IsInGroup()
+	return _targetRoleCmp.groupid
+end
+
+
+local function CanDo( params )
+	--check whether role can be teacher
+	local _follower = _targetEntity:GetComponent( "FOLLOWER_COMPONENT" )
+	local abilities = FOLLOWER_RANK_ABILITY[_follower.rank]
+	if not abilities then return false end
+	print( "check", _roleCmp.name, _targetRoleCmp.name )
+	return abilities[params.action] == 1
+end
+
+
 local function MakeDecision( params )
 	Stat_Add( "MakeDecidsion", params.cmd, StatType.LIST )	
 
 	_decision = { type = params.cmd }	
 
-	_roleCmp.instruction = _decision
+	_actorCmp = ECS_GetComponent( _targetEntity.ecsid, "ACTOR_COMPONENT" )
+	_actorCmp.task = params.cmd
+
+	if params.cmd == "DRILL" then
+		if _targetGroupCmp then _targetGroupCmp:IncStatusValue( "HAS_DRILL_FOLLOWER" ) end
+	end
 	
-	print( _roleCmp.name .. " make decision=" .. params.cmd )
+	if _roleCmp ~= _targetRoleCmp then
+		DBG_Trace( _roleCmp.name .. " order " .. _targetRoleCmp.name .. " to do=" .. params.cmd )
+	else
+		DBG_Trace( _targetRoleCmp.name .. " decide to do=" .. params.cmd )
+	end
 end
 
 
@@ -141,19 +164,40 @@ local function TargetNeedDrill()
 end
 
 
-local function TargetNeedTeacher()
-	local group = ECS_FindEntity( _targetRoleCmp.groupid )
-	--has teacher
+local function TargetNeedTeach()
+	if not _targetGroupCmp and _targetGroupCmp:GetStatusValue( "HAS_DRILL_FOLLOWER" ) == 0 then
+		return false
+	end
+
+	if Random_GetInt_Sync( 1, 100 ) < 50 then return true end
+
 	return false
 end
 
 
 local function TargetNeedSeclude()
-	local group = ECS_FindEntity( _targetRoleCmp.groupid )
+	if Random_GetInt_Sync( 1, 100 ) < 50 then return true end
+
+	_traveler = ECS_GetComponent( _targetEntity.ecsid, "TRAVELER_COMPONENT" )
+		
+	if _targetGroupCmp then
+		if _traveler.location ~= _targetGroupCmp.location then return false end
+		if _targetGroupCmp:GetNumOfConstruction( "BACKROOM" ) <= _targetGroupCmp:GetStatusValue( "HAS_SECLUDE_MEMBER" ) then return false end
+	else
+		--in a secrect area
+		local map = ECS_SendEvent( "MAP_COMPONENT", "Get" )		
+		local plot = map:GetPlotById( _traveler.location )
+		if not plot then return false end
+		if plot.type == "MOUNTAIN" then
+			return true
+		end
+	end
+
 	return false
 end
 
 
+----------------------------------------
 local _GroupDrill = 
 {
 	type = "SEQUENCE", desc="group_drill", children = 
@@ -165,32 +209,38 @@ local _GroupDrill =
 }
 
 
+----------------------------------------
 local _GroupTeach = 
 {
 	type = "SEQUENCE", desc="group_teach", children = 
 	{
-		{ type = "FILTER", condition = TargetNeedTeacher },
+		{ type = "FILTER", condition = CanDo, params = { action="TEACH" } },
+		{ type = "FILTER", condition = TargetNeedTeach },
 		{ type = "ACTION", action = MakeDecision, params = { cmd = "TEACH" } },
 	}
 }
 
 
+----------------------------------------
 local _GroupSeclude = 
 {
 	type = "SEQUENCE", desc="group_seclude", children = 
 	{
+		{ type = "FILTER", condition = CanDo, params = { action="SECLUDE" } },
 		{ type = "FILTER", condition = TargetNeedSeclude },
 		{ type = "ACTION", action = MakeDecision, params = { cmd = "SECLUDE" } },
 	}
 }
 
 
-local _GroupTrainning = 
+----------------------------------------
+local _GroupTraining = 
 {
-	type = "SELECTOR", desc="group_trainning", children = 
+	type = "SELECTOR", desc="group_Training", children = 
 	{
-		_GroupDrill,
 		_GroupTeach,
+		_GroupDrill,
+		_GroupLearn,
 		_GroupSeclude,
 	}
 }
@@ -547,7 +597,7 @@ local ScheduleArrangement =
 	type = "SELECTOR", desc = "scheudle_arrangement", children = 
 	{
 		_PersonalHealthy,
-		_GroupTrainning,
+		_GroupTraining,
 		_GroupFight,
 		_GroupProduce,
 		_DefaultDecision,
@@ -564,7 +614,7 @@ local DetermineAction =
 	type = "SELECTOR", desc = "scheudle_arrangement", children = 
 	{
 		_PersonalHealthy,
-		_GroupTrainning,
+		_GroupTraining,
 		_GroupFight,
 		_GroupProduce,
 		_DefaultDecision,
@@ -592,8 +642,6 @@ local function InitBehavior( role_ecsid, params )
 	_targetRoleCmp    = _targetEntity:GetComponent( "ROLE_COMPONENT" )
 	_targetFighterCmp = _targetEntity:GetComponent( "FIGHTER_COMPONENT" )
 	_targetGroupCmp   = ECS_FindComponent( _targetRoleCmp.groupid, "GROUP_COMPONENT" )
-
-	_decision = nil
 
 	return true
 end
@@ -623,7 +671,7 @@ function AI_DetermineSchedule( role_ecsid, params )
 
 	if not _targetGroupCmp then DBG_Error( "Target isn't in group!" ) end
 
-	DBG_Trace( _roleCmp.name, "is thinking about schedule" )
+	DBG_Trace( _roleCmp.name, "is thinking about schedule. target=" .. _targetRoleCmp.name )
 	Stat_Add( "RoleAI@Run_Times", nil, StatType.TIMES )
 
 	return _behavior:Run( _scheduleTree )
@@ -640,11 +688,6 @@ function AI_DetermineAction( role_ecsid, params )
 	Stat_Add( "RoleAI@Run_Times", nil, StatType.TIMES )
 
 	return _behavior:Run( _actionTree )
-end
-
-
-function AI_GetDecision()
-	return _decision
 end
 
 

@@ -17,7 +17,8 @@ ROLE_CATEGORY =
 
 ROLE_MENTAL = 
 {
-	MOOD            = 1,  --changing easy, visible, when it reach maximum, it'll leads buff / debuff, the latter is more often.
+	--MOOD            = 1,  --changing easy, visible, when it reach maximum, it'll leads buff / debuff, the latter is more often.	
+	PRESSURE        = 1,  --change easy, visible, Increase by the Fight/Event 
 	DISSATISFACTION = 2,  --changing moderate, invisible, when it reach maximum, it'll leads betray or revolt, resist
 	
 	TIRENESS        = 10,  --changing easy, visible, it'll leads SICK	
@@ -27,15 +28,15 @@ ROLE_MENTAL =
 	LOYALITY        = 100, --changing very hard, invisible, it'll leads betray or revolt
 	AMBITION        = 101, --changing very hard, invisible, it'll leads betray or revolt
 	AGGRESION       = 110, --changing very hard, invisible, it'll leads conflict in training or event	
-	LAZY            = 111, --changing moderate, invisible, it'll leads low efficiency in training/learning
 	
 	--Social
 	TEAM_WORK       = 200,
 	GRIGARIOUS      = 201,
 	SOLO            = 210,
 	EXCLUSIVE       = 211,
-	OBEDIENCE       = 220,	
-	RESIST          = 221, --changing moderate, invisible, it'll leads low efficiency in executing task
+
+	OBEDIENCE       = 220, --occasion, always to follower order
+	RESIST          = 221, --invisible, it'll leads low efficiency in executing task
 }
 
 
@@ -76,6 +77,7 @@ ROLE_COMMONSKILL =
 	APOTHECARIES= 100,
 
 	LEADERSHIP  = 200,  --Increase Management points
+	TEACHER     = 201,
 
 	LOBBYIST    = 300, --Works when as a envy to negotiate to a strong group for a weak group
 	NEGOTIATION = 301, --Works when as a envy to negotiate to a weak group for a strong group 

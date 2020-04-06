@@ -41,9 +41,31 @@ end
 local function InitGame( scene )
 	local entity = ECS_CreateEntity( "GAME_DATA" )	
 	scene:GetRootEntity():AddChild( entity )
+	
 	entity:CreateComponent( "DATA_COMPONENT" ).type = "GAME_DATA"
-	local game = entity:CreateComponent( "GAME_COMPONENT" )
-	game.endTime = 10
+	
+	entity:CreateComponent( "GAME_COMPONENT" ).endTime = 10
+
+	local data =
+	{
+		name   = "test",
+		width  = 20,
+		height = 20,
+		plotTypes = 
+	    {
+	       { type="LAND",  terrain="PLAINS",    feature="",      prob=1000 },
+	       { type="LAND",  terrain="GRASSLAND", feature="",      prob=1000 },
+	       { type="LAND",  terrain="GRASSLAND", feature="MARSH", prob=1000 },
+	       { type="HILLS", terrain="PLAINS",    feature="WOODS", prob=1000 },
+	    },
+	    cities = 
+	    {
+			{ id="1", name="北京", x=6, y=2, lv=1, },
+			{ id="2", name="南京", x=4, y=7, lv=1, },
+		},
+	}
+	entity:CreateComponent( "MAP_COMPONENT" ):Generate( data )
+
 	return entity
 end
 
@@ -116,4 +138,7 @@ function Data_Prepare()
 		--initialized the necessary datas
 		Group_Prepare( group )
 	end )
+	ECS_Foreach( "ROLE_COMPONENT", function ( role )
+		Role_Prepare( role )
+	end)
 end

@@ -12,6 +12,20 @@ function Role_SetStatus( ecsid, statuses )
 	role:SetStatus( statues )
 end
 
+---------------------------------------
+function Role_Prepare( role )
+	local traveler = ECS_FindComponent( role.entityid, "TRAVELER_COMPONENT")
+	local group = ECS_FindComponent( role.groupid, "GROUP_COMPONENT" )
+	if group then
+		traveler.location = group.location
+	else
+		local map = ECS_SendEvent( "MAP_COMPONENT", "Get" )
+		local index = Random_GetInt_Unsync( 1, #map.cities )
+		local city = map.cities[index]		
+		traveler.location = city.id
+		DBG_Trace( role.name .. " stay at " .. city.name )
+	end
+end
 
 ---------------------------------------
 --
@@ -64,30 +78,11 @@ local function Role_Travel( role )
 end
 
 local function Role_Drill( role )
-	local fighter = ECS_FindComponent( role.entityid, "FIGHTER_COMPONENT" )
-	if not fighter then DBG_Error( "No fighter component" ) return end
-	local min = 100 - fighter.lv
-	local max = role:GetTraitValue( "HARD_WORK" ) + role:GetTraitValue( "CONCENTRATION" ) + role:GetTraitValue( "INSPIRATION" )
-	local exp = Random_GetInt_Sync( min, max )
-	fighter.exp = math.min( min, fighter.exp + exp )
-	if fighter.exp >= 100 then
-		local fightertemplate = ECS_FindComponent( role.entityid, "FIGHTERTEMPLATE_COMPONENT" )
-		if not fightertemplate then DBG_Error( "No fightertemplate component" ) return end
-		Track_Reset()
-		Track_Table( "fighter", fighter )
-		ECS_GetSystem( "FIGHTER_SYSTEM" ):LevelUp( fighter, fightertemplate, 30 )
-		Track_Table( "fighter", fighter )
-		--Track_Dump( nil, true )
-		--InputUtil_Pause( role.name, "drill, gain exp=" .. fighter.exp .. "+" .. exp )
-		Log_Write( "role", role.name .. " LevelUp to " .. fighter.lv )
-		fighter.exp = 0
-	end	
+	ECS_GetSystem( "TRAINING_SYSTEM" ):AddPupil( role.groupid, role )
 end
 
 local function Role_Teach( role )
-	local fighter = ECS_FindComponent( role.entity, "FIGHTER_COMPONENT" )
-	if not fighter then DBG_Error( "No fighter component" ) return end
-
+	ECS_GetSystem( "TRAINING_SYSTEM" ):AddTeacher( role.groupid, role )
 end
 
 local function Role_Scirimmage( role )
@@ -103,49 +98,49 @@ local function Role_Produce( role )
 end
 
 local function Role_Act( role )
-	local cmd
+	local actor = ECS_GetComponent( role.entityid, "ACTOR_COMPONENT" )
+	local cmd	
 	if role.groupid then
+		--in group
 		local disobey_evl = role:GetMentalValue( "DISSATISFACTION" ) - ( 50 + role:GetMentalValue( "LOYALITY" ) )
-		if Random_GetInt_Sync( 1, 100 ) > disobey_evl then			
-			cmd = role.instruction
+		if Random_GetInt_Sync( 1, 100 ) > disobey_evl then
+			cmd = actor.task
 		else
 			print( role.name, "Disobey" )
 		end
 	end
 	if not cmd then		
 		AI_DetermineAction( role.entityid, { target=ecsid } )
-		cmd = role.instruction
+		cmd = actor.task
 	end
 
-	if not cmd then Role_Idle( role ) end
+	if not cmd then cmd = "IDLE" end
 
-	if cmd.type == "IDLE" then
+	if cmd == "IDLE" then
 		Role_Idle( role )
 	
-	elseif cmd.type == "REST" then
+	elseif cmd == "REST" then
 		Role_Rest( role )
-	elseif cmd.type == "STROLL" then
+	elseif cmd == "STROLL" then
 		Role_Stroll( role )
-	elseif cmd.type == "TRAVEL" then
+	elseif cmd == "TRAVEL" then
 		Role_Travel( role )
 
-	elseif cmd.type == "DRILL" then
+	elseif cmd == "DRILL" then
 		Role_Drill( role )
-	elseif cmd.type == "TEACH" then
+	elseif cmd == "TEACH" then
 		Role_Teach( role )
-	elseif cmd.type == "SECLUDE" then
+	elseif cmd == "SECLUDE" then
 		Role_Seclude( role )
 
-	elseif cmd.type == "SKIRIMMAGE" then
+	elseif cmd == "SKIRIMMAGE" then
 		Role_Scirimmage( role )
-	elseif cmd.type == "CHAMPIONSHIP" then
+	elseif cmd == "CHAMPIONSHIP" then
 		Role_Championship( role )
-	elseif cmd.type == "PRODUCE" then
+	elseif cmd == "PRODUCE" then
 
 	else
-		Dump( cmd )
-		print( role.name .. " unhandle command type=", cmd.type )
-		DBG_TraceBug( role.name .. " unhandle command type=", cmd.type )
+		DBG_Trace( role.name .. " unhandle command type=", cmd )
 		Role_Idle( role )
 	end
 end
@@ -163,7 +158,7 @@ function ROLE_SYSTEM:__init( ... )
 end
 
 ---------------------------------------
-function ROLE_SYSTEM:Update( deltaTime )
+function ROLE_SYSTEM:Update( deltaTime )	
 	ECS_Foreach( "ROLE_COMPONENT", function ( role )
 		Role_Act( role )
 	end )

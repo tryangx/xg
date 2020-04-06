@@ -12,6 +12,7 @@ require "statisticutil"
 require "menuutil"
 require "stringutil"
 require "trackutil"
+require "pathfinderutil"
 
 
 ---------------------------------------

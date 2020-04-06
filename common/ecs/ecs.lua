@@ -1,8 +1,8 @@
 
 
----------------------------------------
+---------------------------------------------------
 -- Enum declarations
----------------------------------------
+---------------------------------------------------
 ECSSTATUS =
 {
 	CREATED      = 0,
@@ -29,8 +29,8 @@ ECSCOMPONENTPROPERTIES =
 }
 
 
----------------------------------------
----------------------------------------
+---------------------------------------------------
+---------------------------------------------------
 require "scene"
 require "entity"
 require "component"
@@ -39,18 +39,18 @@ require "property"
 require "system"
 require "ecsid"
 
----------------------------------------
+---------------------------------------------------
 -- ECS Register Informations
 local _ecs = {}
 
 
----------------------------------------
+---------------------------------------------------
 local _activateScenes = {}
 local _currentScene
 
 
----------------------------------------
----------------------------------------
+---------------------------------------------------
+---------------------------------------------------
 local function ECS_GetDataManager( typeName )
 	local data = _ecs[typeName]
 	if not data then 
@@ -64,9 +64,9 @@ local function ECS_GetDataManager( typeName )
 end
 
 
----------------------------------------
+---------------------------------------------------
 -- (Local)Register an ecs class
----------------------------------------
+---------------------------------------------------
 local function ECS_Register( typeName, clz, properties )	
 	if _ecs[typeName] then
 		DBG_Error( "ECSType=" .. typeName .. " is already registered." )		
@@ -97,9 +97,9 @@ local function ECS_Register( typeName, clz, properties )
 end
 
 
----------------------------------------
+---------------------------------------------------
 -- (Local)Create an ecs object
----------------------------------------
+---------------------------------------------------
 local function ECS_Create( typeName, name )
 	local data = ECS_GetDataManager( typeName )
 	local obj = data.mgr:NewData()
@@ -124,6 +124,7 @@ local function ECS_Create( typeName, name )
 			elseif prop.type == "OBJECT" then
 				obj[propname] = {}
 			elseif prop.type == "ECSID" then
+				--to reduce the check operation
 				obj[propname] = nil
 			elseif prop.type == "LIST" then
 				obj[propname] = {}
@@ -144,10 +145,10 @@ local function ECS_Create( typeName, name )
 end
 
 
----------------------------------------
+---------------------------------------------------
 -- (Local)Find an ecs object by type and keyname
 -- @param id scene:name, entity:id
----------------------------------------
+---------------------------------------------------
 local function ECS_Find( typeName, keyname )	
 	local data = ECS_GetDataManager( typeName )
 	local obj = data.mgr:GetData( keyname )		
@@ -163,25 +164,25 @@ local function ECS_Find( typeName, keyname )
 end
 
 
----------------------------------------
+---------------------------------------------------
 function ECS_GetNum( typeName )
 	local data = ECS_GetDataManager( typeName )
 	return data.mgr:GetCount()
 end
 
 
----------------------------------------
+---------------------------------------------------
 -- (Global)Foreach ecs objects by specified type
----------------------------------------
+---------------------------------------------------
 function ECS_Foreach( typeName, fn )
 	local data = ECS_GetDataManager( typeName )
 	data.mgr:ForeachData( fn )
 end
 
 
----------------------------------------
+---------------------------------------------------
 -- (Global)Reset ECS enviroment
----------------------------------------
+---------------------------------------------------
 function ECS_Reset()
 	--reset scenes
 	_currentScene = nil
@@ -201,13 +202,13 @@ function ECS_Reset()
 end
 
 
----------------------------------------
+---------------------------------------------------
 --
 -- Creation Interfaces
 --
 -- Include Create(), Register()
 --
----------------------------------------
+---------------------------------------------------
 function ECS_CreateComponent( name )
 	local component =  ECS_Create( name, "ECSCOMPONENT" )
 	return component
@@ -235,11 +236,11 @@ function ECS_CreateEntity( name )
 end
 
 
----------------------------------------
+---------------------------------------------------
 --
 -- Destroy Interfaces
 --
----------------------------------------
+---------------------------------------------------
 function ECS_DestroyEntity( entity )
 	if not entity then return end
 	local data = ECS_GetDataManager( "ECSENTITY" )
@@ -274,13 +275,13 @@ function ECS_DestroyComponent( component )
 end
 
 
----------------------------------------
+---------------------------------------------------
 --
 -- Access Interfaces
 --
 -- Includes Getter(), Is()
 --
----------------------------------------
+---------------------------------------------------
 function ECS_GetProperties( typeName )
 	return _ecs[typeName] and _ecs[typeName].properties
 end
@@ -301,31 +302,81 @@ function ECS_FindEntity( id )
 end
 
 
+---------------------------------------------------
+-- Get the component from the entity
+-- @note if component isn't exist, then create one
+---------------------------------------------------
+function ECS_GetComponent( entityid, name )
+	local entity = ECS_FindEntity( entityid )	
+	if not entity then DBG_Erro( "entity is invalid!" ) return end
+	local cmp = entity:GetComponent( name )
+	return cmp or entity:CreateComponent( name )
+end
+
+
 function ECS_FindComponent( entityid, name )
 	local entity = ECS_FindEntity( entityid )	
 	return entity and entity:GetComponent( name )
 end
 
 
+---------------------------------------------------
+-- 
+-- Add a listener for the component
+--
+---------------------------------------------------
 local _listener = {}
-function ECS_AddListener( component )
-	if component.ecstype ~= "ECSCOMPONENT" then return end
+function ECS_AddListener( component, type, id, callback )
+	if component.ecstype ~= "ECSCOMPONENT" then return end	
 	local list = _listener[component.ecsname]
 	if not list then
 		_listener[component.ecsname] = {}
 		list = _listener[component.ecsname]
 	end
-	--table.insert( _listener )
+
+	list[type] = {}
+
+	if id then		
+		list[type][id] = callback
+	else
+		list[type]._callback = callback
+	end
 end
 
 
----------------------------------------
+function ECS_RemoveListener( component, type, id )
+	if component.ecstype ~= "ECSCOMPONENT" then return end
+	local list = _listener[component.ecsname]
+	if not list then return end
+
+	if id then
+		list[type][id] = nil
+	else
+		list[type] = nil
+	end
+end
+
+
+function ECS_SendEvent( ecsname, type, id, ... )
+	local list = _listener[ecsname]
+	if not list then return end
+
+	if id then
+		if list[type][id] then
+			return list[type][id]( ... )
+		end
+	elseif list[type]._callback then
+		return list[type]._callback( ... )
+	end
+end
+
+---------------------------------------------------
 --
 -- Working Interfaces
 --
 -- Include Activate(), Deactivate(), Update()
 --
----------------------------------------
+---------------------------------------------------
 function ECS_Update( deltaTime )
 	--update scenes, entities, components
 	for _, scene in ipairs( _activateScenes ) do scene:Update( deltaTime ) end
@@ -337,9 +388,9 @@ function ECS_Update( deltaTime )
 end
 
 
----------------------------------------
+---------------------------------------------------
 --
----------------------------------------
+---------------------------------------------------
 function ECS_SwitchScene( scene )
 	_currentScene = scene
 	table.insert( _activateScenes, scene )
@@ -370,13 +421,13 @@ function ECS_ForeachScene( fn )
 end
 
 
----------------------------------------
+---------------------------------------------------
 --
 -- Debug Interfaces
 --
 -- Include Dump()
 --
----------------------------------------
+---------------------------------------------------
 function ECS_Dump( object, indent )
 	if not object then print( "invalid to dump" ) return end
 	if not indent then indent = 0 print( "******** Start Dump ********") end
@@ -413,10 +464,10 @@ function ECS_Dump( object, indent )
 end
 
 
----------------------------------------
+---------------------------------------------------
 --
 -- Preprocess
 --
----------------------------------------
+---------------------------------------------------
 ECS_Register( "ECSSCENE", ECSScene, ECSSCENEPROPERTIES )
 ECS_Register( "ECSENTITY", ECSEntity, ECSENTITYPROPERTIES )

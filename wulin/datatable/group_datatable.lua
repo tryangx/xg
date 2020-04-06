@@ -10,7 +10,7 @@ local GROUP_DATATABLE =
 {
 	[1] =
 	{
-		name    = "少林派",
+		name     = "少林派",
 	},
 	[2] =
 	{

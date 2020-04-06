@@ -1,3 +1,4 @@
+------------------------------------------
 function String_ToStr( data, item )
 	if not data then
 		return "[??]"
@@ -9,12 +10,6 @@ function String_ToStr( data, item )
 end
 
 ------------------------------------------
--- String
-
---[[
-	
-
---]]
 function StringUtil_Trim( str, finalLength, curLength )
 	local ret
 	local length = string.len( str )

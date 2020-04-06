@@ -17,10 +17,7 @@ FIGHTER_ELEMENT =
 
 
 FIGHTER_STATUSTYPE = 
-{
-	TIRENESS           = 1,     --Long Duration, Increase by Active Action, Reduce by Rest
-	PRESSURE           = 2,     --Long Duration, Increase by the Fight/Event 
-	
+{	
 	STUN               = 10,    --Short Duration, Cann't defend
 	COIL               = 11,    --Short Duration, Reduce hit power
 	BLIND              = 12,    --Short Duration, Reduce hit accuracy

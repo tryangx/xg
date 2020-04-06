@@ -6,7 +6,7 @@ local GROUP_PARAMS =
 	{
 		FAMILY     = 
 			{
-			member={min=1,max=3},
+			member={min=1,max=3,ELDER={num=1}},
 			assets={ LAND={init=3}, REPUTATION={min=100,max=300}, INFLUENCE={min=100,max=300}, MONEY={min=1000,max=2000} },
 			resources=
 				{
@@ -17,7 +17,7 @@ local GROUP_PARAMS =
 			},
 		SMALL      =
 			{
-			member={min=1,max=3},
+			member={min=1,max=3,ELDER=1},
 			assets={ LAND={init=3}, REPUTATION={min=200,max=500}, INFLUENCE={min=200,max=500}, MONEY={min=1000,max=2000} },
 			resources=
 				{
@@ -28,7 +28,7 @@ local GROUP_PARAMS =
 			},
 		MID        =
 			{
-			member={min=1,max=3},
+			member={min=1,max=3,ELDER=1},
 			assets={ LAND={init=3}, REPUTATION={min=300,max=1000}, INFLUENCE={min=0,max=100}, MONEY={min=1000,max=2000} },
 			resources=
 				{
@@ -39,7 +39,7 @@ local GROUP_PARAMS =
 			},			
 		BIG        =
 			{
-			member={min=1,max=3},
+			member={min=1,max=3,ELDER=1},
 			assets={ LAND={init=3}, REPUTATION={min=500,max=3000}, INFLUENCE={min=0,max=100}, MONEY={min=1000,max=2000} },
 			resources=
 				{
@@ -50,7 +50,7 @@ local GROUP_PARAMS =
 			},		
 		HUGE       =
 			{
-			member={min=1,max=3},
+			member={min=1,max=3,ELDER=1},
 			assets={ LAND={init=3}, REPUTATION={min=2000,max=5000}, INFLUENCE={min=0,max=100}, MONEY={min=1000,max=2000} },
 			resources=
 				{
@@ -131,6 +131,15 @@ end
 function Group_Prepare( group )
 	local start = GROUP_PARAMS.START[group.size]
 
+	if group.location == 0 then
+		--we should find a location
+		local map = ECS_SendEvent( "MAP_COMPONENT", "Get" )
+		local index = Random_GetInt_Unsync( 1, #map.cities )
+		local city = map.cities[index]		
+		group.location = city.id
+		DBG_Trace( group.name .. " set base at " .. city.name )
+	end
+
 	--members
 	local need = Random_GetInt_Sync( start.member.min, start.member.max )
 	local needRecruit = need - #group.members
@@ -138,6 +147,22 @@ function Group_Prepare( group )
 	while needRecruit > 0 do
 		Group_RecruitMember( group )
 		needRecruit = needRecruit - 1
+	end
+
+	--rank
+	for rank, _ in pairs( FOLLOWER_RANK ) do
+		if start.member[rank] then
+			local num = start.member[rank].num
+			for _, memberid in pairs( group.members ) do				
+				follower = ECS_FindComponent( memberid, "FOLLOWER_COMPONENT" )
+				if not FOLLOWER_RANK[follower.rank] then
+					follower.rank = rank
+					DBG_Trace( ECS_FindComponent( memberid, "ROLE_COMPONENT" ).name .. " is promoted to " .. rank, "Left=" .. num )
+					num = num - 1
+					if num <= 0 then break end
+				end
+			end
+		end
 	end
 
 	--assets
@@ -331,7 +356,7 @@ end
 ---------------------------------------
 function Group_SelectMaster( group )
 	local list
-	local HighestJob
+	local HighestRank
 	local totalProb = 0
 
 	function CalcMasterProb( follower )
@@ -346,12 +371,12 @@ function Group_SelectMaster( group )
 		local role = entity:GetComponent( "ROLE_COMPONENT" )
 		if not role then DBG_Error( "No role component" ) end
 		
-		if not HighestJob or HighestJob < follower.job then
-			HighestJob = follower.job
+		if not HighestRank or HighestRank < follower.rank then
+			HighestRank = follower.rank
 			list = {}
 			totalProb  = CalcMasterProb( follower )
 			table.insert( list, { entity=entity, prob=totalProb } )
-		elseif HighestJob == follower.job then
+		elseif HighestRank == follower.rank then
 			totalProb = totalProb + CalcMasterProb( follower )
 			table.insert( list, { entity=entity, prob=totalProb } )
 		end
@@ -450,12 +475,33 @@ function Group_HoldMeeting( group )
 	--Determine affair for group
 	AI_DetermineGroupAffair( group.masterid )
 
-	--Make schedule for each one
+	--Make schedule for members by special priority
+	--  1st junior
+	--  2nd other
+	local list = {}
+	function CheckPriority( follower )
+		return follower.rank == "JUNIOR" or follower.rank == "NONE"
+	end
 	MathUtil_Foreach( group.members, function ( _, ecsid )
-		AI_DetermineSchedule( group.masterid, { target=ecsid } )
+		local follower = ECS_FindComponent( ecsid, "FOLLOWER_COMPONENT" )
+		if CheckPriority( follower ) then
+			AI_DetermineSchedule( group.masterid, { target=ecsid } )
+		end
+	end )
+	MathUtil_Foreach( group.members, function ( _, ecsid )
+		local follower = ECS_FindComponent( ecsid, "FOLLOWER_COMPONENT" )
+		if not CheckPriority( follower ) then
+			AI_DetermineSchedule( group.masterid, { target=ecsid } )
+		end
 	end )
 end
 
+---------------------------------------
+---------------------------------------
+function Group_Clear( group )
+	--clear temp status
+	group.statuses["HAS_DRILL_FOLLOWER"] = nil
+end
 
 ---------------------------------------
 ---------------------------------------
@@ -481,7 +527,8 @@ function GROUP_SYSTEM:Update( deltaTime )
 		Group_UpdateAffairs( group, deltaTime )
 		Group_SelectMaster( group )
 		Group_HoldMeeting( group )
-		Group_Attack( group )		
+		Group_Attack( group )
+		Group_Clear( group )
 	end )
 	--print( "Update group", ECS_GetNum( "GROUP_COMPONENT" ) )	
 end

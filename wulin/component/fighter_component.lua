@@ -24,6 +24,7 @@ FIGHTER_PROPERTIES =
 	--growth
 	lv         = { type="NUMBER" },
 	exp        = { type="NUMBER" },
+	knowledge  = { type="NUMBER" },
 
 	--status
 	--  valuetype: { type = FIGHTER_STATUSTYPE, effect = number, duration = number }

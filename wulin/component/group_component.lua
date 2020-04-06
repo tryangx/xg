@@ -22,22 +22,25 @@ GROUP_PROPERTIES =
 	name            = { type="STRING", },
 
 	size            = { type="STRING", default="FAMILY" },
+	location        = { type="NUMBER" },
 
 	statuses        = { type="DICT" },
 
 	members         = { type="LIST", }, --list of role entity id
 	masterid        = { type="ECSID", }, --role entity id
 
-	assets          = { type="LIST" },
-
-	resources       = { type="LIST" },
-
 	actionpts       = { type="DICT" },
 
-	membertemplates = { type="LIST" }, --list of number
+	assets          = { type="LIST" },
+	resources       = { type="LIST" },
+	books           = { type="LIST" },
 
 	constructions   = { type="LIST" },
 
+	--datatable
+	membertemplates = { type="LIST" }, --list of number	
+
+	--runtime data
 	affairs         = { type="LIST" }, 
 }
 
@@ -155,6 +158,7 @@ end
 
 
 function GROUP_COMPONENT:IncStatusValue( type, value )
+	if not value then value = 1 end	
 	self.statuses[type] = self.statuses[type] and self.statuses[type] + value or value
 	--InputUtil_Pause( self.name, "inc status", self.statuses[type], value )
 end
@@ -205,7 +209,7 @@ function GROUP_COMPONENT:ToString()
 	end
 
 	--constructions
-	content = content .. "constructions=["
+	content = content .. " constructions=["
 	for inx, id in ipairs( self.constructions ) do
 		content = content .. ( inx > 1 and "," or "" ) .. CONSTRUCTION_DATATABLE_Get( id ).name
 	end

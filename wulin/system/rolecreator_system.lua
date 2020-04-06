@@ -1,4 +1,8 @@
 ---------------------------------------
+-- Role Data
+--   
+--
+--
 ---------------------------------------
 function Role_CreateByTableData( roleTable )
 	local roleEntity, role, follower, fighter, fightertemplate
@@ -16,12 +20,16 @@ function Role_CreateByTableData( roleTable )
 
 	--Create fighter data
 	fighter = DataTable_CreateComponent( "FIGHTER_COMPONENT", roleTable )	
-	--fighter = ECS_CreateComponent( "FIGHTER_COMPONENT" )
 	roleEntity:AddComponent( fighter )
 
 	--Create fighter template data
-	fightertemplate = ECS_CreateComponent( "FIGHTERTEMPLATE_COMPONENT" )
-	roleEntity:AddComponent( fightertemplate )
+	fightertemplate = roleEntity:CreateComponent( "FIGHTERTEMPLATE_COMPONENT" )
+
+	--Create actor	
+	roleEntity:CreateComponent( "ACTOR_COMPONENT" )
+
+	--Create traveler
+	roleEntity:CreateComponent( "TRAVELER_COMPONENT" )
 
 	--Generate datas
 	if not roleTable.template then DBG_Error( "Role data needs template" ) end

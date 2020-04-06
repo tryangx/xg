@@ -6,7 +6,8 @@ require "role_datatable"
 require "roletemplate_datatable"
 require "construction_datatable"
 require "group_datatable"
-
+require "book_datatable"
+require "map_datatable"
 
 ---------------------------------------------------
 ---------------------------------------------------

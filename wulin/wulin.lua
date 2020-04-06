@@ -21,11 +21,14 @@ require "all_systems"
 ---------------------------------------------------
 ---------------------------------------------------
 --register component
+ECS_RegisterComponent( "MAP_COMPONENT",                MAP_COMPONENT,                MAP_PROPERTIES )
 ECS_RegisterComponent( "GAME_COMPONENT",               GAME_COMPONENT,               GAME_PROPERTIES )
 ECS_RegisterComponent( "DATA_COMPONENT",               DATA_COMPONENT,               DATA_PROPERTIES )
 ECS_RegisterComponent( "GROUP_COMPONENT",              GROUP_COMPONENT,              GROUP_PROPERTIES )
 ECS_RegisterComponent( "ROLE_COMPONENT",               ROLE_COMPONENT,               ROLE_PROPERTIES )
 ECS_RegisterComponent( "FOLLOWER_COMPONENT",           FOLLOWER_COMPONENT,           FOLLOWER_PROPERTIES )
+ECS_RegisterComponent( "ACTOR_COMPONENT",              ACTOR_COMPONENT,              ACTOR_PROPERTIES )
+ECS_RegisterComponent( "TRAVELER_COMPONENT",           TRAVELER_COMPONENT,           TRAVELER_PROPERTIES )
 ECS_RegisterComponent( "FIGHT_COMPONENT",              FIGHT_COMPONENT,              FIGHT_PROPERTIES )
 ECS_RegisterComponent( "FIGHTER_COMPONENT",            FIGHTER_COMPONENT,            FIGHTER_PROPERTIES )
 ECS_RegisterComponent( "FIGHTSKILL_COMPONENT",         FIGHTSKILL_COMPONENT,         FIGHTSKILL_PROPERTIES )
@@ -41,6 +44,7 @@ ECS_RegisterSystem( ROLE_SYSTEM() )
 ECS_RegisterSystem( FIGHT_SYSTEM() )
 ECS_RegisterSystem( FIGHTER_SYSTEM() )
 ECS_RegisterSystem( FIGHTSKILL_SYSTEM() )
+ECS_RegisterSystem( TRAINING_SYSTEM() )
 
 
 ---------------------------------------------------
