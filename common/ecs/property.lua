@@ -18,7 +18,6 @@ PROPERTY_TYPE =
 	--
 	LIST       = 10,	
 	DICT       = 11,
-	LIST_ECSID = 12,
 }
 
 
@@ -55,7 +54,7 @@ end
 function Prop_GetByFilter( container, name, filter )
 	if not container or not container._properties then error( "container is invalid" ) end	
 	local prop = container._properties[name]
-	if prop.type == "LIST" or prop.type == "DICT" or prop.type == "LIST_ECSID" then
+	if prop.type == "LIST" or prop.type == "DICT" then
 		for _, v in pairs( container ) do
 			if filter( v ) then
 				return v
@@ -82,8 +81,6 @@ function Prop_Set( container, name, data, id )
 	elseif prop.type == "LIST" then
 		DBG_Error( "Shouldn't use Prop_Set() for " .. prop.type )
 	elseif prop.type == "DICT" then
-		DBG_Error( "Shouldn't use Prop_Set() for " .. prop.type )
-	elseif prop.type == "LIST_ECSID" then
 		DBG_Error( "Shouldn't use Prop_Set() for " .. prop.type )
 	else
 		DBG_Error( "Unhanlde type=" .. prop.type )	
@@ -127,11 +124,11 @@ function Prop_Add( container, name, data, id )
 					container[name][id] = v
 				end
 			else
-				table.insert( container[name], data )
+				container[name][id] = data
 			end
 		else
 			container[name][id] = data
-		end
+	end
 	else
 		DBG_Error( "Unhanlde type=" .. prop.type )
 	end

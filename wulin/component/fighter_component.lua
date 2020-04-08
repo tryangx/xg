@@ -53,7 +53,7 @@ function FIGHTER_COMPONENT:Deactivate()
 end
 
 ---------------------------------------
-function FIGHTER_COMPONENT:Update()	
+function FIGHTER_COMPONENT:Update()
 end
 
 ---------------------------------------
@@ -74,4 +74,16 @@ end
 ---------------------------------------
 function FIGHTER_COMPONENT:Dump()	
 	print( self:ToString() )
+end
+
+---------------------------------------
+function FIGHTER_COMPONENT:ObtainSkill( id )
+	Prop_Add( self, "skills", id )
+	DBG_Trace( ECS_FindComponent( self.entityid, "ROLE_COMPONENT" ).name .. " obtain fightskill=" .. FIGHTSKILL_DATATABLE_Get( id ).name )
+end
+
+---------------------------------------
+function FIGHTER_COMPONENT:ObtainPassiveSkill( id )
+	Prop_Add( self, "skills", id )
+	DBG_Trace( ECS_FindComponent( self.entityid, "ROLE_COMPONENT" ).name .. " obtain skill=" .. FIGHTSKILL_DATATABLE_Get( id ).name )
 end

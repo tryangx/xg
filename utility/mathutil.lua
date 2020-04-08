@@ -60,7 +60,9 @@ function MathUtil_Clamp( value, min, max, default )
 end
 
 
+---------------------------------------------
 --only list, no dict
+---------------------------------------------
 function MathUtil_Reverse( list )
 	local newList = {}
 	for k = #list, 1, -1 do
@@ -70,6 +72,9 @@ function MathUtil_Reverse( list )
 end
 
 
+---------------------------------------------
+-- Create a shuffled number sequence from 1~length
+---------------------------------------------
 function MathUtil_CreateShuffledSequence( length )
 	local seqs = {}
 	for i = 1, length do
@@ -79,12 +84,13 @@ function MathUtil_CreateShuffledSequence( length )
 end
 
 
---[[
-	Shuffle Table
-	
-	-- @usage 
-		MathUtil_Shuffle( { 1, 3, 5 } ) -- { 3, 5, 1 }
-]]
+---------------------------------------------
+--
+--	Shuffle Table
+--	
+-- @usage 
+--   MathUtil_Shuffle( { 1, 3, 5 } ) -- { 3, 5, 1 }
+---------------------------------------------
 function MathUtil_Shuffle_Sync( source, desc )	
 	if not source then return end
 	local length = #source
@@ -139,8 +145,7 @@ function MathUtil_Foreach( source, fn )
 	end
 end
 
---[[
---]]
+
 function MathUtil_FindTableKey_Descend( source, value )
 	local findKey = nil
 	local findValue = nil

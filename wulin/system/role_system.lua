@@ -77,14 +77,24 @@ local function Role_Travel( role )
 
 end
 
+---------------------------------------
 local function Role_Drill( role )
-	ECS_GetSystem( "TRAINING_SYSTEM" ):AddPupil( role.groupid, role )
+	ECS_GetSystem( "TRAINING_SYSTEM" ):AddPupil( role.groupid, role, 1 )
 end
 
 local function Role_Teach( role )
-	ECS_GetSystem( "TRAINING_SYSTEM" ):AddTeacher( role.groupid, role )
+	ECS_GetSystem( "TRAINING_SYSTEM" ):AddTeacher( role.groupid, role, 1 )
 end
 
+local function Role_Seclude( role )
+	ECS_GetSystem( "TRAINING_SYSTEM" ):AddSeclude( role, 1 )
+end
+
+local function Role_ReadBook( role )
+	ECS_GetSystem( "TRAINING_SYSTEM" ):AddReader( role, 1 )
+end
+
+---------------------------------------
 local function Role_Scirimmage( role )
 	
 end
@@ -132,6 +142,8 @@ local function Role_Act( role )
 		Role_Teach( role )
 	elseif cmd == "SECLUDE" then
 		Role_Seclude( role )
+	elseif cmd == "READBOOK" then
+		Role_ReadBook( role )
 
 	elseif cmd == "SKIRIMMAGE" then
 		Role_Scirimmage( role )

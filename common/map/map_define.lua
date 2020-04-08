@@ -65,6 +65,34 @@ PlotAddition =
 	--]]
 }
 
+
+PLOT_WEIGHT = 
+{
+	LAND        = 10,
+	HILLS       = 40,
+	MOUNTAIN    = 100,
+	WATER       = -20,
+
+	NONE        = 0,
+	PLAINS      = 10,
+	GRASSLAND   = 10,
+	DESERT      = 50,
+	TUNDRA      = 50,
+	SNOW        = 50,
+	COAST       = 20,
+	OCEAN       = -10,
+		
+	ALL         = 0,
+	WOODS       = 10,
+	RAIN_FOREST = 20,
+	MARSH       = 30,
+	OASIS       = 0,
+	FLOOD_PLAIN = 0,
+	ICE         = 30,
+	FALLOUT     = 0,
+}
+
+
 ----------------------------------------------------------------------------------------
 --
 -- Resource Definition

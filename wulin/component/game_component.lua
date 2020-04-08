@@ -10,6 +10,8 @@ GAME_PROPERTIES =
 	curTime  = { type="NUMBER" },
 	startTime= { type="NUMBER" },
 	endTime  = { type="NUMBER", default = 1 },
+
+	rules    = { type="DICT" },
 }
 
 ---------------------------------------

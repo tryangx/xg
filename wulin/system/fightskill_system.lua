@@ -42,7 +42,8 @@ function FIGHTSKILL_SYSTEM:Create( skill, id )
 	skill.lv       = template.lv
 	skill.template = template.id
 	skill.weapon   = MathUtil_ShallowCopy( template.weapon )
-	skill.actions  = {}
+	skill.conditions = MathUtil_ShallowCopy( template.conditions )
+	skill.actions  = {}	
 	--use skill id as seed
 	Random_SetSeed_Unsync( skill.id )
 
@@ -108,7 +109,7 @@ function FIGHTSKILL_SYSTEM:Create( skill, id )
 			return "STRENGTH"
 		end
 		function GenerateComboEffects()
-
+			
 		end
 		local action = {}
 		action.attack   = GenerateValue( "atk" ) 

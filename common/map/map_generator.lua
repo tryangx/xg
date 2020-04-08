@@ -1,22 +1,57 @@
 -------------------------------------------
---   07 08 09
---  18 01 02 10
---17 06 00 03 11
---  16 05 04 12
---   15 14 13
+-- Hexagonal
+--   Offset even rows
+-- 
+-- 11 21 31 41
+--   12 22 32 42
+-- 13 23 33 43
+--   14 24 34 44
+-- 
+-- Pick 22 as center, its adjacents are:
+--   21(0,-1)
+--   31(1,-1)
+--   32(1,0)
+--   33(1,1)
+--   23(0,1)
+--   12(-1,0)
+--
+-- Pick 23 as center, its adjacents are:
+--   12(-1,-1)
+--   22(0,-1)
+--   33(1,0)
+--   24(0,1)
+--   14(-1,1)
+--   13(-1,0)
 -------------------------------------------
 PLOTADJACENTOFFSET_1 = 
 {
+	--   1   2
+	-- 6   0   3
+	--   5   4
 	{ x = -1, y = -1, distance = 1, },
 	{ x = 0,  y = -1, distance = 1, },
 	{ x = 1,  y = 0,  distance = 1, },
 	{ x = 0,  y = 1,  distance = 1, },
 	{ x = -1, y = 1,  distance = 1, },
-	{ x = -1, y = 0,  distance = 1, },	
+	{ x = -1, y = 0,  distance = 1, },
 }
+
 
 PLOTADJACENTOFFSET_2 = 
 {
+	-- xx  08  09  10  xx
+	-- 07  01  02  11
+	-- 18  06  00  03  12
+	-- 17  05  04  13
+	-- xx  16  15  14  xx
+	{ x = -1, y = -1, distance = 1, },
+	{ x = 0,  y = -1, distance = 1, },
+	{ x = 1,  y = 0,  distance = 1, },
+	{ x = 0,  y = 1,  distance = 1, },
+	{ x = -1, y = 1,  distance = 1, },
+	{ x = -1, y = 0,  distance = 1, },
+
+	{ x = -2, y = -1, distance = 2, },
 	{ x = -1, y = -2, distance = 2, },
 	{ x = 0,  y = -2, distance = 2, },
 	{ x = 1,  y = -2, distance = 2, },
@@ -26,33 +61,11 @@ PLOTADJACENTOFFSET_2 =
 	{ x = 1,  y = 2,  distance = 2, },
 	{ x = 0,  y = 2,  distance = 2, },
 	{ x = -1, y = 2,  distance = 2, },
+	{ x = -2, y = 1,  distance = 2, },
 	{ x = -2, y = 0,  distance = 2, },
-	{ x = -2, y = -1, distance = 2, },
 }
 
-PLOTADJACENTOFFSET_3 = 
-{
-	{ x = -2, y = -3, distance = 3, },
-	{ x = -1, y = -3, distance = 3, },
-	{ x = 0,  y = -3, distance = 3, },
-	{ x = 1,  y = -3, distance = 3, },	
-	{ x = 2,  y = -2, distance = 3, },
-	{ x = 2,  y = -1, distance = 3, },
-	{ x = 3,  y = 0,  distance = 3, },
-	{ x = 2,  y = 1,  distance = 3, },
-	{ x = 2,  y = 2,  distance = 3, },	
-	{ x = 1,  y = 3,  distance = 3, },
-	{ x = 0,  y = 3,  distance = 3, },
-	{ x = -1, y = 3,  distance = 3, },	
-	{ x = -2, y = 3,  distance = 3, },	
-	{ x = -2, y = 2,  distance = 3, },
-	{ x = -3, y = 1,  distance = 3, },	
-	{ x = -3, y = 0,  distance = 3, },
-	{ x = -3, y = -1, distance = 3, },
-	{ x = -2, y = -2, distance = 3, },	
-}
-
-local function Map_CreateKey( x, y )
+local function Map_GenKey( x, y )
 	return y * 10000 + x
 end
 
@@ -88,29 +101,35 @@ local function Map_AddCityToPlot( map, city )
 	plot.additions["DISTRICT"] = city.id
 
 	--find the plots belonged to the city
-	local offsets = PLOTADJACENTOFFSET_1
-	if city.lv == 2 then offsets = PLOTADJACENTOFFSET_2 end
-	local leftPlot = city.numOfPlot or 99
-	local plots = {}
-	for k, offset in ipairs( offsets ) do
-		local plot = map:GetPlot( city.x + offset.x, city.y + offset.y )
-		if plot and not plot.additions["DISTRICT"] then
-			leftPlot = leftPlot - 1
-			table.insert( plots, plot )
+	local offsets = nil
+	if city.lv == 2 then offsets = PLOTADJACENTOFFSET_1 end
+	if city.lv == 3 then offsets = PLOTADJACENTOFFSET_2 end
+	local leftPlot = city.numOfPlot or 99	
+	if offsets then
+		local plots = {}
+		for k, offset in ipairs( offsets ) do
+			local tx = city.x + offset.x
+			local ty = city.y + offset.y
+			if offset.y ~= 0 and ty % 2 == 1 then tx = tx + 1 end
+			local plot = map:GetPlot( tx, ty )
+			if plot and not plot.additions["DISTRICT"] then
+				leftPlot = leftPlot - 1
+				table.insert( plots, plot )
+			end
+			if leftPlot <= 0 then break end
 		end
-		if leftPlot <= 0 then break end
-	end
-
-	for _, cityPlot in ipairs( plots ) do
-		cityPlot.additions["DISTRICT"] = city.id
+		for _, cityPlot in ipairs( plots ) do
+			cityPlot.additions["DISTRICT"] = city.id
+		end
 	end
 
 	--InputUtil_Pause( "add city", city.x, city.y )
 	local data = {}
-	data.name = city.name
-	data.x  = city.x
-	data.y  = city.y
-	data.id = Map_CreateKey( data.x, data.y )
+	data.name  = city.name
+	data.plot  = plot
+	data.x     = city.x
+	data.y     = city.y
+	data.key   = Map_GenKey( data.x, data.y )
 	return data
 end
 
@@ -124,7 +143,7 @@ MAP_GENERATOR = class()
 
 -------------------------------------------
 function MAP_GENERATOR:GetPlot( x, y )
-	local key = Map_CreateKey( x, y )
+	local key = Map_GenKey( x, y )
 	return self.plots[key]
 end
 
@@ -137,7 +156,10 @@ end
 function MAP_GENERATOR:GetAdjoinPlots( x, y, list, fn )
 	if not list then list = {} end
 	for _, offset in ipairs( PLOTADJACENTOFFSET_1 ) do
-		local adjaPlot = self:GetPlot( x + offset.x, y + offset.y )		
+		local tx = x + offset.x
+		local ty = y + offset.y
+		if offset.y ~= 0 and ty % 2 == 1 then tx = tx + 1 end
+		local adjaPlot = self:GetPlot( tx, ty )
 		if adjaPlot and ( not fn or fn( adjaPlot ) ) then
 			table.insert( list, adjaPlot )
 		end
@@ -322,11 +344,12 @@ function MAP_GENERATOR:GeneratePlots( data )
 	for y = 1, data.height do
 		for x = 1, data.width do
 			local plot = {}
-			plot.x = x
-			plot.y = y
+			plot.id = Map_GenKey( x, y )
+			plot.x  = x
+			plot.y  = y
 			plot.additions = {}
 			Map_GeneratePlotType( plot, data.plotTypes )
-			self.plots[Map_CreateKey(x, y)] = plot			
+			self.plots[Map_GenKey(x, y)] = plot			
 		end
 	end
 
@@ -357,7 +380,8 @@ function MAP_GENERATOR:GenereateCities( data )
 	--1st, allocate plots to city
 	self.cities = {}
 	for _, city in ipairs( data.cities ) do		
-		table.insert( self.cities, Map_AddCityToPlot( self, city ) )
+		local data = Map_AddCityToPlot( self, city )
+		self.cities[city.id] = data
 	end
 
 	--2nd, todo
@@ -365,29 +389,33 @@ end
 
 
 -------------------------------------------
-function MAP_GENERATOR:Draw()
+function MAP_GENERATOR:Draw( printer )
 	local rowWidth = 3
-	local colWidth = 3
+	local colWidth = 4
 
-	local printer = function( plot )
+	local function Map_DefaultPrinter( plot )
 		local content = ""
-		content = content .. string.sub( plot.type, 1, 1 )
-		if plot.additions["DISTRICT"] then
-			content = content .. "D"
-		end
+		content = content .. string.sub( plot.type, 1, 1 )		
+		if plot.additions["DISTRICT"] then content = content .. "D" end
+		if plot.additions["ROAD"] then content = content .. "R" end		
 		return StringUtil_Abbreviate( content, colWidth )
 	end
+	if not printer then error("set printer") printer = Map_DefaultPrinter end
 
-	--row
+	--header row
 	local header = string.rep( " ", rowWidth )
 	for x = 1, self.width do
 		header = header .. StringUtil_Abbreviate( x, colWidth )
 	end
 	print( header )
 
+	--content of each row
 	for y = 1, self.height do
 		local row = StringUtil_Abbreviate( y, rowWidth )
+		if y % 2 == 0 then row = row .. string.rep( " ", 2 ) end
 		for x = 1, self.width do
+			local plot = self:GetPlot( x, y )
+			Map_DefaultPrinter( plot )
 			row = row .. printer( self:GetPlot( x, y ) )
 		end
 		print( row )

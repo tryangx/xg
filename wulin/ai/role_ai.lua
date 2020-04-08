@@ -44,7 +44,9 @@ local function MakeDecision( params )
 	_actorCmp.task = params.cmd
 
 	if params.cmd == "DRILL" then
-		if _targetGroupCmp then _targetGroupCmp:IncStatusValue( "HAS_DRILL_FOLLOWER" ) end
+		if _targetGroupCmp then _targetGroupCmp:IncTempStatusValue( "DRILL_MEMBER" ) end
+	elseif params.cmd == "READBOOK" then
+		if _targetGroupCmp then _targetGroupCmp:IncTempStatusValue( "SECLUDE_MEMBER" ) end
 	end
 	
 	if _roleCmp ~= _targetRoleCmp then
@@ -165,7 +167,7 @@ end
 
 
 local function TargetNeedTeach()
-	if not _targetGroupCmp and _targetGroupCmp:GetStatusValue( "HAS_DRILL_FOLLOWER" ) == 0 then
+	if not _targetGroupCmp and _targetGroupCmp:GetTempStatusValue( "DRILL_MEMBER" ) == 0 then
 		return false
 	end
 
@@ -176,13 +178,13 @@ end
 
 
 local function TargetNeedSeclude()
-	if Random_GetInt_Sync( 1, 100 ) < 50 then return true end
+	if Random_GetInt_Sync( 1, 100 ) < 100 then return true end
 
 	_traveler = ECS_GetComponent( _targetEntity.ecsid, "TRAVELER_COMPONENT" )
-		
+	
 	if _targetGroupCmp then
 		if _traveler.location ~= _targetGroupCmp.location then return false end
-		if _targetGroupCmp:GetNumOfConstruction( "BACKROOM" ) <= _targetGroupCmp:GetStatusValue( "HAS_SECLUDE_MEMBER" ) then return false end
+		if _targetGroupCmp:GetNumOfConstruction( "BACKROOM" ) <= _targetGroupCmp:GetTempStatusValue( "SECLUDE_MEMBER" ) then return false end
 	else
 		--in a secrect area
 		local map = ECS_SendEvent( "MAP_COMPONENT", "Get" )		
@@ -193,6 +195,20 @@ local function TargetNeedSeclude()
 		end
 	end
 
+	return false
+end
+
+
+local function TargetNeedReadBook( ... )
+	if Random_GetInt_Sync( 1, 100 ) < 100 then return true end
+
+	--has construction
+	if not _targetGroupCmp then
+		--check bags
+	else
+		if _targetRoleCmp:GetNumOfConstruction( "STUDY_ROOM" ) <= _targetGroupCmp:GetTempStatusValue( "READBOOK_MEMBER" ) then return false end
+		return true
+	end
 	return false
 end
 
@@ -220,7 +236,6 @@ local _GroupTeach =
 	}
 }
 
-
 ----------------------------------------
 local _GroupSeclude = 
 {
@@ -232,16 +247,28 @@ local _GroupSeclude =
 	}
 }
 
+----------------------------------------
+local _GroupReadBook = 
+{
+	type = "SEQUENCE", desc="group_seclude", children = 
+	{
+		{ type = "FILTER", condition = CanDo, params = { action="READBOOK" } },
+		{ type = "FILTER", condition = TargetNeedReadBook },
+		{ type = "ACTION", action = MakeDecision, params = { cmd = "READBOOK" } },
+	}
+}
 
 ----------------------------------------
 local _GroupTraining = 
 {
 	type = "SELECTOR", desc="group_Training", children = 
 	{
+	--[[
+		_GroupSeclude,
 		_GroupTeach,
 		_GroupDrill,
-		_GroupLearn,
-		_GroupSeclude,
+		--]]
+		_GroupReadBook,
 	}
 }
 
@@ -250,6 +277,8 @@ local _GroupTraining =
 ----------------------------------------
 local function TargetNeedAttendSkirimmage()
 	--at least two followr
+	if not _targetGroupCmp then return false end
+
 	if #_targetGroupCmp.members < 2 then return false end
 
 	local list = _targetGroupCmp:FindMember( function ( ecsid )		

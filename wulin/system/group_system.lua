@@ -13,6 +13,7 @@ local GROUP_PARAMS =
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
 				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
+			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 }
 			},
 		SMALL      =
@@ -24,6 +25,7 @@ local GROUP_PARAMS =
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
 				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
+			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 }
 			},
 		MID        =
@@ -35,6 +37,7 @@ local GROUP_PARAMS =
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
 				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
+			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 }
 			},			
 		BIG        =
@@ -46,6 +49,7 @@ local GROUP_PARAMS =
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
 				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
+			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 }
 			},		
 		HUGE       =
@@ -57,6 +61,7 @@ local GROUP_PARAMS =
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
 				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
+			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 }
 			},		
 	},
@@ -71,63 +76,6 @@ local GROUP_PARAMS =
 	},
 }
 
----------------------------------------
----------------------------------------
-local memberidx = 1
-function Group_AddMember( group, entity )
-	local role = entity:GetComponent( "ROLE_COMPONENT" )
-	if not role then DBG_Error( "Can't find role component, Failed to AddMember()" ) end
-
-	Prop_Add( group, "members", entity.ecsid )
-	--table.insert( group.members, entity.ecsid )
-
-	role.groupid = group.entityid
-	role.name = group.name .. role.name .. memberidx
-	memberidx = memberidx + 1
-	print( group.name .. " recruit " .. role.name )
-end
-
-
----------------------------------------
----------------------------------------
-function Group_RemoveMember( group, ecsid )	
-	if not Prop_Remove( group, "members", ecsid ) then
-		print( "remove member failed! ID=", ecsid )
-	end
-end
-
-
----------------------------------------
----------------------------------------
-function Group_CreateByTableData( groupTable )
-	local groupEntity, groupComponent
-	
-	--create root role entity
-	groupEntity = ECS_CreateEntity( "Group" )
-
-	--create role
-	group = DataTable_CreateComponent( "GROUP_COMPONENT", groupTable )
-	groupEntity:AddComponent( group )
-	
-	return groupEntity
-end
-
-
----------------------------------------
----------------------------------------
-function Group_TrainFollower()
-	-- body
-end
-
-
----------------------------------------
----------------------------------------
-function Group_EducateFollwer()
-end
-
-
----------------------------------------
----------------------------------------
 function Group_Prepare( group )
 	local start = GROUP_PARAMS.START[group.size]
 
@@ -193,6 +141,21 @@ function Group_Prepare( group )
 		end
 	end
 
+	if start.books then
+		local numOfBook = start.books.num.init or 0
+		if start.books.num.min and start.books.num.max then
+			numOfBook = Random_GetInt_Sync( start.books.num.min, start.books.num.max )
+		end
+		local leftLv = start.books.num.tot_lv
+		local pool = MathUtil_Shuffle_Sync( start.books.pool )
+		for _, id in ipairs( pool ) do
+			local book = BOOK_DATATABLE_Get( id )
+			leftLv = leftLv - book.lv
+			group:ObtainBook( id )
+			if leftLv and leftLv <= 0 then break end
+		end
+	end
+
 	--constructions
 	if start.constrs then
 		for type, num in pairs( start.constrs ) do
@@ -212,6 +175,62 @@ function Group_Prepare( group )
 
 	DBG_Trace( group.name, "Start=", group.size )
 end
+
+
+---------------------------------------
+---------------------------------------
+local memberidx = 1
+function Group_AddMember( group, entity )
+	local role = entity:GetComponent( "ROLE_COMPONENT" )
+	if not role then DBG_Error( "Can't find role component, Failed to AddMember()" ) end
+
+	Prop_Add( group, "members", entity.ecsid )
+	--table.insert( group.members, entity.ecsid )
+
+	role.groupid = group.entityid
+	role.name = group.name .. role.name .. memberidx
+	memberidx = memberidx + 1
+	print( group.name .. " recruit " .. role.name )
+end
+
+
+---------------------------------------
+---------------------------------------
+function Group_RemoveMember( group, ecsid )	
+	if not Prop_Remove( group, "members", ecsid ) then
+		print( "remove member failed! ID=", ecsid )
+	end
+end
+
+
+---------------------------------------
+---------------------------------------
+function Group_CreateByTableData( groupTable )
+	local groupEntity, groupComponent
+	
+	--create root role entity
+	groupEntity = ECS_CreateEntity( "Group" )
+
+	--create role
+	group = DataTable_CreateComponent( "GROUP_COMPONENT", groupTable )
+	groupEntity:AddComponent( group )
+	
+	return groupEntity
+end
+
+
+---------------------------------------
+---------------------------------------
+function Group_TrainFollower()
+	-- body
+end
+
+
+---------------------------------------
+---------------------------------------
+function Group_EducateFollwer()
+end
+
 
 
 ---------------------------------------
@@ -496,12 +515,6 @@ function Group_HoldMeeting( group )
 	end )
 end
 
----------------------------------------
----------------------------------------
-function Group_Clear( group )
-	--clear temp status
-	group.statuses["HAS_DRILL_FOLLOWER"] = nil
-end
 
 ---------------------------------------
 ---------------------------------------
@@ -523,12 +536,12 @@ function GROUP_SYSTEM:Update( deltaTime )
 	local sys = self
 	ECS_Foreach( "GROUP_COMPONENT", function ( group )
 		print( "[GROUP]" .. group.name .. " action......" )
+		group:Update()
 		Group_UpdateActionPoints( group )
 		Group_UpdateAffairs( group, deltaTime )
 		Group_SelectMaster( group )
 		Group_HoldMeeting( group )
 		Group_Attack( group )
-		Group_Clear( group )
 	end )
 	--print( "Update group", ECS_GetNum( "GROUP_COMPONENT" ) )	
 end

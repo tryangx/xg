@@ -24,7 +24,7 @@ GROUP_PROPERTIES =
 	size            = { type="STRING", default="FAMILY" },
 	location        = { type="NUMBER" },
 
-	statuses        = { type="DICT" },
+	statuses        = { type="DICT" },	
 
 	members         = { type="LIST", }, --list of role entity id
 	masterid        = { type="ECSID", }, --role entity id
@@ -47,11 +47,12 @@ GROUP_PROPERTIES =
 ---------------------------------------
 function GROUP_COMPONENT:__init()
 	self._attrs = {}
+	self._tempStatuses = {}
 end
 
 
 ---------------------------------------
-function GROUP_COMPONENT:Activate()	
+function GROUP_COMPONENT:Activate()
 end
 
 
@@ -62,7 +63,7 @@ end
 
 ---------------------------------------
 function GROUP_COMPONENT:Update()
-
+	self._tempStatuses = {}
 end
 
 ---------------------------------------
@@ -137,15 +138,32 @@ function GROUP_COMPONENT:UseResources( type, value )
 end
 
 ---------------------------------------
-function GROUP_COMPONENT:CompleteConstruction( id )
-	table.insert( self.constructions, id )
+function GROUP_COMPONENT:ObtainBook( id )
+	Prop_Add( self, "books", id )
+	DBG_Trace( self.name .. " obtain book=" .. BOOK_DATATABLE_Get( id ).name )
 end
 
+---------------------------------------
+function GROUP_COMPONENT:CompleteConstruction( id )
+	Prop_Add( self, "constructions", id )
+	DBG_Trace( self.name .. " complete construction=" .. CONSTRUCTION_DATATABLE_Get( id ).name )
+end
 
 function GROUP_COMPONENT:DestroyConstruction( id )
-	MathUtil_Remove( self.constructions, id )
+	--MathUtil_Remove( self.constructions, id )
+	--not pass test
+	Prop_Remove( self, "constructions", id )
+	DBG_Trace( self.name .. " destroy construction=" .. CONSTRUCTION_DATATABLE_Get( id ).name )
 end
 
+---------------------------------------
+function GROUP_COMPONENT:GetTempStatusValue( type )
+	return self._tempStatuses[type] or 0
+end
+
+function GROUP_COMPONENT:IncTempStatusValue( type )
+	return self._tempStatuses[type] or 0
+end
 
 ---------------------------------------
 --

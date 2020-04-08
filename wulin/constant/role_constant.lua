@@ -42,6 +42,10 @@ ROLE_MENTAL =
 
 ROLE_TRAITS = 
 {
+	IQ              = 10,
+	EQ              = 11,
+	AQ              = 12,
+
 	--social
 	FRIENDLY        = 100,
 	LONELY          = 101,
@@ -56,32 +60,31 @@ ROLE_TRAITS =
 ROLE_COMMONSKILL = 
 {
 	--Master	
-	MANAGEMENT  = 20,
-	STRATEGIC   = 30,  --Increase strategic points
-	TACTIC      = 40,  --Increase tactic points
+	MANAGEMENT  = 10,
+	STRATEGIC   = 20,  --Increase strategic points
+	TACTIC      = 30,  --Increase tactic points
 
 	--Survive
 	COLLLECTING = 100,
-	FISHER      = 100,
-	FARMER      = 100,
-	MINER       = 100,
-	BLACKSMITH  = 100,
-	TOOLMAKER   = 100,
-	BUILDER     = 100,
-	TAILOR      = 100,
-	CARPENTER   = 100,
-	HERDSMAN    = 100,
-	STOCKMAN    = 100,
-	GROWER      = 100,
-	MEDIC       = 100,
-	APOTHECARIES= 100,
+	FISHER      = 110,
+	FARMER      = 120,
+	MINER       = 130,
+	BLACKSMITH  = 140,
+	TOOLMAKER   = 150,
+	BUILDER     = 160,
+	TAILOR      = 170,
+	CARPENTER   = 180,
+	HERDSMAN    = 190,
+	STOCKMAN    = 200,
+	GROWER      = 210,
+	MEDIC       = 220,
+	APOTHECARIES= 230,
 
-	LEADERSHIP  = 200,  --Increase Management points
-	TEACHER     = 201,
-
-	LOBBYIST    = 300, --Works when as a envy to negotiate to a strong group for a weak group
-	NEGOTIATION = 301, --Works when as a envy to negotiate to a weak group for a strong group 
-	CHEATER     = 302, --Workds when as a envy to negotiate to non-group target
+	LEADERSHIP  = 400,  --Increase Management points
+	TEACHER     = 410,
+	LOBBYIST    = 420, --Works when as a envy to negotiate to a strong group for a weak group
+	NEGOTIATION = 430, --Works when as a envy to negotiate to a weak group for a strong group 
+	CHEATER     = 440, --Workds when as a envy to negotiate to non-group target
 }
 
 
@@ -102,6 +105,7 @@ ROLE_COMMAND =
 	DRILL       = 20,  --All together
 	TEACH       = 21,  --elder, master, senior
 	SECLUDE     = 22,  --elder, master
+	READBOOK    = 23,
 
 	SKRIMMAGE   = 30,  --interior dule
 	CHAMPIONSHIP= 31,  --all group union dules

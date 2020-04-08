@@ -1,0 +1,6 @@
+PASSIVESKILL_TYPE = 
+{
+	RESIDENT = 0,
+	
+	MOVEMENT = 1,
+}

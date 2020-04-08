@@ -23,7 +23,7 @@ ROLE_PROPERTIES =
 
 	--common skill
 	--{ {type=ROLE_COMMONSKILL, value=evaluation} }
-	commonSkills = { type="LIST" },
+	commonSkills = { type="DICT" },
 }
 
 ---------------------------------------
@@ -54,6 +54,11 @@ function ROLE_COMPONENT:IsMatch( params )
 	end
 end
 
+---------------------------------------
+function ROLE_COMPONENT:ObtainCommonSkill( book )
+	Prop_Add( self, "commonSkills", book.lv, book.commonskill )
+	DBG_Trace( self.name .. " obtain commonskill=" .. book.name .. " lv=" .. Prop_Get( self, "commonSkills" )[book.commonskill] .. "+" .. book.lv )
+end
 
 ---------------------------------------
 -- @return default as 0

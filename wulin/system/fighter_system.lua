@@ -68,7 +68,7 @@ function FIGHTER_SYSTEM:Generate( fighter, fightertemplate, id )
 		lv = Random_GetInt_Sync( traits.init_lv or 1, fightertemplate.potential )
 	end
 	--test
-	--lv = 75
+	lv = 20
 
 	--initialize fighter's attributes
 	self:LevelUp( fighter, fightertemplate, lv )
@@ -85,15 +85,13 @@ function FIGHTER_SYSTEM:Generate( fighter, fightertemplate, id )
 				local num = #pool
 				if num > 0 then
 					local id = pool[Random_GetInt_Sync( 1, #pool )]
-					table.insert( fighter.skills, id )
-					--print( "add skill",id )
+					fighter:ObtainSkill( id )
 				end
 			else
 				--add all
 				if typeof(pool) == "table" then
 					for _, id in ipairs( pool ) do
-						table.insert( fighter.skills, id )
-						--print( "add skill",id )
+						fighter:ObtainSkill( id )
 					end
 				else
 					--print( template.name, pool, string.len( pool ))
@@ -121,6 +119,9 @@ function FIGHTER_SYSTEM:Generate( fighter, fightertemplate, id )
 	fighter.hp = fighter.maxhp
 	fighter.mp = fighter.maxmp
 	fighter.st = fighter.maxst
+
+	fighter.knowledge = 1000
+	fighter.exp       = 50
 
 	--fighter:Dump() 	Dump( template ) 	InputUtil_Pause()
 end
