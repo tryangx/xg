@@ -27,7 +27,7 @@ ECS_RegisterComponent( "DATA_COMPONENT",               DATA_COMPONENT,          
 ECS_RegisterComponent( "GROUP_COMPONENT",              GROUP_COMPONENT,              GROUP_PROPERTIES )
 ECS_RegisterComponent( "ROLE_COMPONENT",               ROLE_COMPONENT,               ROLE_PROPERTIES )
 ECS_RegisterComponent( "FOLLOWER_COMPONENT",           FOLLOWER_COMPONENT,           FOLLOWER_PROPERTIES )
-ECS_RegisterComponent( "ACTOR_COMPONENT",              ACTOR_COMPONENT,              ACTOR_PROPERTIES )
+ECS_RegisterComponent( "TASK_COMPONENT",               TASK_COMPONENT,               TASK_PROPERTIES )
 ECS_RegisterComponent( "TRAVELER_COMPONENT",           TRAVELER_COMPONENT,           TRAVELER_PROPERTIES )
 ECS_RegisterComponent( "FIGHT_COMPONENT",              FIGHT_COMPONENT,              FIGHT_PROPERTIES )
 ECS_RegisterComponent( "FIGHTER_COMPONENT",            FIGHTER_COMPONENT,            FIGHTER_PROPERTIES )
@@ -58,7 +58,7 @@ function run()
 
 	--ECS_DumpSystem()
 
-	--Stat_Dump( StatType.LIST )
+	Stat_Dump( StatType.LIST )
 end
 
 ---------------------------------------------------

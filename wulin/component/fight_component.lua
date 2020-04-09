@@ -21,6 +21,7 @@ FIGHT_PROPERTIES =
 	reds       = { type="LIST" },--store the entity id of fighter
 	blues      = { type="LIST" },--store the entity id of fighter
 	result     = { type="STRING", default="NONE" },
+	rules      = { type="DICT" },
 
 	remainTime = { type="NUMBER", default=100 },
 }
@@ -83,13 +84,32 @@ end
 
 ---------------------------------------
 function FIGHT_COMPONENT:ToString()
-	local content = ""
+	local content = "FIGHT BETWEEN"
 	local atk = ECS_FindEntity( self.redgroupid )
 	local def = ECS_FindEntity( self.bluegroupid )
-	content = content .. "FIGHT BETWEEN [" .. atk:GetComponent( "GROUP_COMPONENT" ).name .."] VS [".. def:GetComponent( "GROUP_COMPONENT" ).name .. "]"
+	if atk then
+		content = content .. "[" .. atk:GetComponent( "GROUP_COMPONENT" ).name .."]"		
+	end
+	for _, role in ipairs( self.reds ) do
+		content = content .. " " .. ECS_FindComponent( role, "ROLE_COMPONENT" ).name
+	end
+	content = content .. " VS "
+	if def then
+		content = content .. "[".. def:GetComponent( "GROUP_COMPONENT" ).name .. "]"
+	end
+	for _, role in ipairs( self.blues ) do
+		content = content .. " " .. ECS_FindComponent( role, "ROLE_COMPONENT" ).name
+	end
 	return content
 end
 
+
 function FIGHT_COMPONENT:Dump()
 	print( self:ToString() )
+end
+
+---------------------------------------
+function FIGHT_COMPONENT:InitTestFight()
+	self.rules["NO_DEAD"]   = 1
+	self.rules["TESTFIGHT"] = 1
 end

@@ -92,6 +92,9 @@ ROLE_STATUS =
 {
 	BUSY        = 1,
 	OUTING      = 2,
+
+	TESTFIGHT_INTERVAL = 100,
+	TESTFIGHT_APPLY    = 101,
 }
 
 
@@ -108,7 +111,10 @@ ROLE_COMMAND =
 	READBOOK    = 23,
 
 	SKRIMMAGE   = 30,  --interior dule
-	CHAMPIONSHIP= 31,  --all group union dules
+	TESTFIGHT   = 31,  --elder vs follower
+	TESTFIGHT_OFFICER = 32,
+
+	CHAMPIONSHIP= 40,  --all group union dules
 
 	PRODUCE     = 100,
 }

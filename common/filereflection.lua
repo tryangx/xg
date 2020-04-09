@@ -131,11 +131,11 @@ function FileReflection:ImportData( data, name )
 	elseif data.ecstype == "ECSENTITY" then		
 		ecsproperties = ECSPROPERTIES
 		properties    = ECSENTITYPROPERTIES
-		object        = ECS_CreateEntity( "ECSENTITY", "UNKNOWN" )
+		object        = ECS_CreateEntity( "ECSENTITY" )
 		debugmsg( "creat entity", object )
 	elseif data.ecstype == "ECSCOMPONENT" then
 		ecsproperties = ECSCOMPONENTPROPERTIES
-		object        = ECS_CreateComponent( data.ecsname, "UNKNOWN" )
+		object        = ECS_CreateComponent( data.ecsname )
 		debugmsg( "creat component", object )
 	end
 	

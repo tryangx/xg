@@ -31,13 +31,16 @@ function FIGHT_SYSTEM:Update( deltaTime )
 		--clear the under attack status
 		local entity = ECS_FindEntity( ecsid )
 		local fight = entity:GetComponent( "FIGHT_COMPONENT" )
-		local groupentity = ECS_FindEntity( fight.bluegroupid )		
-		local group = groupentity:GetComponent( "GROUP_COMPONENT" )
-		group:DecStatusValue( "UNDER_ATTACK", 1 )
-
+		local groupentity = ECS_FindEntity( fight.bluegroupid )
+		if groupentity then
+			local group = groupentity:GetComponent( "GROUP_COMPONENT" )
+			group:DecStatusValue( "UNDER_ATTACK", 1 )
+		end
 		ECS_DestroyEntity( entity )
 
 		Log_Write( "fight", "fight removed id=" .. ecsid )
+
+		--InputUtil_Pause( "End Fight" )
 
 		return true
 	end)

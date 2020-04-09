@@ -10,7 +10,7 @@ local ROLETEMPLATE_DATATABLE =
 	},
 	[3] =
 	{
-		name    = "丐帮",
+		name    = "",
 	},
 }
 

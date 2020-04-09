@@ -15,7 +15,7 @@ function Role_CreateByTableData( roleTable )
 	roleEntity:AddComponent( role )
 
 	--Create follower data
-	follower = DataTable_CreateComponent( "FOLLOWER_COMPONENT", roleTable )
+	follower = DataTable_CreateComponent( "FOLLOWER_COMPONENT", roleTable )	
 	roleEntity:AddComponent( follower )
 
 	--Create fighter data
@@ -25,8 +25,8 @@ function Role_CreateByTableData( roleTable )
 	--Create fighter template data
 	fightertemplate = roleEntity:CreateComponent( "FIGHTERTEMPLATE_COMPONENT" )
 
-	--Create actor	
-	roleEntity:CreateComponent( "ACTOR_COMPONENT" )
+	--Create task
+	roleEntity:CreateComponent( "TASK_COMPONENT" )
 
 	--Create traveler
 	roleEntity:CreateComponent( "TRAVELER_COMPONENT" )

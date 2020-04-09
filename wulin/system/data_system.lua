@@ -1,3 +1,10 @@
+DATA_TYPE = 
+{
+	GROUP_DATA  = 1,
+	ROLE_DATA   = 2,
+	FIGHT_DATA  = 3,
+	GAME_DATA   = 4,	
+}
 ---------------------------------------------------
 ---------------------------------------------------
 local _dataRoots = {}
@@ -119,7 +126,7 @@ function Data_AddEntity( type, entity )
 	local root = _dataRoots[type]
 	if not root then DBG_Error( "Data root isn't initialized! Type=" .. type ) return end
 	root:AddChild( entity )
-	DBG_TraceBug( "[DATA]Type=" .. type, "add new entity", entity.ecsid )
+	DBG_Trace( "[DATA]Type=" .. type, "add new entity", entity.ecsid )
 end
 
 
@@ -127,7 +134,7 @@ function Data_RemoveEntity( type, entity )
 	local root = _dataRoots[type]
 	if not root then DBG_Error( "Data root isn't initialized! Type=" .. type ) return end
 	root:RemoveChild( entity )
-	DBG_TraceBug( "[DATA]Type=" .. type, "remove an entity", entity.ecsid )
+	DBG_Trace( "[DATA]Type=" .. type, "remove an entity", entity.ecsid )
 end
 
 

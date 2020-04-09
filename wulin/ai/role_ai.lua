@@ -30,23 +30,27 @@ local function CanDo( params )
 	local _follower = _targetEntity:GetComponent( "FOLLOWER_COMPONENT" )
 	local abilities = FOLLOWER_RANK_ABILITY[_follower.rank]
 	if not abilities then return false end
-	print( "check", _roleCmp.name, _targetRoleCmp.name )
 	return abilities[params.action] == 1
 end
 
 
 local function MakeDecision( params )
-	Stat_Add( "MakeDecidsion", params.cmd, StatType.LIST )	
+	Stat_Add( "MakeDecidsion", params.cmd, StatType.TIMES )
 
 	_decision = { type = params.cmd }	
 
-	_actorCmp = ECS_GetComponent( _targetEntity.ecsid, "ACTOR_COMPONENT" )
-	_actorCmp.task = params.cmd
+	_taskCmp = ECS_GetComponent( _targetEntity.ecsid, "TASK_COMPONENT" )
+	_taskCmp.task = params.cmd
 
 	if params.cmd == "DRILL" then
 		if _targetGroupCmp then _targetGroupCmp:IncTempStatusValue( "DRILL_MEMBER" ) end
 	elseif params.cmd == "READBOOK" then
 		if _targetGroupCmp then _targetGroupCmp:IncTempStatusValue( "SECLUDE_MEMBER" ) end
+	elseif params.cmd == "TESTFIGHT" then
+		_targetGroupCmp:IncTempStatusValue( "TESTFIGHT_MEMBER" )		
+	elseif params.cmd == "TESTFIGHT_OFFICER" then
+		_targetGroupCmp:IncTempStatusValue( "TESTFIGHT_MEMBER" )
+		InputUtil_Pause( "TESTFIGHT_OFFICER" )
 	end
 	
 	if _roleCmp ~= _targetRoleCmp then
@@ -167,7 +171,7 @@ end
 
 
 local function TargetNeedTeach()
-	if not _targetGroupCmp and _targetGroupCmp:GetTempStatusValue( "DRILL_MEMBER" ) == 0 then
+	if not _targetGroupCmp or _targetGroupCmp:GetTempStatusValue( "DRILL_MEMBER" ) == 0 then
 		return false
 	end
 
@@ -263,11 +267,9 @@ local _GroupTraining =
 {
 	type = "SELECTOR", desc="group_Training", children = 
 	{
-	--[[
 		_GroupSeclude,
 		_GroupTeach,
 		_GroupDrill,
-		--]]
 		_GroupReadBook,
 	}
 }
@@ -281,14 +283,37 @@ local function TargetNeedAttendSkirimmage()
 
 	if #_targetGroupCmp.members < 2 then return false end
 
-	local list = _targetGroupCmp:FindMember( function ( ecsid )		
-
-		return Role_IsMatch( ecsid, { status_excludes={ "BUSY", "OUTING" } } )
+	local list = _targetGroupCmp:FindMember( function ( ecsid )
+		return Role_MatchStatus( ecsid, { status_excludes={ "BUSY", "OUTING" } } )
 	end)
 
-	if #list < 2 then return end	
+	if #list < 2 then return false end
 
 	return false
+end
+
+
+local function TargetNeedTestFight()
+	if not _targetGroupCmp then return false end
+	
+	--Need testfight
+	--if _targetRoleCmp:GetStatusValue( "TESTFIGHT_INTERVAL" ) < 1 then return false end
+
+	--Wheter his master is idle
+	local _follower = ECS_FindComponent( _targetEntity.ecsid, "FOLLOWER_COMPONENT" )
+	if not _follower.masterid then return false end
+
+	local master = ECS_FindComponent( _follower.masterid, "ROLE_COMPONENT" )
+	--check deads for debug
+	if not master then
+		--if DBG_FindData( _follower.masterid ) then error( "Find in debugger data" ) end
+		return
+	end
+	if not master:MatchStatus( { status_excludes={ "BUSY", "OUTING" } } ) then return false end
+
+	master:IncStatusValue( "TESTFIGHT_APPLY", 1 )
+
+	return true
 end
 
 
@@ -302,7 +327,16 @@ local _GroupSkirimmage =
 	type = "SEQUENCE", desc="group_skirimmage", children = 
 	{
 		{ type = "FILTER", condition = TargetNeedAttendSkirimmage },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "SECLUDE" } },
+		{ type = "ACTION", action = MakeDecision, params = { cmd = "SKIRIMMAGE" } },
+	}
+}
+
+local _GroupTestFight = 
+{
+	type = "SEQUENCE", desc="group_championship", children = 
+	{
+		{ type = "FILTER", condition = TargetNeedTestFight },
+		{ type = "ACTION", action = MakeDecision, params = { cmd = "TESTFIGHT" } },
 	}
 }
 
@@ -312,7 +346,7 @@ local _GroupChampionship =
 	type = "SEQUENCE", desc="group_championship", children = 
 	{
 		{ type = "FILTER", condition = TargetNeedAttendChamiponship },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "SECLUDE" } },
+		{ type = "ACTION", action = MakeDecision, params = { cmd = "CHAMPIONSHIP" } },
 	}
 }
 
@@ -322,15 +356,47 @@ local _GroupFight =
 	type = "SELECTOR", desc="group_fight", children = 
 	{
 		_GroupSkirimmage,
+		_GroupTestFight,
 		_GroupChampionship,
 	}
 }
 
+----------------------------------------
+----------------------------------------
+local function TargetCanBeTESTFIGHT_OFFICER()
+	if not _roleGroupCmp then return false end
+
+	error( "2" )
+
+	if _targetRoleCmp:GetStatusValue( "TESTFIGHT_APPLY" ) then
+		return true
+	end
+	
+	return false
+end
+
+
+local _GroupTestFightOfficer =
+{
+	type = "SEQUENCE", desc="test_officer", children = 
+	{
+		{ type = "FILTER", condition = TargetCanBeTESTFIGHT_OFFICER },
+		{ type = "ACTION", action = MakeDecision, params = { cmd = "TESTFIGHT_OFFICER" } },
+	}
+}
+
+
+local _GroupDuty = 
+{
+	type = "SELECTOR", desc="group_elder", children = 
+	{
+		--teach/testfight
+		_GroupTestFightOfficer,
+	}
+}
 
 ----------------------------------------
 ----------------------------------------
-
-
 local _GroupCollect =
 {
 	type = "SEQUENCE", desc="group_collect", children = 
@@ -610,9 +676,10 @@ local GroupAffair =
 {
 	type = "SELECTOR", desc = "scheudle_arrangement", children = 
 	{
-		--_GroupBuildConstruction,
+		_GroupBuildConstruction,
 		_GroupUpgradeConstruction,
 		_GroupDestroyConstruction,
+		_GroupApprenticed,
 	}
 }
 _groupAffairTree = BehaviorNode( true )
@@ -625,6 +692,10 @@ local ScheduleArrangement =
 	--find the right one
 	type = "SELECTOR", desc = "scheudle_arrangement", children = 
 	{
+		--test slot
+		_GroupFight,
+
+		--normal priority
 		_PersonalHealthy,
 		_GroupTraining,
 		_GroupFight,
@@ -643,6 +714,7 @@ local DetermineAction =
 	type = "SELECTOR", desc = "scheudle_arrangement", children = 
 	{
 		_PersonalHealthy,
+		_GroupDuty,
 		_GroupTraining,
 		_GroupFight,
 		_GroupProduce,
@@ -657,7 +729,16 @@ _actionTree:BuildTree( DetermineAction )
 local function InitBehavior( role_ecsid, params )
 	_roleEntity   = ECS_FindEntity( role_ecsid )
 
-	if not _roleEntity then print( "[AI]Role ecsid is invalid! ID=", role_ecsid ) error("") return end
+	if not _roleEntity then
+		--check deads for debug
+		if DBG_FindData( role_ecsid ) then
+			print( "Find in debugger data" )
+		else
+			print( "[AI]Role ecsid is invalid! ID=", role_ecsid )
+			error("")
+		end
+		return
+	end
 
 	if params and params.target then
 		_targetEntity = ECS_FindEntity( params.target )

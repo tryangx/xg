@@ -25,70 +25,8 @@
 --     means attack( 100% damage, 50% block ), defend( 50% damage, 100% block, special effect )
 --
 ------------------------------------------------------------------------------
-FightFormation = 
-{
-	
-}
+local _fight
 
-
-FIGHT_SIDE = 
-{
-	NONE = 0,
-	RED  = 1,
-	BLUE = 2,
-}
---   Role will action after its action point is enough
---   
-
-FIGHT_ACTIONTIME = 
-{
-	DEFAULT  = 1000,
-	USESKILL = 3000,
-	REST     = 5000,
-	DEFEND   = 5000,
-}
-
-
-FIGHT_SKILLPOSE = 
-{
-	NONE   = { NONE={}, UPPER={ atk=-10 }, CENTER={ hit=10 },  LOWER={ def=10 },  ALL={} },
-	UPPER  = { NONE={}, UPPER={ atk=-10 }, CENTER={ hit=10 },  LOWER={ def=10 },  ALL={} },
-	CENTER = { NONE={}, UPPER={ def=10 },  CENTER={ atk=-10 }, LOWER={ hit=10 },  ALL={} },
-	LOWER  = { NONE={}, UPPER={ hit=10 },  CENTER={ def=10 },  LOWER={ atk=-10 }, ALL={} },
-	ALL    = { NONE={}, UPPER={ hit=10 },  CENTER={ hit=10 },  LOWER={ hit=10 },  ALL={} },
-}
-
-
-FIGHT_TARGET =
-{
-	SELF          = 0,
-	TARGET        = 1,
-	SINGLE_ENEMY  = 10,
-	ALL_ENEMIES   = 11,	
-	SINGLE_FRIEND = 20,
-	ALL_FRIENDS   = 21,
-	ALL           = 30,
-	SINGLE_ALL    = 31,
-}
-
-
-FIGHT_RULE = 
-{
-	ENABLE_SAVEPONIT = 1,
-	ENABLE_CRITICAL  = 1,	
-}
-
-
-FIGHT_PARAMS = 
-{
-	DEFEND_COST_RATE    = 0.25,
-
-	DAMAGE_RATE         = 100,
-}
-
----------------------------------------
--- Helper
----------------------------------------
 local function Fight_ForeachRole( teams, fn, ... )
 	for _, actor in ipairs( teams ) do
 		fn ( actor, ... )
@@ -130,9 +68,12 @@ end
 
 
 ---------------------------------------
-local function Fight_IsRoleAlive( role )
+local function Fight_IsRoleAlive( actor )
 	if not role then return false end
-	return actor.fighter.hp > 0
+	if not _fight.rules["TESTFIGHT"] then
+		return actor.fighter.hp > 0
+	end
+	return actor.fighter.hp > actor.fighter.maxhp * 0.5
 end	
 
 
@@ -292,7 +233,6 @@ local function Fight_RoleRest( actor )
 
 	Fight_UsePassiveSkill( actor, passiveSkill )
 
-	--role.fighter.hp = math.max( role.fighter.hp, math.min( math.ceil( maxhp * 0.5 ), role.fighter.hp + math.ceil( maxhp * 0.05 ) ) )
 	if passiveSkill.restAction.st then
 		local maxst = math.ceil( actor.fighter.maxst * ( passiveSkill.restAction.st.max or 1 ) )
 		local value = passiveSkill.restAction.st.value or 0
@@ -382,7 +322,7 @@ end
 
 
 ---------------------------------------
-local function Fight_CanFight_TriggerSkillBuff( actor, skill )	
+local function Fight_CanTriggerSkillBuff( actor, skill )	
 	if not skill.statuses then return end
 	for _, comboeffect in ipairs( skill.comboeffects ) do
 		local match = true
@@ -605,7 +545,7 @@ local function Fight_ProcessDuel( atk, def )
 			end
 
 			--buff/debuff
-			local comboeffect = Fight_CanFight_TriggerSkillBuff( atk, atk.fighter._usingSkill )
+			local comboeffect = Fight_CanTriggerSkillBuff( atk, atk.fighter._usingSkill )
 			if comboeffect then Fight_TriggerSkillBuff( atk, def, comboeffect ) end
 
 			--damage
@@ -698,8 +638,10 @@ end
 
 
 ---------------------------------------
-function Fight_Process( fight )
+function Fight_Process( fight )	
 	if fight.result ~= "NONE" then return true end
+
+	_fight = fight
 		
 	local result = FIGHT_SIDE.NONE
 
@@ -821,15 +763,20 @@ function Fight_Process( fight )
 		if passTime > maxTime then break end
 	end
 
-	function FightEnd( role )
+	function FightEnd( actor )
 		--Fight_RoleDump( role, { "ATTRS", "STATS" } )
-		if Fight_IsRoleAlive( role ) then return end
-		--dead
-		Fight_RoleDead( role.fighter.entityid )
+		if Fight_IsRoleAlive( actor ) then return end
+
+		if not fight.rules["NO_DEAD"] then
+			--dead
+			Role_Dead( actor.fighter.entityid )
+		end
 	end
+
+	print( "Fight End", fight:ToString() )
 
 	Fight_ForeachRole( fight._reds,  FightEnd );
 	Fight_ForeachRole( fight._blues, FightEnd );
 
-	print( "Fight End", fight:ToString() )
+	_fight = nil
 end

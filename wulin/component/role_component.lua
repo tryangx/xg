@@ -21,6 +21,8 @@ ROLE_PROPERTIES =
 
 	traits     = { type="LIST" },
 
+	bags       = { type="LIST" },
+
 	--common skill
 	--{ {type=ROLE_COMMONSKILL, value=evaluation} }
 	commonSkills = { type="DICT" },
@@ -33,26 +35,53 @@ end
 
 ---------------------------------------
 function ROLE_COMPONENT:Update()
-
 end
 
 ---------------------------------------
 ---------------------------------------
-function ROLE_COMPONENT:IsMatch( params )
+function ROLE_COMPONENT:MatchStatus( params )
 	if params.status_includes then
-		for _, status in pairs( status_includes ) do
+		for _, status in pairs( params.status_includes ) do
 			local ret = self.statuses[status]
 			if not ret or ret == 0 then return false end
 		end
 	end
 
-	if params.status_includes then
-		for _, status in pairs( status_excludes ) do
+	if params.status_excludes then		
+		for _, status in pairs( params.status_excludes ) do
 			local ret = self.statuses[status]
 			if ret and ret ~= 0 then return false end
 		end
 	end
+	
+	return true
 end
+
+function ROLE_COMPONENT:SetStatusValue( type, value )
+	if not self.statuses then return end
+	self.statuses[type] = value
+end
+
+function ROLE_COMPONENT:IncStatusValue( type, value )
+	if not self.statuses then return end
+	self.statuses[type] = self.statuses[type] and self.statuses[type] + value or value
+end
+
+function ROLE_COMPONENT:GetStatusValue( type )
+	return self.statuses[type] or 0
+end
+
+---------------------------------------
+function ROLE_COMPONENT:AppendBag( item )
+	Prop_Add( self, "bags", item )
+end
+
+
+---------------------------------------
+function ROLE_COMPONENT:RemoveBag( bag )
+	Prop_Remove( self, "bags", item )
+end
+
 
 ---------------------------------------
 function ROLE_COMPONENT:ObtainCommonSkill( book )
@@ -76,26 +105,20 @@ end
 
 
 ---------------------------------------
-function ROLE_COMPONENT:SetStatus( statuses)
-	if not self.statuses then return end
-	for status, value in pairs( statuses ) do
-		--print( role.name, "status=" .. status, "value=" .. value )
-		role.statuses[status] = value
-	end
-end
-
-
----------------------------------------
 function ROLE_COMPONENT:ToString()
 	local content = ""
 	content = content .. "[" .. self.name .. "]"
 	content = content .. " " .. "Age=" .. self.age
+	
 	if self.groupid then
 		local entity = ECS_FindEntity( self.groupid )
-		if entity then
-			content = content .. " " .. "group=" .. entity:GetComponent( "GROUP_COMPONENT" ).name
-		end
+		if entity then content = content .. " " .. "group=" .. entity:GetComponent( "GROUP_COMPONENT" ).name end
 	end
+
+	for type, value in pairs(self.statuses) do
+		content = content ..  " " .. type .. "=" .. value
+	end
+
 	return content
 end
 

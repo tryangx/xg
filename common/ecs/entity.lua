@@ -43,13 +43,15 @@ end
 --
 ---------------------------------------
 function ECSEntity:AddChild( entity )
-	if entity.parentid then
-		DBG_Error( "Entity already has parent" )
-		return
-	end
+	if entity.parentid then DBG_Error( "Entity already has parent" ) return end
+	if not ECS_IsEntity( entity ) then DBG_Error( "Add invalid entity" ) return end
 	entity.parentid = self.ecsid
 	Prop_Add( self, "children", entity )
 	--print( entity.ecsid, "set parent=", self.ecsid )
+
+	if self.status == ECSSTATUS.ACTIVATED then
+		entity:Activate()
+	end
 end
 
 
@@ -147,7 +149,7 @@ function ECSEntity:Activate()
 		component.entityid = entity.ecsid
 		component.parent   = entity
 		--print( "Activate component", component.ecsname )
-		if component.Activate then component:Activate() end		
+		if component.Activate then component:Activate() end
 		component.status = ECSSTATUS.ACTIVATED
 	end)
 	Prop_Foreach( self, "children", function ( child )
@@ -166,7 +168,7 @@ function ECSEntity:Deactivate()
 		component.status = ECSSTATUS.DEACTIVATED
 	end )
 	Prop_Foreach( self, "children", function ( child )
-		child:Activate()
+		child:Deactivate()
 	end)
 	self.status = ECSSTATUS.DEACTIVATED
 end

@@ -178,3 +178,13 @@ function Log_Write( type, content, single )
 end
 
 -----------------------------------
+_debugDataList = {}
+function DBG_AddData( data )
+	table.insert( _debugDataList, data )
+end
+
+function DBG_FindData( value )
+	for _, data in ipairs( _debugDataList ) do
+		if value == data then return true end
+	end	
+end

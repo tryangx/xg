@@ -1,9 +1,9 @@
 ---------------------------------------
 ---------------------------------------
-ACTOR_COMPONENT = class()
+TASK_COMPONENT = class()
 
 ---------------------------------------
-ACTOR_PROPERTIES = 
+TASK_PROPERTIES = 
 {
 	task        = { type="STRING" },
 }

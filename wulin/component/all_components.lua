@@ -1,6 +1,6 @@
 require "fight_component"
 require "role_component"
-require "actor_component"
+require "task_component"
 require "traveler_component"
 require "fighter_component"
 require "fightskill_component"

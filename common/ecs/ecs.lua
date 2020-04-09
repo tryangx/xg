@@ -176,7 +176,9 @@ end
 ---------------------------------------------------
 function ECS_Foreach( typeName, fn )
 	local data = ECS_GetDataManager( typeName )
-	data.mgr:ForeachData( fn )
+	if data then
+		data.mgr:ForeachData( fn )
+	end
 end
 
 
@@ -286,6 +288,9 @@ function ECS_GetProperties( typeName )
 	return _ecs[typeName] and _ecs[typeName].properties
 end
 
+function ECS_IsEntity( entity )
+	return entity.ecstype == "ECSENTITY"
+end
 
 function ECS_IsComponent( component )
 	return component.ecstype == "ECSCOMPONENT"

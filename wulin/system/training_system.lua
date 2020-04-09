@@ -1,9 +1,12 @@
+---------------------------------------
+---------------------------------------
 local function Training_Drill( role, data )
 	local fighter = ECS_FindComponent( role.entityid, "FIGHTER_COMPONENT" )
-	if not fighter then DBG_Error( "No fighter component" ) return end
-	--local role = ECS_FindComponent( entityid, "ROLE_COMPONENT" )
-	--if not role then DBG_Error( "No role component" ) return end
-
+	if not fighter then
+		print( "eid=", role.entityid )
+		ECS_Dump( ECS_FindEntity( role.entityid ) )
+		DBG_Error( "No fighter component" )	return end
+	
 	--role's work
 	local min = 100 - fighter.lv
 	local max = role:GetTraitValue( "HARD_WORK" ) + role:GetTraitValue( "CONCENTRATION" ) + role:GetTraitValue( "INSPIRATION" )
@@ -66,8 +69,8 @@ end
 
 local TRAIN_SECLUDE_RESULT = 
 {
-	--{ prob=30, exp=100 },
-	--{ prob=30, knowledge=100 },
+	{ prob=30, exp=100 },
+	{ prob=30, knowledge=100 },
 	{ prob=30, skill=100 },
 }
 local function Training_Seclude( role )
@@ -105,8 +108,8 @@ end
 
 local TRAIN_READBOOK_RESULT = 
 {
-	--{ prob=30 },
-	--{ prob=30, exp=100 },	
+	{ prob=30 },
+	{ prob=30, exp=100 },	
 	{ prob=30, readbook=100 },
 }
 local function Training_ReadBook( role )
@@ -134,13 +137,16 @@ local function Training_Train( data, deltaTime )
 	if data.pupils and data.time > 0 then
 		data.time = data.time - deltaTime
 		if data.time <= 0 then
-			for _, role in ipairs( data.pupils ) do Training_Drill( role, data and data.teacher or nil ) end
+			for _, role in ipairs( data.pupils ) do
+				Training_Drill( role, data and data.teacher or nil )
+			end
 		end
 	end
 
 	if data.seclude and data.seclude.time > 0 then
 		data.seclude.time = data.seclude.time - deltaTime
 		if data.seclude.time <= 0 then
+			--Dump( data.seclude.role )
 			Training_Seclude( data.seclude.role )
 		end
 	end
@@ -158,6 +164,7 @@ end
 ---------------------------------------
 TRAINING_SYSTEM = class()
 
+
 ---------------------------------------
 function TRAINING_SYSTEM:__init( ... )
 	local args = ...
@@ -166,6 +173,7 @@ function TRAINING_SYSTEM:__init( ... )
 	self._datas = {}
 end
 
+
 ---------------------------------------
 function TRAINING_SYSTEM:Update( deltaTime )
 	for _, data in pairs( self._datas ) do
@@ -173,6 +181,7 @@ function TRAINING_SYSTEM:Update( deltaTime )
 	end
 	self._datas = {}
 end
+
 
 ---------------------------------------
 function TRAINING_SYSTEM:AddTeacher( groupid, teacher, time )
@@ -184,6 +193,7 @@ function TRAINING_SYSTEM:AddTeacher( groupid, teacher, time )
 	self._datas[groupid].teacher.time = time
 end
 
+
 ---------------------------------------
 function TRAINING_SYSTEM:AddPupil( groupid, role, time )
 	if not groupid then groupid = role.entityid end
@@ -194,6 +204,7 @@ function TRAINING_SYSTEM:AddPupil( groupid, role, time )
 	table.insert( self._datas[groupid].pupils, role )
 end
 
+
 ---------------------------------------
 function TRAINING_SYSTEM:AddSeclude( role, time )
 	local groupid = role.entityid
@@ -203,6 +214,7 @@ function TRAINING_SYSTEM:AddSeclude( role, time )
 	self._datas[groupid].seclude.role = role
 	self._datas[groupid].seclude.time = time
 end
+
 
 ---------------------------------------
 function TRAINING_SYSTEM:AddReader( role, time )

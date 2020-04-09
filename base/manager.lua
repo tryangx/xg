@@ -234,7 +234,7 @@ end
 --------------------------------------------------------------
 function Manager:ForeachData( fn )
 	self:BeginTraversal()
-	for k, data in pairs( self._datas ) do
+	for _, data in pairs( self._datas ) do
 		fn( data )
 	end
 	self:EndTraversal()
@@ -245,7 +245,7 @@ end
 function Manager:FindData( fn )
 	self:BeginTraversal()
 	local ret
-	for k, data in pairs( self._datas ) do
+	for _, data in pairs( self._datas ) do
 		if fn( data ) == true then			
 			ret = data
 			break

@@ -27,7 +27,7 @@ GROUP_PROPERTIES =
 	statuses        = { type="DICT" },	
 
 	members         = { type="LIST", }, --list of role entity id
-	masterid        = { type="ECSID", }, --role entity id
+	leaderid        = { type="ECSID", }, --role entity id
 
 	actionpts       = { type="DICT" },
 
@@ -74,6 +74,29 @@ function GROUP_COMPONENT:FindMember( fn )
 	end )
 	return roles
 end
+
+
+---------------------------------------
+-- rank
+---------------------------------------
+function GROUP_COMPONENT:GetNumOfMember( params )
+	local num = 0
+	for _, id in ipairs( self.members ) do
+		local match = true
+		if params.rank then
+			local follower = ECS_FindComponent( id, "FOLLOWER_COMPONENT" )
+			if match and params.rank and follower.rank ~= params.rank then match = false end
+			if match and params.rank_ge and FOLLOWER_RANK[followr.rank] >= FOLLOWER_RANK[params.rank_ge] then match = false end
+		end
+		if params.ability then
+			local follower = ECS_FindComponent( id, "FOLLOWER_COMPONENT" )
+			if match and not FOLLOWER_RANK_ABILITY[follower.rank][params.ability] then match = false end
+		end
+		if match then num = num + 1 end
+	end
+	return num
+end
+
 
 ---------------------------------------
 function GROUP_COMPONENT:GetNumOfAffairs( type )
@@ -200,6 +223,11 @@ end
 function GROUP_COMPONENT:ToString()
 	local content = ""
 	content = content .. "[" .. self.name .. "]"
+
+	--leader
+	content = content .. " Leader=" .. ECS_FindComponent( self.leaderid, "ROLE_COMPONENT" ).name
+
+	--members
 	content = content .. " " .. "Member=" .. #self.members
 	if #self.members > 0 then
 		content = content .. "["

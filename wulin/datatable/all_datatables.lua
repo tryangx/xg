@@ -15,12 +15,10 @@ require "map_datatable"
 function DataTable_CreateComponent( componentType, tabledata )
 	local component = ECS_CreateComponent( componentType )
 	if tabledata then
-		--use properties	
-		--print( "properties", component._properties )
+		--use properties
 		for name, _ in pairs( component._properties ) do
 			if tabledata[name] then
 				component[name] = MathUtil_ShallowCopy( tabledata[name] )
-				--print( "set", name, component[name] )
 			end
 		end
 	end
