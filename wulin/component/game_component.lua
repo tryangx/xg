@@ -20,7 +20,14 @@ end
 
 ---------------------------------------
 function GAME_COMPONENT:Deactivate()
-	InputUtil_Pause( "Deactivated", self:ToString() )
+	local cmp = self
+	ECS_AddListener( self, "Get", nil, function( ... ) return cmp end )
+end
+	
+---------------------------------------
+function GAME_COMPONENT:Deactivate()
+	local cmp = self
+	ECS_RemoveListener( self, "Get", nil, function( ... ) return cmp end )
 end
 
 ---------------------------------------

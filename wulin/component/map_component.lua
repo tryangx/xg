@@ -21,12 +21,17 @@ end
 function MAP_COMPONENT:Activate()
 	local cmp = self
 	ECS_AddListener( self, "Get", nil, function( ... ) return cmp end )
+
+	self.map.width  = self.width
+	self.map.height = self.height
+	self.map.plots  = self.plots
+	self.map.cities = self.cities
 end
 
 ---------------------------------------
 function MAP_COMPONENT:Dectivate()
 	local cmp = self
-	ECS_AddListener( self, "Get", nil, function( ... ) return cmp end )
+	ECS_RemoveListener( self, "Get", nil, function( ... ) return cmp end )
 end
 
 ---------------------------------------
@@ -75,10 +80,10 @@ end
 ---------------------------------------
 function MAP_COMPONENT:Generate( data )	
 	self.map:GeneratePlots( data )
-	self.map:GenereateCities( data )	
+	self.map:GenereateCities( data )
 
 	self.width  = self.map.width
-	self.height = self.map.width
+	self.height = self.map.height
 	self.plots  = self.map.plots
 	self.cities = self.map.cities
 end

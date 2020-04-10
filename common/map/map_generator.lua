@@ -395,7 +395,7 @@ function MAP_GENERATOR:Draw( printer )
 
 	local function Map_DefaultPrinter( plot )
 		local content = ""
-		content = content .. string.sub( plot.type, 1, 1 )		
+		content = content .. string.sub( plot.type, 1, 1 )
 		if plot.additions["DISTRICT"] then content = content .. "D" end
 		if plot.additions["ROAD"] then content = content .. "R" end		
 		return StringUtil_Abbreviate( content, colWidth )
@@ -414,9 +414,13 @@ function MAP_GENERATOR:Draw( printer )
 		local row = StringUtil_Abbreviate( y, rowWidth )
 		if y % 2 == 0 then row = row .. string.rep( " ", 2 ) end
 		for x = 1, self.width do
+			--print( "key=" .. Map_GenKey( x, y ), self.plots[Map_GenKey(x, y)] )
 			local plot = self:GetPlot( x, y )
-			Map_DefaultPrinter( plot )
-			row = row .. printer( self:GetPlot( x, y ) )
+			if plot then			
+				row = row .. printer( self:GetPlot( x, y ) )
+			else
+				row = row .. string.rep( " ", colWidth )
+			end
 		end
 		print( row )
 	end

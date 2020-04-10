@@ -2,16 +2,26 @@
 --------------------------------------------------
 local MAP_DATATABLE =
 {
-	[1] = 
+	[1] =
 	{
-		name    = "江南",
-		width   = 10,
-		height  = 10,
-		grid_array =
-		{
-			{ }, { }, { }, {},
+		name   = "testmap",
+		width  = 20,
+		height = 20,
+		plotTypes = 
+	    {
+	       { type="LAND",  terrain="PLAINS",    feature="",      prob=1000 },
+	       { type="LAND",  terrain="GRASSLAND", feature="",      prob=1000 },
+	       { type="LAND",  terrain="GRASSLAND", feature="MARSH", prob=1000 },
+	       --{ type="HILLS", terrain="PLAINS",    feature="WOODS", prob=1000 },
+	    },
+	    cities = 
+	    {
+			{ id=1, name="北京", x=8,  y=2,  lv=1, adjacents = { 2,3,4 } },
+			{ id=2, name="南京", x=11, y=17, lv=1, adjacents = { 1,3,4 } },
+			{ id=3, name="东京", x=18, y=9,  lv=1, adjacents = { 1,2,4 } },
+			{ id=4, name="西京", x=2,  y=11, lv=1, adjacents = { 1,2,3 } },
 		},
-	},
+	}
 }
 
 --------------------------------------------------
@@ -24,8 +34,4 @@ end
 --------------------------------------------------
 --------------------------------------------------
 function MAP_DATATABLE_Foreach( fn )
-	for id, role in pairs( MAP_DATATABLE ) do
-		role.id = id
-		fn( role )
-	end
 end

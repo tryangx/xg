@@ -225,7 +225,7 @@ function ROLE_SYSTEM:Dump()
 	ECS_Foreach( "FIGHTER_COMPONENT", function ( obj )
 		local entity = ECS_FindEntity( obj.entityid )
 		if not entity then return end
-		local role = entity:GetComponent( "ROLE_COMPONENT" )
+		local role = entity:GetComponent( "ROLE_COMPONENT" )		
 		role:Dump()
 		obj:Dump()
 	end )

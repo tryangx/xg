@@ -57,6 +57,15 @@ BehaviorNodeType =
 	-------------------------
 	-- Return the result of condition
 	FILTER            = 410,
+
+
+	------------------------
+	-- Debug Node
+	-------------------------
+	MESSAGE           = 500,
+	PAUSE             = 510,
+	MESSAGE_FALSE     = 520,
+	PAUSE_FALSE       = 530,
 }
 
 BehaviorNodeStatus = 
@@ -69,7 +78,7 @@ BehaviorNodeStatus =
 BehaviorNode = class()
 
 function BehaviorNode:__init( root, type, desc )
-	self.type      = type	
+	self.type      = type
 	self.desc      = desc
 	self.root      = root
 	self.children  = {}
@@ -123,7 +132,11 @@ end
 		node:BuildTree( data )
 --]]
 function BehaviorNode:BuildTree( data )
-	if not data or not data.type then return end	
+	if not data or not data.type then
+		Dump( data )
+		error( "Data hasn't type" )
+		return
+	end
 	
 	-- Base information
 	--debugmsg( data.type, data.desc, data.condition, data.action )
@@ -132,6 +145,7 @@ function BehaviorNode:BuildTree( data )
 
 	if not self.type then
 		error( "invalid tree node=" .. data.type )
+		return
 	end
 	
 	-- Extension
@@ -141,6 +155,7 @@ function BehaviorNode:BuildTree( data )
 	if self.type == BehaviorNodeType.ACTION then
 		self.action = data.action
 		if not self.action then
+			Dump( data )			
 			debugmsg( "ACTION function is invalid", self.type )
 			return false
 		end
@@ -148,13 +163,15 @@ function BehaviorNode:BuildTree( data )
 		self.action    = data.action		
 		self.condition = data.condition
 		if ( not self.condition or not self.action ) then
+			Dump( data )
 			debugmsg( "ACTION or CONDITION function is invalid" )
 			return false
 		end
 	elseif self.type == BehaviorNodeType.FILTER then
 		self.condition = data.condition
 		if not self.condition then
-			debugmsg( "CONDITION function is invalid", self.type )
+			Dump( data )
+			debugmsg( "FILTER function is invalid", self.type )
 			return false
 		end
 	end
@@ -166,8 +183,8 @@ function BehaviorNode:BuildTree( data )
 			local child = BehaviorNode()
 			if child:BuildTree( childData ) == false then
 				if self.root == true then
-					MathUtil_Dump( data )
-					error( "Build tree failed!" )					
+					Dump( data )
+					error( "Build tree failed!" )
 				end
 				return false
 			else
@@ -233,15 +250,16 @@ end
 
 
 local function Parallel( behavior, node )
-	if  node.desc then debugmsg( "Parallel" ) end
+	if  node.desc then debugmsg( "Parallel" ) end	
+	local ret = false	
 	for k, child in pairs( node.children ) do
 		if behavior.functions[child.type]( behavior, child ) == true then
 			debugmsg( "Parallel children return true, node=" .. ( node.desc or "" ) )
-			return true
+			ret = true
 		end
 	end
 	debugmsg( "Parallel return false, node=" .. ( node.desc or "" ) )
-	return false
+	return ret
 end
 
 
@@ -304,12 +322,37 @@ local function Filter( behavior, node )
 	return ret
 end
 
+local function Message( behavior, node )
+	if node.desc then debugmsg( "Filter=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
+	print( node.desc )
+	return true	
+end
+
+local function Pause( behavior, node )
+	if node.desc then debugmsg( "Filter=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
+	InputUtil_Pause( node.desc )
+	return true
+end
+
+local function MessageFalse( behavior, node )
+	if node.desc then debugmsg( "Filter=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
+	print( node.desc )
+	return false	
+end
+
+local function PauseFalse( behavior, node )
+	if node.desc then debugmsg( "Filter=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
+	InputUtil_Pause( node.desc )
+	return false
+end
+
+
 function Behavior:__init( ... )	
 	self.functions = {}
 	self.functions[BehaviorNodeType.SELECTOR] = Selector
 	self.functions[BehaviorNodeType.RANDOM_SELECTOR] = RandomSelector
 	self.functions[BehaviorNodeType.SEQUENCE] = Sequence
-	--self.functions[BehaviorNodeType.PARALLEL] = Parallel
+	self.functions[BehaviorNodeType.PARALLEL] = Parallel
 	
 	self.functions[BehaviorNodeType.ACTION] = Action
 	self.functions[BehaviorNodeType.CONDITION_ACTION] = ConditionAction
@@ -319,6 +362,11 @@ function Behavior:__init( ... )
 	self.functions[BehaviorNodeType.NEGATE] = Negate
 	
 	self.functions[BehaviorNodeType.FILTER] = Filter
+
+	self.functions[BehaviorNodeType.MESSAGE] = Message;
+	self.functions[BehaviorNodeType.PAUSE] = Pause;
+	self.functions[BehaviorNodeType.MESSAGE_FALSE] = MessageFalse;
+	self.functions[BehaviorNodeType.PAUSE_FALSE] = PauseFalse;
 end
 
 function Behavior:Run( node )

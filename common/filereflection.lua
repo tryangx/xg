@@ -178,7 +178,7 @@ function FileReflection:ImportData( data, name )
 	--InputUtil_Pause( key )
 	--process with other data( include ECS properties and its properties )
 	debugmsg( "Data has children=" .. MathUtil_GetSize( data ) )
-	for name, value in pairs( data ) do
+	for name, value in pairs( data ) do		
 		if ecsproperties and MathUtil_FindByKey( ecsproperties, name, "type" ) then
 			--ECS properties in common
 			if not data[name] then error( "Invalid data format! Name=" .. name ) end
@@ -193,6 +193,8 @@ function FileReflection:ImportData( data, name )
 				properties[name].import( object )
 			else
 				debugmsg( "process key=", name )
+				local numname = tonumber( name )
+				if numname then name = numname end
 				local child = self:ImportData( value, name )
 				object[name] = child
 			end
@@ -285,7 +287,14 @@ function FileReflection:ExportValue( name, value )
 
 			--check if it is an array or object
 			local isArray = true
-			for k, v in pairs( value ) do if typeof( k ) ~= "number" then isArray = false break end end
+			local last
+			for k, v in pairs( value ) do
+				if typeof(k) ~= "number" or ( last and last - k > 1 ) then
+					isArray = false
+					break
+				end				
+				last = k
+			end
 
 			--save the current state
 			local lastState = self._isArray
@@ -294,6 +303,7 @@ function FileReflection:ExportValue( name, value )
 			local firstValue = true
 
 			--process the object by the different methods depends on whether it is array or object.
+			--print( "data=", name, self._isArray )
 			if self._isArray then
 				self:ExportBegin( name, REFLECTION_SEPERATOR.ARRAY )
 				for k, v in ipairs( value ) do

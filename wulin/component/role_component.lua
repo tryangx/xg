@@ -23,6 +23,8 @@ ROLE_PROPERTIES =
 
 	bags       = { type="LIST" },
 
+	equips     = { type="DICT" },
+
 	--common skill
 	--{ {type=ROLE_COMMONSKILL, value=evaluation} }
 	commonSkills = { type="DICT" },
@@ -71,22 +73,16 @@ function ROLE_COMPONENT:GetStatusValue( type )
 	return self.statuses[type] or 0
 end
 
----------------------------------------
-function ROLE_COMPONENT:AppendBag( item )
-	Prop_Add( self, "bags", item )
-end
-
-
----------------------------------------
-function ROLE_COMPONENT:RemoveBag( bag )
-	Prop_Remove( self, "bags", item )
-end
-
 
 ---------------------------------------
 function ROLE_COMPONENT:ObtainCommonSkill( book )
 	Prop_Add( self, "commonSkills", book.lv, book.commonskill )
 	DBG_Trace( self.name .. " obtain commonskill=" .. book.name .. " lv=" .. Prop_Get( self, "commonSkills" )[book.commonskill] .. "+" .. book.lv )
+end
+
+
+function ROLE_COMPONENT:HasCommonSkill( type, lv )
+	return self.commonSkills[type] and self.commonSkills[type] >= ( lv or 0 ) or false
 end
 
 ---------------------------------------
@@ -105,6 +101,39 @@ end
 
 
 ---------------------------------------
+function ROLE_COMPONENT:AppendBag( item )
+	Prop_Add( self, "bags", item )
+end
+
+
+---------------------------------------
+function ROLE_COMPONENT:RemoveBag( bag )
+	Prop_Remove( self, "bags", item )
+end
+
+
+---------------------------------------
+-- @params type reference to EQUIPMENT_TYPE
+---------------------------------------
+function ROLE_COMPONENT:GetEquip( type )
+	return self.equips[type]
+end
+
+
+function ROLE_COMPONENT:SetupEquip( type, equip )
+	if not equip then
+		--remove
+		equip = self.equips[type]
+		self.equips[type] = nil
+		MathUtil_Add( self.bags, equip )
+	else
+		self.equips[type] = equip
+		MathUtil_Remove( self.bags, equipe )
+	end
+end
+
+
+---------------------------------------
 function ROLE_COMPONENT:ToString()
 	local content = ""
 	content = content .. "[" .. self.name .. "]"
@@ -115,8 +144,14 @@ function ROLE_COMPONENT:ToString()
 		if entity then content = content .. " " .. "group=" .. entity:GetComponent( "GROUP_COMPONENT" ).name end
 	end
 
+	--status
 	for type, value in pairs(self.statuses) do
 		content = content ..  " " .. type .. "=" .. value
+	end
+
+	--commonskill
+	for type, value in pairs( self.commonSkills ) do
+		content = content .. " " .. type .. "=" .. value
 	end
 
 	return content

@@ -48,6 +48,7 @@ local function Fight_DumpRole( actor, type )
 		print( "", "AGILITY  =" .. actor.fighter.agility   .. "/" .. actor.template.agility )
 		print( "", "template =" .. actor.template.name )
 		print( "", "skills   =" .. #actor.fighter.skills )
+		print( "", "passiveSkills   =" .. #actor.fighter.passiveSkills )
 	else
 		print( "", "lv=" .. actor.fighter.lv )
 		print( "", "hp=" .. actor.fighter.hp )
@@ -60,8 +61,10 @@ local function Fight_DumpRole( actor, type )
 		print( "", "ActTimes=" .. ( actor.fighter._skillTimes or 0 ) .. "Skill/" .. ( actor.fighter._restTimes or 0 ) .. "Rest/" .. ( actor.fighter._defendTimes or 0 ) .. "Defend" )
 		print( "", "DealDamg=" .. ( actor.fighter._dealDamage or 0 ) .. "/" ..  ( actor.fighter._INTERNAL_DMG or 0 ) .. "Int/" .. ( actor.fighter._STRENGTH_DMG or 0 ) .. "Str" )		
 		print( "", "DmgPerTim=" .. ( ( actor.fighter._dealDamage and actor.fighter._totalHit ) and math.ceil( actor.fighter._dealDamage / actor.fighter._totalHit ) or 0 ) )
-		for skill, times in pairs( actor.fighter._useSkillList ) do
-			print( "", skill.name .. "=" .. times )
+		if actor.fighter._usingSkillList then
+			for skill, times in pairs( actor.fighter._useSkillList ) do
+				print( "", skill.name .. "=" .. times )
+			end
 		end
 	end
 end
@@ -69,7 +72,7 @@ end
 
 ---------------------------------------
 local function Fight_IsRoleAlive( actor )
-	if not role then return false end
+	if not actor then return false end
 	if not _fight.rules["TESTFIGHT"] then
 		return actor.fighter.hp > 0
 	end
@@ -135,13 +138,19 @@ end
 ---------------------------------------
 -- @params type reference to PASSIVESKILL_TYPE
 ---------------------------------------
-local function Fight_GetPassiveSkill( actor, type )
+local function Fight_GetPassiveSkill( actor, action )
 	local passiveSkill
 	for _, id in ipairs( actor.fighter.passiveSkills ) do
 		local skill = PASSIVESKILL_DATATABLE_Get( id )
-		if skill.type == type then
-			if not skill.cost.max_cd or cd < ( actor.passiveSkillDelays and actor.passiveSkillDelays[skill.id] or 0 ) then
-				passiveSkill = skill
+		local skillAction = skill[action]
+		if skillAction then
+			--prob
+			if not skillAction.prob or Random_GetInt_Sync( 1, 50 ) < skillAction.prob then
+				--cooldown
+				if not skillAction.cd or skillAction.cd.max >= ( actor.passiveSkillDelays and actor.passiveSkillDelays[skill.id] or 0 ) then
+					passiveSkill = skill
+					break
+				end
 			end
 		end
 	end
@@ -151,11 +160,17 @@ end
 
 
 ---------------------------------------
-local function Fight_UsePassiveSkill( actor, passiveSkill, action )
-	if passiveSkill.cost.step_cd then
-		if not actor.passiveSkillDelays then actor.passiveSkillDelays = {} end
-		actor.passiveSkillDelays[skill.id] = actor.passiveSkillDelays[skill.id] + passiveSkill.cost.step_cd
+local function Fight_UsePassiveSkill( actor, passiveSkill, action )	
+	if not passiveSkill[action] or not passiveSkill[action].cd then error("1") return end
+	if not actor.passiveSkillDelays then actor.passiveSkillDelays = {} end
+	if not actor.passiveSkillDelays[passiveSkill.id] then actor.passiveSkillDelays[passiveSkill.id] = {} end
+	if actor.passiveSkillDelays[passiveSkill.id][action] then
+		actor.passiveSkillDelays[passiveSkill.id][action] = actor.passiveSkillDelays[passiveSkill.id][action] + ( passiveSkill[action].cd.step or 0 )
+	else
+		actor.passiveSkillDelays[passiveSkill.id][action] = ( passiveSkill[action].cd.step or 0 )
 	end
+	--InputUtil_Pause( "use passiveSkill", actor.passiveSkillDelays[passiveSkill.id][action] )
+	Stat_Add( "PassiveSkill" .. passiveSkill.name, 1, StatType.TIMES )
 end
 
 
@@ -228,29 +243,27 @@ end
 
 ---------------------------------------
 local function Fight_RoleRest( actor )
-	local passiveSkill = Fight_GetPassiveSkill( actor, "RESIDENT" )
+	local passiveSkill = Fight_GetPassiveSkill( actor, "restAction" )
 	if not passiveSkill or passiveSkill.restAction then return end
-
-	Fight_UsePassiveSkill( actor, passiveSkill )
-
+	Fight_UsePassiveSkill( actor, passiveSkill, "restAction" )
 	if passiveSkill.restAction.st then
 		local maxst = math.ceil( actor.fighter.maxst * ( passiveSkill.restAction.st.max or 1 ) )
 		local value = passiveSkill.restAction.st.value or 0
-		local pvalue = math.ceil( maxst * passiveSkill.restAction.st.percent )
+		local pvalue = math.ceil( maxst * passiveSkill.restAction.st.ratio )
 		local inc    = value + pvalue		
 		actor.fighter.st = math.min( math.ceil( maxst * 0.5 ), actor.fighter.st + inc )
 	end
 	if passiveSkill.restAction.mp then
 		local maxmp = math.ceil( actor.fighter.maxmp * ( passiveSkill.restAction.mp.max or 1 ) )
 		local value = passiveSkill.restAction.mp.value or 0
-		local pvalue = math.ceil( maxmp * passiveSkill.restAction.mp.percent )
+		local pvalue = math.ceil( maxmp * passiveSkill.restAction.mp.ratio )
 		local inc    = value + pvalue
 		actor.fighter.mp = math.min( math.ceil( maxmp * 0.5 ), actor.fighter.mp + inc )
 	end
 	if passiveSkill.restAction.hp then
 		local maxhp = math.ceil( actor.fighter.maxhp * ( passiveSkill.restAction.hp.max or 1 ) )
 		local value = passiveSkill.restAction.hp.value or 0
-		local pvalue = math.ceil( maxhp * passiveSkill.restAction.hp.percent )
+		local pvalue = math.ceil( maxhp * passiveSkill.restAction.hp.ratio )
 		local inc    = value + pvalue
 		actor.fighter.hp = math.min( math.ceil( maxhp * 0.5 ), actor.fighter.hp + inc )
 	end
@@ -341,11 +354,14 @@ end
 local function Fight_AddSkillBuff( actor, comboeffect, buff )
 	if not actor.statuses then actor.statuses = {} end
 
-	local passiveSkill = Fight_GetPassiveSkill( actor )
-
-	if passiveSkill and passiveSkill.buffAction and passiveSkill.buffAction.resist_prob then
-		if Random_GetInt_Sync( 1, 100 ) < passiveSkill.buffAction.resist_prob then
-			return
+	local skillAction = buff.isDebuff and "debuffAction" or "buffAction"
+	local passiveSkill = Fight_GetPassiveSkill( actor, skillAction )
+	if passiveSkill then
+		Fight_UsePassiveSkill( actor, passiveSkill, skillAction )
+		if passiveSkill[skillAction] and passiveSkill[skillAction].resist_prob then
+			if Random_GetInt_Sync( 1, 100 ) < passiveSkill.buffAction.resist_prob then
+				return
+			end
 		end
 	end
 
@@ -475,6 +491,34 @@ local function Fight_ProcessDuel( atk, def )
 	atk.fighter._hitCombo = 0
 	atk.fighter._skillDamage = 0
 
+	--passive skill
+	local atkDmgMod     = 1
+	local defDodge      = 0
+	local defDodgeTimes = 0
+	
+	--passive skill atk	
+	passiveSkill = Fight_GetPassiveSkill( atk, "atkAction" )
+	if passiveSkill then
+		if passiveSkill.atkAction.hit then
+			defDodge = defDodge - ( passiveSkill.atkAction.hit.mod or 0 )
+			defDodgeTimes = defDodgeTimes - ( passiveSkill.atkAction.hit.times or 0 )
+		end
+		if passiveSkill.atkAction.dmg then
+			atkDmgMod = passiveSkill.atkAction.dmg.mod
+		end
+		Fight_UsePassiveSkill( atk, passiveSkill, "atkAction" )
+	end
+
+	--passive skill def	
+	passiveSkill = Fight_GetPassiveSkill( def, "defAction" )
+	if passiveSkill then
+		if passiveSkill.defAction.dodge then
+			defDodge = defDodge + passiveSkill.defAction.dodge.mod or 0
+			defDodgeTimes = defDodgeTimes + passiveSkill.defAction.dodge.times or 0
+		end
+		Fight_UsePassiveSkill( def, passiveSkill, "defAction" )
+	end	
+	
 	for action_idx, atkAction in ipairs( atkSkill.actions ) do
 		--calculate hit accuracy
 		local defAction = defSkill and defSkill.actions[action_idx]
@@ -483,10 +527,18 @@ local function Fight_ProcessDuel( atk, def )
 
 		local accuracy = Fight_GetValueByBuff( atk, FIGHTER_ATTR.TECHNIQUE )
 		local dodge    = Fight_GetValueByBuff( def, FIGHTER_ATTR.TECHNIQUE ) * 0.3 + Fight_GetValueByBuff( def, FIGHTER_ATTR.AGILITY ) * 0.7
-		local hit      = math.max( atk.fighter._hitMod or 0, ( pose and pose.hit or 0 ) + math.ceil( ( atkAction.accuracy * 0.5 or 0 ) + accuracy * 100 / ( accuracy + dodge ) ) ) * 100
+		local hit      = math.max( atk.fighter._hitMod or 0, ( pose and pose.hit or 0 ) + math.ceil( ( atkAction.accuracy * 0.5 or 0 ) + accuracy * 100 / ( accuracy + dodge ) ) - defDodge ) * 100
 		--print( atk.role.name .. " hit accurcy is " .. hit )
 
-		local isHit = Random_GetInt_Sync( 1, 10000 ) < hit
+		local isHit = true
+		if defDodgeTimes > 0 then
+			isHit = false
+			defDodgeTimes = defDodgeTimes - 1
+		elseif defDodgeTimes < 0 then
+			defDodgeTimes = defDodgeTimes + 1
+		else
+			isHit = Random_GetInt_Sync( 1, 10000 ) < hit
+		end
 
 		atk.fighter._totalHitTries = atk.fighter._totalHitTries and atk.fighter._totalHitTries + 1 or 1
 
@@ -513,7 +565,7 @@ local function Fight_ProcessDuel( atk, def )
 				end
 				--print( atkSkill.name, "critical", atkAction.cri, critical_prob )
 			end			
-			local atkDamage    = atkPow * atkSkillMod * critical * 0.0001
+			local atkDamage    = atkPow * atkSkillMod * critical * atkDmgMod * 0.0001
 			local defDefend    = defPow			
 			local base_damage  = atkDamage * atkDamage / ( atkDamage + defDefend )
 			local block        = ( defAction and defAction.defense or 0 ) + ( def.fighter._dp or 0 )
@@ -692,8 +744,10 @@ function Fight_Process( fight )
 
 		if not actionRole then DBG_Error( "why" ) end
 
+		--print( "Turn to", actionRole.role.name )
+
 		if Fight_IsRoleAlive( actionRole ) then
-			--print( actionRole.role.name .. " action, atb=" .. actionRole.fighter._atb )
+			print( actionRole.role.name .. " action, atb=" .. actionRole.fighter._atb )
 
 			--pass the time		
 			for _, role in ipairs( actionSequence ) do				
@@ -735,8 +789,8 @@ function Fight_Process( fight )
 					actionRole.fighter._useSkillList[actionRole.fighter._usingSkill] = 1
 				end				
 
-				--Determine				
-				DetermineATB( actionRole, "UseSkill", actionRole.fighter._usingSkill.time )
+				--Determine
+				DetermineATB( actionRole, "USESKILL", actionRole.fighter._usingSkill.cd and ctionRole.fighter._usingSkill.cd.time or 0 )
 
 			--elseif target.fighter._usingSkill then
 			else
@@ -764,7 +818,8 @@ function Fight_Process( fight )
 	end
 
 	function FightEnd( actor )
-		--Fight_RoleDump( role, { "ATTRS", "STATS" } )
+		--Fight_DumpRole( actor, { "ATTRS", "STATS" } )
+
 		if Fight_IsRoleAlive( actor ) then return end
 
 		if not fight.rules["NO_DEAD"] then

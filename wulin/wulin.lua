@@ -58,7 +58,7 @@ function run()
 
 	--ECS_DumpSystem()
 
-	Stat_Dump( StatType.LIST )
+	Stat_Dump()-- StatType.LIST )
 end
 
 ---------------------------------------------------
@@ -121,6 +121,15 @@ end
 
 
 ---------------------------------------------------
+function test_mapsaveload()
+	local map = ECS_CreateComponent( "MAP_COMPONENT" )	
+	local mapData = MAP_DATATABLE_Get( 1 )
+	map:Setup( mapData )
+	map:Generate( mapData )	
+	map:GenerateRoutes( mapData )
+	save_data( map, "map.json" )
+end
+
 function create_fightskill( id )
 	local fightSkill = ECS_CreateComponent( "FIGHTSKILL_COMPONENT" )
 	MathUtil_ShallowCopy( FIGHTSKILL_DATATABLE_Get( id ), fightSkill )
@@ -307,3 +316,5 @@ Init_Table()
 ---------------------------------------------------
 --main_menu()
 new_game()
+
+--test_mapsaveload()

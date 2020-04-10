@@ -68,6 +68,10 @@ function FIGHTER_COMPONENT:ToString( ... )
 	content = content .. " " .. "tec=" .. self.technique
 	content = content .. " " .. "agi=" .. self.agility
 	content = content .. " " .. "ski=" .. #self.skills
+	--passiveskill
+	for _, id in pairs( self.passiveSkills ) do
+		content = content .. " " .. PASSIVESKILL_DATATABLE_Get( id ).name
+	end
 	return content
 end
 
@@ -79,6 +83,7 @@ end
 ---------------------------------------
 function FIGHTER_COMPONENT:ObtainSkill( id )
 	Prop_Add( self, "skills", id )
+	print( id, ECS_FindComponent( self.entityid, "ROLE_COMPONENT" ), FIGHTSKILL_DATATABLE_Get( id ) )
 	DBG_Trace( ECS_FindComponent( self.entityid, "ROLE_COMPONENT" ).name .. " obtain fightskill=" .. FIGHTSKILL_DATATABLE_Get( id ).name )
 end
 

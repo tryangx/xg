@@ -86,7 +86,7 @@ function Track_Table( name, t )
 				_trackerCaches[n] = {}
 				_trackerCaches[n].init    = v
 				_trackerCaches[n].current = v
-				--print( n, _trackerCaches[n].init, _trackerCaches[n].current )
+				print( n, _trackerCaches[n].init, _trackerCaches[n].current )
 			end
 		elseif t == "table" then
 		end

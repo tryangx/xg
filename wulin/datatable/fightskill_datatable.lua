@@ -19,7 +19,6 @@ local FIGHTSKILL_DATATABLE =
 		template = 100,
 	},
 
-
 	[101]  =
 	{
 		name     = "初级拳法",
@@ -306,6 +305,7 @@ end
 
 --------------------------------------------------
 function FIGHTSKILL_DATATABLE_Add( id, skill )
+	skill.id = id
 	FIGHTSKILL_DATATABLE[id] = skill
 end
 

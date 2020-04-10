@@ -50,7 +50,7 @@ local function MakeDecision( params )
 		_targetGroupCmp:IncTempStatusValue( "TESTFIGHT_MEMBER" )		
 	elseif params.cmd == "TESTFIGHT_OFFICER" then
 		_targetGroupCmp:IncTempStatusValue( "TESTFIGHT_MEMBER" )
-		InputUtil_Pause( "TESTFIGHT_OFFICER" )
+		InputUtil_Pause( "TESTFIGHT_OFFICER" )	
 	end
 	
 	if _roleCmp ~= _targetRoleCmp then
@@ -75,10 +75,50 @@ local function TestProbability( params )
 end
 
 
-local _DefaultDecision = 
-{
-	type = "ACTION", desc="Decision", action = MakeDecision, params = { cmd = "IDLE" },
-}
+----------------------------------------
+----------------------------------------
+local function GroupHasLand( params )
+	if not _targetGroupCmp then return false end
+	if _targetGroupCmp:GetNumOfLand( params.type ) <= ( params.value or 0 ) then return false end
+	return true
+end
+
+
+local function GroupHasAffairs( params )
+	if _roleGroupCmp:GetNumOfAffairs( params.type ) >= params.max then return false end
+	return true
+end
+
+----------------------------------------
+local function AddAffair( params )
+	if params.type == "BUILD_CONSTRUCTION" then
+		Group_StartBuildingConstruction( _roleGroupCmp, _variables.construction )		
+	elseif params.type == "UPGRADE_CONSTRUCTION" then
+		Group_StartUpgradingConstruction( _roleGroupCmp, _variables.construction, _variables.target )
+	elseif params.type == "DESTROY_CONSTRUCTION" then
+
+	elseif params.type == "SMELTA" then
+		Group_Smelta( _roleGroupCmp, _variables.material )
+
+	elseif params.type == "MAKE_ITEM" then
+		if _variables.maketype and _variables.makeid then
+			Group_StartMakeItem( _roleGroupCmp, _variables.maketype, _variables.makeid )
+		else
+			DBG_Error( "unspecified making item" )
+		end
+	elseif params.type == "PROCESS"	then
+
+	elseif params.type == "PRODUCE" then
+		if _variables.producetype then
+			Group_StartProduce( _roleGroupCmp, _variables.producetype )
+		else
+			DBG_Error( "unspecified produce type" )
+		end
+
+	else
+		DBG_Error( "unhandle", params.type )
+	end
+end
 
 
 ----------------------------------------
@@ -112,41 +152,47 @@ local function TargetNeedTravel()
 	return false
 end
 
+----------------------------------------
+local _DefaultDecision = 
+{
+	type="ACTION", desc="Decision", action = MakeDecision, params={ cmd="IDLE" },
+}
+
 
 local _PersonalRest = 
 {
-	type = "SEQUENCE", desc="personal_rest", children = 
+	type="SEQUENCE", desc="personal_rest", children = 
 	{
-		{ type = "FILTER", condition = TargetNeedRest },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "REST" } },
+		{ type="FILTER", condition=TargetNeedRest },
+		{ type="ACTION", action = MakeDecision, params={ cmd="REST" } },
 	},	
 }
 
 
 local _PersonalStroll = 
 {
-	type = "SEQUENCE", desc="personal_stroll", children = 
+	type="SEQUENCE", desc="personal_stroll", children = 
 	{
-		{ type = "FILTER", condition = NearDistrct, params = { districts = { "VILLAGE", "TOWN", "CITY" } } },
-		{ type = "FILTER", condition = TargetNeedStroll },		
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "REST" } },
+		{ type="FILTER", condition=NearDistrct, params={ districts = { "VILLAGE", "TOWN", "CITY" } } },
+		{ type="FILTER", condition=TargetNeedStroll },		
+		{ type="ACTION", action = MakeDecision, params={ cmd="REST" } },
 	},	
 }
 
 
 local _PersonalTravel = 
 {
-	type = "SEQUENCE", desc="personal_travel", children = 
+	type="SEQUENCE", desc="personal_travel", children = 
 	{
-		{ type = "FILTER", condition = TargetNeedTravel },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "REST" } },
+		{ type="FILTER", condition=TargetNeedTravel },
+		{ type="ACTION", action = MakeDecision, params={ cmd="REST" } },
 	},	
 }
 
 
 local _PersonalHealthy = 
 {
-	type = "SELECTOR", desc="personal_healthy", children = 
+	type="SELECTOR", desc="personal_healthy", children = 
 	{
 		_PersonalRest,
 		_PersonalStroll,
@@ -220,11 +266,11 @@ end
 ----------------------------------------
 local _GroupDrill = 
 {
-	type = "SEQUENCE", desc="group_drill", children = 
+	type="SEQUENCE", desc="group_drill", children = 
 	{
-		{ type = "FILTER", condition = TargetNeedDrill },
-		{ type = "FILTER", condition = TestProbability, params = { prob = 100 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "DRILL" } },
+		{ type="FILTER", condition=TargetNeedDrill },
+		{ type="FILTER", condition=TestProbability, params={ prob = 100 } },
+		{ type="ACTION", action = MakeDecision, params={ cmd="DRILL" } },
 	}
 }
 
@@ -232,40 +278,40 @@ local _GroupDrill =
 ----------------------------------------
 local _GroupTeach = 
 {
-	type = "SEQUENCE", desc="group_teach", children = 
+	type="SEQUENCE", desc="group_teach", children = 
 	{
-		{ type = "FILTER", condition = CanDo, params = { action="TEACH" } },
-		{ type = "FILTER", condition = TargetNeedTeach },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "TEACH" } },
+		{ type="FILTER", condition=CanDo, params={ action="TEACH" } },
+		{ type="FILTER", condition=TargetNeedTeach },
+		{ type="ACTION", action = MakeDecision, params={ cmd="TEACH" } },
 	}
 }
 
 ----------------------------------------
 local _GroupSeclude = 
 {
-	type = "SEQUENCE", desc="group_seclude", children = 
+	type="SEQUENCE", desc="group_seclude", children = 
 	{
-		{ type = "FILTER", condition = CanDo, params = { action="SECLUDE" } },
-		{ type = "FILTER", condition = TargetNeedSeclude },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "SECLUDE" } },
+		{ type="FILTER", condition=CanDo, params={ action="SECLUDE" } },
+		{ type="FILTER", condition=TargetNeedSeclude },
+		{ type="ACTION", action = MakeDecision, params={ cmd="SECLUDE" } },
 	}
 }
 
 ----------------------------------------
 local _GroupReadBook = 
 {
-	type = "SEQUENCE", desc="group_seclude", children = 
+	type="SEQUENCE", desc="group_seclude", children = 
 	{
-		{ type = "FILTER", condition = CanDo, params = { action="READBOOK" } },
-		{ type = "FILTER", condition = TargetNeedReadBook },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "READBOOK" } },
+		{ type="FILTER", condition=CanDo, params={ action="READBOOK" } },
+		{ type="FILTER", condition=TargetNeedReadBook },
+		{ type="ACTION", action = MakeDecision, params={ cmd="READBOOK" } },
 	}
 }
 
 ----------------------------------------
 local _GroupTraining = 
 {
-	type = "SELECTOR", desc="group_Training", children = 
+	type="SELECTOR", desc="group_Training", children = 
 	{
 		_GroupSeclude,
 		_GroupTeach,
@@ -324,36 +370,36 @@ end
 
 local _GroupSkirimmage = 
 {
-	type = "SEQUENCE", desc="group_skirimmage", children = 
+	type="SEQUENCE", desc="group_skirimmage", children = 
 	{
-		{ type = "FILTER", condition = TargetNeedAttendSkirimmage },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "SKIRIMMAGE" } },
+		{ type="FILTER", condition=TargetNeedAttendSkirimmage },
+		{ type="ACTION", action = MakeDecision, params={ cmd="SKIRIMMAGE" } },
 	}
 }
 
 local _GroupTestFight = 
 {
-	type = "SEQUENCE", desc="group_championship", children = 
+	type="SEQUENCE", desc="group_championship", children = 
 	{
-		{ type = "FILTER", condition = TargetNeedTestFight },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "TESTFIGHT" } },
+		{ type="FILTER", condition=TargetNeedTestFight },
+		{ type="ACTION", action = MakeDecision, params={ cmd="TESTFIGHT" } },
 	}
 }
 
 
 local _GroupChampionship = 
 {
-	type = "SEQUENCE", desc="group_championship", children = 
+	type="SEQUENCE", desc="group_championship", children = 
 	{
-		{ type = "FILTER", condition = TargetNeedAttendChamiponship },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "CHAMPIONSHIP" } },
+		{ type="FILTER", condition=TargetNeedAttendChamiponship },
+		{ type="ACTION", action = MakeDecision, params={ cmd="CHAMPIONSHIP" } },
 	}
 }
 
 
 local _GroupFight = 
 {
-	type = "SELECTOR", desc="group_fight", children = 
+	type="SELECTOR", desc="group_fight", children = 
 	{
 		_GroupSkirimmage,
 		_GroupTestFight,
@@ -361,9 +407,10 @@ local _GroupFight =
 	}
 }
 
+
 ----------------------------------------
 ----------------------------------------
-local function TargetCanBeTESTFIGHT_OFFICER()
+local function TargetCanBeTestFightOfficer()
 	if not _roleGroupCmp then return false end
 
 	error( "2" )
@@ -378,31 +425,43 @@ end
 
 local _GroupTestFightOfficer =
 {
-	type = "SEQUENCE", desc="test_officer", children = 
+	type="SEQUENCE", desc="test_officer", children = 
 	{
-		{ type = "FILTER", condition = TargetCanBeTESTFIGHT_OFFICER },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "TESTFIGHT_OFFICER" } },
+		{ type="FILTER", condition=TargetCanBeTestFightOfficer },
+		{ type="ACTION", action = MakeDecision, params={ cmd="TESTFIGHT_OFFICER" } },
 	}
 }
 
 
 local _GroupDuty = 
 {
-	type = "SELECTOR", desc="group_elder", children = 
+	type="SELECTOR", desc="group_elder", children = 
 	{
 		--teach/testfight
 		_GroupTestFightOfficer,
 	}
 }
 
+
 ----------------------------------------
 ----------------------------------------
+local function GroupNeedProduce( params )
+	if not GroupHasAffairs( { type="PRODUCE", max=1 } ) then return false end
+
+	--if _targetGroupCmp:GetAttr( "MAX_INVENTORY" ) >
+	_variables.producetype = params.type
+	return true
+end
+
+
 local _GroupCollect =
 {
-	type = "SEQUENCE", desc="group_collect", children = 
+	type="SEQUENCE", desc="group_collect", children = 
 	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "COLLECT" } },
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupHasLand, params={ type="JUNGLELAND", lv=1 } },
+		{ type="FILTER", condition=GroupNeedProduce, params={ type="FRUIT" } },
+		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
 }
 
@@ -410,10 +469,12 @@ local _GroupCollect =
 
 local _GroupFish =
 {
-	type = "SEQUENCE", desc="group_fish", children = 
+	type="SEQUENCE", desc="group_fish", children = 
 	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "FISH" } },
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupHasLand, params={ type="WATERLAND", lv=1 } },
+		{ type="FILTER", condition=GroupNeedProduce, params={ type="FISH" } },
+		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
 }
 
@@ -421,131 +482,214 @@ local _GroupFish =
 
 local _GroupFarm =
 {
-	type = "SEQUENCE", desc="", children = 
+	type="SEQUENCE", desc="", children = 
 	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "FARM" } },
-	}
-}
-
-
-local _GroupMineStone =
-{
-	type = "SEQUENCE", desc="", children = 
-	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "MINE" } },
-	}
-}
-
-
-local _GroupMineMineral =
-{
-	type = "SEQUENCE", desc="", children = 
-	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "MINE" } },
-	}
-}
-
-
-local _GroupToolMake =
-{
-	type = "SEQUENCE", desc="", children = 
-	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "TOOLMAKE" } },
-	}
-}
-
-
-local _GroupSmelta =
-{
-	type = "SEQUENCE", desc="", children =
-	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "SMELT" } },
-	}
-}
-
-
-local _GroupBuild =
-{
-	type = "SEQUENCE", desc="", children =
-	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "BUILD" } },
-	}
-}
-
-
-local _GroupMakeCloth =
-{
-	type = "SEQUENCE", desc="", children =
-	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "MAKECLOTH" } },
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupHasLand, params={ type="FARMLAND", lv=1 } },
+		{ type="FILTER", condition=GroupNeedProduce, params={ type="FOOD" } },
+		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
 }
 
 
 local _GroupCutWood =
 {
-	type = "SEQUENCE", desc="", children =
+	type="SEQUENCE", desc="", children =
 	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "CUTWOOD" } },
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupHasLand, params={ type="WOODLAND" } },
+		{ type="FILTER", condition=GroupNeedProduce, params={ type="WOOD" } },
+		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
 }
 
 
+local _GroupMineStone =
+{
+	type="SEQUENCE", desc="", children = 
+	{
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupHasLand, params={ type="STONEELAND", lv=1 } },
+		{ type="FILTER", condition=GroupNeedProduce, params={ type="STONE" } },
+		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
+	}
+}
+
+
+local _GroupMineMineral =
+{
+	type="SEQUENCE", desc="", children = 
+	{
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupHasLand, params={ type="MINELAND", lv=1 } },
+		{ type="FILTER", condition=GroupNeedProduce, params={ type="MINERAL" } },
+		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
+	}
+}
+
+
+local _GroupWork = 
+{
+	type="SELECTOR", desc="", children =
+	{
+		_GroupCollect,
+		_GroupFish,
+		_GroupFarm,
+		_GroupCutWood,
+		_GroupMineStone,
+		_GroupMineMineral,
+	}		
+}
+
+
+----------------------------------------
+----------------------------------------
+local function GroupNeedMakeEquip( params )
+	if not GroupHasAffairs( { type="MAKE_ITEM", max=1 } ) then return false end
+
+	if not _targetGroupCmp then return false end	
+	local list = EQUIPMENT_DATATABLE_Find( _targetGroupCmp, params.type )
+	local num = #list
+	if num == 0 then return false end
+	local index = Random_GetInt_Sync( 1, num )
+	local equip = list[index]
+	_variables.maketype = "EQUIPMENT"
+	_variables.makeid   = equip.id
+	return true
+end
+
+
+local function GroupNeedProcess( params )
+	if not GroupHasAffairs( { type="PROCESS", max=1 } ) then return false end
+
+	if not params.action then DBG_Error( "no action" ) return false end
+	local list = PROCESS_DATATABLE_Find( _targetGroupCmp, params.action )
+	local num = #list
+	if num == 0 then return false end
+	local index = Random_GetInt_Sync( 1, num )
+	local id = list[index]
+	_variables.process = id
+
+	return true
+end
+
+
+local _GroupMakeTool =
+{
+	type="SEQUENCE", desc="", children = 
+	{
+		--{ type="FILTER", condition=TestProbability, params={ prob=20 } },		
+		{ type="FILTER", condition=GroupNeedMakeEquip, params={ type="ACCESSORY" } },
+		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
+	}
+}
+
+
+local _GroupMakeEquip =
+{
+	type="SEQUENCE", desc="", children = 
+	{
+		--{ type="FILTER", condition=TestProbability, params={ prob=20 } },		
+		{ type="FILTER", condition=GroupNeedMakeEquip, params={ type="WEAPON" } },
+		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
+	}
+}
+
+
+local _GroupMakeCloth =
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupNeedMakeEquip, params={ type="ARMOR" } },
+		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
+	}
+}
+
+local _GroupRaiseHorse =
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupNeedMakeEquip, params={ type="VEHICLE" } },
+		{ type="ACTION", action = AddAffair, params={ type="RAISELIVESTOCK" } },
+	}
+}
+
+
+local _GroupSmelt =
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupNeedProcess, params={ action="SMELT" } },
+		{ type="ACTION", action = AddAffair, params={ type="SMELT" } },
+	}
+}
+
+
+--[[
 local _GroupSawWood =
 {
-	type = "SEQUENCE", desc="", children =
+	type="SEQUENCE", desc="", children =
 	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "SAWWOOD" } },
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupNeedProcess, params={ type="WOOD" } },
+		{ type="ACTION", action = AddAffair, params={ type="SAWWOOD" } },
 	}
 }
+]]
 
 
 local _GroupRaiseLivestock =
 {
-	type = "SEQUENCE", desc="", children =
+	type="SEQUENCE", desc="", children =
 	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "RAISELIVESTOCK" } },
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupNeedProcess, params={ action="RAISELIVESTOK" } },
+		{ type="ACTION", action = AddAffair, params={ type="RAISELIVESTOCK" } },
 	}
 }
 
 
 local _GroupPlantHerb =
 {
-	type = "SEQUENCE", desc="", children =
+	type="SEQUENCE", desc="", children =
 	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "PLANTHERB" } },
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupNeedProcess, params={ action="PLANTHERB" } },
+		{ type="ACTION", action = AddAffair, params={ type="PLANTHERB" } },
 	}
 }
 
 
 local _GroupMakeMedicine =
 {
-	type = "SEQUENCE", desc="", children =
+	type="SEQUENCE", desc="", children =
 	{
-		{ type = "FILTER", condition = TestProbability, params = { prob=20 } },
-		{ type = "ACTION", action = MakeDecision, params = { cmd = "MAKEMEDICINE" } },
+		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupNeedProcess, params={ action="MAKEMEDICINE" } },
+		{ type="ACTION", action = AddAffair, params={ type="MAKEMEDICINE" } },
 	}
 }
 
 
-local _GroupProduce = 
+local _GroupProcess = 
 {
-	type = "SELECTOR", desc="", children =
+	type="SELECTOR", desc="", children =
 	{
-		_GroupCollect,
+		_GroupMakeEquip,
+		_GroupSmelt,
+		{ type="PAUSE_FALSE", desc="asdfadsf"},
+		--_GroupMakeTool,
+		_GroupMakeCloth,
+		_GroupSawWood,
+		_GroupRaiseLivestock,
+		_GroupPlantHerb,
+		_GroupMakeMedicine,
 	}		
 }
+
 
 
 ----------------------------------------
@@ -575,17 +719,6 @@ local _GroupProduce =
 --	 Attack
 ----------------------------------------
 
-
-----------------------------------------
-local function AddAffair( params )
-	if params.type == "BUILD_CONSTRUCTION" then
-		Group_StartBuildingConstruction( _roleGroupCmp, _variables.construction )		
-	elseif params.type == "UPGRADE_CONSTRUCTION" then
-		Group_StartUpgradingConstruction( _roleGroupCmp, _variables.construction, _variables.target )
-	end
-end
-
-
 ----------------------------------------
 local function GroupNeedToBuildConstruction()
 	if _roleGroupCmp:GetNumOfAffairs( "BUILD_CONSTRUCTION" ) > 0 or
@@ -599,7 +732,6 @@ local function GroupNeedToBuildConstruction()
 	local num = #list
 	if num == 0 then return false end
 
-	--Dump( list )
 	local index = Random_GetInt_Sync( 1, num )
 	local id = list[index].id
 	_variables.construction = id
@@ -646,40 +778,52 @@ end
 
 local _GroupBuildConstruction = 
 {
-	type = "SEQUENCE", desc="", children =
+	type="SEQUENCE", desc="", children =
 	{
-		{ type = "FILTER", condition = GroupNeedToBuildConstruction },
-		{ type = "ACTION", action = AddAffair, params = { type="BUILD_CONSTRUCTION" } },
+		{ type="FILTER", condition=GroupNeedToBuildConstruction },
+		{ type="ACTION", action = AddAffair, params={ type="BUILD_CONSTRUCTION" } },
 	}
 }
 
 local _GroupUpgradeConstruction = 
 {
-	type = "SEQUENCE", desc="", children =
+	type="SEQUENCE", desc="", children =
 	{
-		{ type = "FILTER", condition = GroupNeedToUpgradeConstruction },
-		{ type = "ACTION", action = AddAffair, params = { type="UPGRADE_CONSTRUCTION" } },
+		{ type="FILTER", condition=GroupNeedToUpgradeConstruction },
+		{ type="ACTION", action = AddAffair, params={ type="UPGRADE_CONSTRUCTION" } },
 	}
 }
 
 local _GroupDestroyConstruction = 
 {
-	type = "SEQUENCE", desc="", children =
+	type="SEQUENCE", desc="", children =
 	{
-		{ type = "FAILURE" },
+		{ type="FAILURE" },
 	}
 }
 
 ----------------------------------------
 ----------------------------------------
+
+
+----------------------------------------
+----------------------------------------
 local GroupAffair = 
 {
-	type = "SELECTOR", desc = "scheudle_arrangement", children = 
+	type="PARALLEL", desc = "scheudle_arrangement", children = 
 	{
+	--[[
+		--construction
 		_GroupBuildConstruction,
 		_GroupUpgradeConstruction,
 		_GroupDestroyConstruction,
-		_GroupApprenticed,
+
+		--human resource		
+		--_GroupApprenticed,
+]]
+		--make
+		_GroupWork,
+		--_GroupProcess,		
 	}
 }
 _groupAffairTree = BehaviorNode( true )
@@ -690,7 +834,7 @@ _groupAffairTree:BuildTree( GroupAffair )
 local ScheduleArrangement = 
 {
 	--find the right one
-	type = "SELECTOR", desc = "scheudle_arrangement", children = 
+	type="SELECTOR", desc = "scheudle_arrangement", children = 
 	{
 		--test slot
 		_GroupFight,
@@ -711,7 +855,7 @@ _scheduleTree:BuildTree( ScheduleArrangement )
 ----------------------------------------
 local DetermineAction = 
 {
-	type = "SELECTOR", desc = "scheudle_arrangement", children = 
+	type="SELECTOR", desc = "scheudle_arrangement", children = 
 	{
 		_PersonalHealthy,
 		_GroupDuty,
@@ -769,7 +913,7 @@ function AI_DetermineGroupAffair( role_ecsid, params )
 	Stat_Add( "RoleAI@Run_Times", nil, StatType.TIMES )
 	Log_Write( "roleai", _roleCmp.name .. " is thinking schedule" )
 
-	return _behavior:Run( _groupAffairTree )
+	_behavior:Run( _groupAffairTree )
 end
 
 

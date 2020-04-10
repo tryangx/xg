@@ -7,33 +7,28 @@
 --     level
 --     knowledge
 --
---   beforeAction: trigger before execute action
---   afterAction : trigger after execute action
 --   atkAction   : trigger before attack
 --   defAction   : trigger before defend. 
 --   restAction  : trigger when rest
 --   buffAction  : trigger when gain buff?
 --   debuffAction: trigger when gain debuff?
 --
---
---   restAction
---
---   AllAction
---     max_cd   when delay assumed
---     step_cd  when skill trigger every time
---     hp.limit
---
 ---------------------------------------
 local PASSIVESKILL_DATATABLE =
 {
 	[100] =
 	{
+		name         = "梯云纵",
+		type         = "MOVEMENT",
+		conditions   = {knowledge=100, lv=20},
+		defAction    = {prob=45, cd={max=100,step=30}, dodge={times=3, mod=10}},
+	},
+	[101] =
+	{
 		name         = "凌波微步",
 		type         = "MOVEMENT",
-		conditions   = { knowledge=100, lv=20 },
-		beforeAction = {},
-		atkAction    = {},
-		defAction    = {},
+		conditions   = {knowledge=100, lv=20},
+		defAction    = {prob=65, cd={max=100,step=30}, dodge={times=1, mod=20}},
 	},
 
 	[1000] =
@@ -41,16 +36,16 @@ local PASSIVESKILL_DATATABLE =
 		name         = "混合内功",
 		type         = "RESIDENT",
 		conditions   = {},
-		beforeAction = {},
-		restAction   = { max_cd=100, step_cd=30, hp={ max=0.5, percent=0.05 }, mp={ max=0.5, percent=0.05 } },
+		atkAction    = {cd={max=100,step=30}, hit={times=1,mod=10}, dmg={mod=10}},
+		restAction   = {cd={max=100,step=30}, hp={max=0.5, ratio=0.05}, mp={max=0.5, ratio=0.05}},
 	},
 	[1001] =
 	{
 		name         = "纯阳内功",
 		type         = "RESIDENT",
-		conditions   = {},
-		afterAction  = {},
-		restAction   = { cd={ limit=100, step=30 }, hp={ max=0.5, percent=0.05 }, mp={ max=0.5, percent=0.05 } },
+		conditions   = {},		
+		restAction   = {cd={max=100,step=30}, hp={max=0.5, ratio=0.05}, mp={max=0.5, ratio=0.05}},
+		debuffAction = {cd={max=100,step=30}, buff={reduce_time=0.5, resist_prob=30}},
 	},
 	[1002] =
 	{
@@ -58,7 +53,7 @@ local PASSIVESKILL_DATATABLE =
 		type         = "RESIDENT",
 		conditions   = {},
 		afterAction  = {},
-		restAction   = { delay={ limit=100, step=30 }, hp={ max=0.5, percent=0.05 }, mp={ max=0.5, percent=0.06 } },
+		restAction   = {cd={max=100,step=30}, hp={max=0.5, ratio=0.05}, mp={max=0.5, ratio=0.06}},
 	},	
 
 	[2000] =
@@ -66,8 +61,8 @@ local PASSIVESKILL_DATATABLE =
 		name         = "九阴真经",
 		type         = "RESIDENT",
 		conditions   = {},
-		atkAction    = { damage={ modulus={ min=110, max=130 } } },
-		restAction   = { delay={ limit=100, step=30 }, hp={ max=0.5, percent=0.05 }, mp={ max=0.5, percent=0.06 } },
+		atkAction    = {dmg={mod=1.1}},
+		restAction   = {cd={max=100,step=30}, hp={max=0.5, ratio=0.05}, mp={max=0.5, ratio=0.06}},
 	},
 
 	[2001] =
@@ -75,10 +70,16 @@ local PASSIVESKILL_DATATABLE =
 		name         = "九阳真经",
 		type         = "RESIDENT",
 		conditions   = {},
-		buffAction   = { buff={ resist_prob=50, reduce_time=0.5 } },
-		restAction   = { delay={ limit=100, step=30 }, hp={ max=0.5, percent=0.05 }, mp={ max=0.5, percent=0.06 } },
+		buffAction   = {resist_prob=50, reduce_time=0.5},
+		restAction   = {cd={max=100,step=30}, hp={max=0.5, ratio=0.05}, mp={max=0.5, ratio=0.06}},
 	},
 }
+
+
+for id, skill in pairs( PASSIVESKILL_DATATABLE ) do
+	skill.id = id
+end
+
 --------------------------------------------------
 --------------------------------------------------
 function PASSIVESKILL_DATATABLE_Get( id )

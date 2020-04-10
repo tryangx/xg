@@ -1,14 +1,19 @@
 ---------------------------------------------------
 ---------------------------------------------------
-require "fightskill_datatable"
 require "fightskilltemplate_datatable"
+require "roletemplate_datatable"
+
+require "fightskill_datatable"
 require "passiveskill_datatable"
 require "role_datatable"
-require "roletemplate_datatable"
 require "construction_datatable"
 require "group_datatable"
 require "book_datatable"
 require "map_datatable"
+require "equipment_datatable"
+require "process_datatable"
+require "consumable_datatable"
+
 
 ---------------------------------------------------
 ---------------------------------------------------

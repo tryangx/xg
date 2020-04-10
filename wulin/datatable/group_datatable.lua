@@ -11,14 +11,23 @@ local GROUP_DATATABLE =
 	[1] =
 	{
 		name     = "少林派",
+		size     = "MID",
+		assets   = { land=200 },
+		lands    = { FARMLAND=100, WOODLAND=10, STONELAND=10, MINELAND=10 },
 	},
 	[2] =
 	{
 		name    = "武当派",
+		size     = "MID",
+		assets   = { land=200 },
+		lands    = { FARMLAND=100, WOODLAND=10, STONELAND=10, MINELAND=10 },
 	},
 	[3] =
 	{
 		name    = "丐帮",
+		size     = "MID",
+		assets   = { land=200 },
+		lands    = { FARMLAND=100, WOODLAND=10, STONELAND=10, MINELAND=10 },
 	},
 }
 --[[
@@ -136,8 +145,8 @@ end
 --------------------------------------------------
 --------------------------------------------------
 function GROUP_DATATABLE_Foreach( fn )
-	for id, role in pairs( GROUP_DATATABLE ) do
-		role.id = id
-		fn( role )
+	for id, group in pairs( GROUP_DATATABLE ) do
+		group.id = id
+		fn( group )
 	end
 end

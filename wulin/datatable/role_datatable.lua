@@ -19,7 +19,8 @@ local ROLE_DATATALBE =
 		template  = 1000120,
 		mentals   = {},
 		statuses  = {},
-	},	
+		passiveSkills = { 100, 1000 },
+	},
 	[2] =
 	{
 		--FOLLOWER DATA
@@ -30,6 +31,7 @@ local ROLE_DATATALBE =
 		template  = 1000120,
 		mentals   = {},
 		statuses  = {},
+		passiveSkills = { 100, 1000 },
 	},
 	[3] =
 	{
@@ -41,6 +43,7 @@ local ROLE_DATATALBE =
 		template  = 1000120,
 		mentals   = {},
 		statuses  = {},
+		passiveSkills = { 100, 1000 },
 	},
 	[10] =
 	{
@@ -52,6 +55,7 @@ local ROLE_DATATALBE =
 		template  = 1000120,
 		mentals   = {},
 		statuses  = {},
+		passiveSkills = { 100, 1000 },
 	},
 	[11] =
 	{
@@ -63,6 +67,7 @@ local ROLE_DATATALBE =
 		template  = 1000120,
 		mentals   = {},
 		statuses  = {},
+		passiveSkills = { 100, 1000 },
 	},
 
 	[1003001] =

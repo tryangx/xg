@@ -6,7 +6,8 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 1,
 		weapon = { range="CLOSE", subtype="FIST" },
 		step   = { min=6, max=8 },
-		cost   = { st_std=4, mp_std=0, max_cd=100, step_cd=30 },
+		cd     = { max=100, step=30 },
+		cost   = { st_std=4, mp_std=0 },
 		conditions = { lv=10, knowledge=1000 },
 		actions=
 		{
@@ -23,6 +24,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 4,
 		weapon = { range="CLOSE", subtype="FIST" },
 		step   = { min=8, max=10 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=6, mp_std=4 },
 		conditions = { lv=10, knowledge=1000 },
 		actions=
@@ -40,6 +42,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 7,
 		weapon = { range="CLOSE", subtype="FIST" },
 		step   = { min=8, max=12 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=6, mp_std=6 },
 		conditions = { lv=10, knowledge=1000 },
 		actions=
@@ -57,6 +60,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 7,
 		weapon = { range="CLOSE", subtype="FIST" },
 		step   = { min=9, max=12 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=8, mp_std=8 },
 		conditions = { lv=10, knowledge=1000 },
 		actions=
@@ -74,6 +78,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 9,
 		weapon = { range="CLOSE", subtype="FIST" },
 		step   = { min=8, max=8 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=10, mp_std=15 },
 		conditions = { lv=10, knowledge=1000 },
 		actions=
@@ -91,6 +96,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 4,
 		weapon = { range="CLOSE", subtype="PALM" },
 		step   = { min=18, max=18 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=15, mp_std=5 },
 		conditions = { lv=10, knowledge=1000 },
 		actions=
@@ -108,6 +114,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 4,
 		weapon = { range="CLOSE", subtype="PALM" },
 		step   = { min=11, max=11 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=10, mp_std=10 },
 		conditions = { lv=10, knowledge=1000 },
 		actions=
@@ -125,6 +132,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 4,
 		weapon = { range="CLOSE", subtype="PALM" },
 		step   = { min=11, max=11 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=10, mp_std=10 },
 		conditions = { lv=10, knowledge=1000 },
 		actions=
@@ -142,6 +150,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 4,
 		weapon = { range="FLY", subtype="FINGER" },
 		step   = { min=12, max=12 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=5, mp_std=20 },
 		conditions = { lv=10, knowledge=8000 },
 		actions=
@@ -161,6 +170,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 1,
 		weapon = { range="MID", subtype="SWORD" },
 		step   = { min=6, max=8 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=4, mp_std=2 },
 		conditions = { knowledge=1000 },
 		actions=
@@ -179,6 +189,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 2,
 		weapon = { range="MID", subtype="SWORD" },
 		step   = { min=6, max=8 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=6, mp_std=4 },
 		conditions = { lv=25, knowledge=1000 },
 		actions=
@@ -197,6 +208,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 3,
 		weapon = { range="MID", subtype="SWORD" },
 		step   = { min=6, max=8 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=6, mp_std=8 },
 		conditions = { lv=35, knowledge=6000 },
 		actions=
@@ -215,6 +227,7 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 		lv     = 4,
 		weapon = { range="MID", subtype="SWORD" },
 		step   = { min=9, max=9 },
+		cd     = { max=100, step=30 },
 		cost   = { st_std=10, mp_std=5 },
 		conditions = { lv=40, knowledge=8000 },
 		actions=

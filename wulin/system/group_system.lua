@@ -1,4 +1,7 @@
 ---------------------------------------
+-- Group Prepare
+--   Init group data by params
+--   Now just for test
 ---------------------------------------
 local GROUP_PARAMS = 
 {
@@ -14,56 +17,61 @@ local GROUP_PARAMS =
 				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
-			constrs={ HOUSE=1 }
+			constrs={ HOUSE=1 },
+			lands={},
 			},
 		SMALL      =
 			{
 			member={min=4,max=8,ELDER=1},
-			assets={ LAND={init=3}, REPUTATION={min=200,max=500}, INFLUENCE={min=200,max=500}, MONEY={min=1000,max=2000} },
+			assets={ LAND={init=10}, REPUTATION={min=200,max=500}, INFLUENCE={min=200,max=500}, MONEY={min=1000,max=2000} },
 			resources=
 				{
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
 				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
-			constrs={ HOUSE=1 }
+			constrs={ HOUSE=1 },
+			lands={},
 			},
 		MID        =
 			{
 			member={min=8,max=20,ELDER=1},
-			assets={ LAND={init=3}, REPUTATION={min=300,max=1000}, INFLUENCE={min=0,max=100}, MONEY={min=1000,max=2000} },
+			assets={ LAND={init=30}, REPUTATION={min=300,max=1000}, INFLUENCE={min=0,max=100}, MONEY={min=1000,max=2000} },
 			resources=
 				{
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
 				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
-			constrs={ HOUSE=1 }
+			constrs={ HOUSE=1 },
+			lands={},
 			},			
 		BIG        =
 			{
 			member={min=16,max=30,ELDER=1},
-			assets={ LAND={init=3}, REPUTATION={min=500,max=3000}, INFLUENCE={min=0,max=100}, MONEY={min=1000,max=2000} },
+			assets={ LAND={init=100}, REPUTATION={min=500,max=3000}, INFLUENCE={min=0,max=100}, MONEY={min=1000,max=2000} },
 			resources=
 				{
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
 				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
-			constrs={ HOUSE=1 }
+			constrs={ HOUSE=1 },
+			lands={},
 			},		
 		HUGE       =
 			{
 			member={min=30,max=50,ELDER=1},
-			assets={ LAND={init=3}, REPUTATION={min=2000,max=5000}, INFLUENCE={min=0,max=100}, MONEY={min=1000,max=2000} },
+			assets={ LAND={init=300}, REPUTATION={min=2000,max=5000}, INFLUENCE={min=0,max=100}, MONEY={min=1000,max=2000} },
 			resources=
 				{
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
 				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
-			constrs={ HOUSE=1 }
-			},		
+			constrs={ HOUSE=1 },
+			lands={},
+			},
 	},
 
 	ACTION_PTS = 
@@ -104,14 +112,16 @@ function Group_Prepare( group )
 	--rank
 	for rank, _ in pairs( FOLLOWER_RANK ) do
 		if start.member[rank] then
-			local num = start.member[rank].num
-			for _, memberid in pairs( group.members ) do				
-				follower = ECS_FindComponent( memberid, "FOLLOWER_COMPONENT" )
-				if not FOLLOWER_RANK[follower.rank] then
-					follower.rank = rank
-					DBG_Trace( ECS_FindComponent( memberid, "ROLE_COMPONENT" ).name .. " is promoted to " .. rank, "Left=" .. num )
-					num = num - 1
-					if num <= 0 then break end
+			local num = start.member[rank]
+			if num > 0 then
+				for _, memberid in pairs( group.members ) do				
+					follower = ECS_FindComponent( memberid, "FOLLOWER_COMPONENT" )
+					if not FOLLOWER_RANK[follower.rank] then
+						follower.rank = rank
+						DBG_Trace( ECS_FindComponent( memberid, "ROLE_COMPONENT" ).name .. " is promoted to " .. rank, "Left=" .. num )
+						num = num - 1
+						if num <= 0 then break end
+					end
 				end
 			end
 		end
@@ -120,14 +130,16 @@ function Group_Prepare( group )
 	--assets
 	if start.assets then
 		for name, value in pairs( start.assets ) do
-			if value.init then
-				group.assets[name] = value.init
-			elseif value.min and value.max then
-				group.assets[name] = Random_GetInt_Sync( value.min, value.max )				
-			else
-				group.assets[name] = 0
+			if not group.assets[name] then
+				if value.init then
+					group.assets[name] = value.init
+				elseif value.min and value.max then
+					group.assets[name] = Random_GetInt_Sync( value.min, value.max )				
+				else
+					group.assets[name] = 0
+				end
+				DBG_Trace( group.name .. " asset " .. name .. "=" .. group.assets[name] )
 			end
-			DBG_Trace( group.name .. " asset " .. name .. "=" .. group.assets[name] )
 		end
 	end
 
@@ -146,7 +158,7 @@ function Group_Prepare( group )
 	end
 
 	--books
-	if start.books then
+	if start.books and #group.books == 0 then		
 		local numOfBook = start.books.num.init or 0
 		if start.books.num.min and start.books.num.max then
 			numOfBook = Random_GetInt_Sync( start.books.num.min, start.books.num.max )
@@ -188,6 +200,9 @@ function Group_Prepare( group )
 		end
 	end
 
+	--Dump( group )
+	--InputUtil_Pause()
+
 	DBG_Trace( group.name, "Start=", group.size )
 end
 
@@ -223,7 +238,7 @@ function Group_RemoveMember( group, ecsid )
 	for _, id in ipairs( group.members ) do
 		local follower = ECS_FindComponent( id, "FOLLOWER_COMPONENT" )
 		if follower and follower.masterid == ecsid then
-			follower.masterid = nil
+			follower.masterid = group.masterid
 		end
 	end
 end
@@ -238,7 +253,7 @@ function Group_CreateByTableData( groupTable )
 	groupEntity = ECS_CreateEntity( "Group" )
 
 	--create role
-	group = DataTable_CreateComponent( "GROUP_COMPONENT", groupTable )
+	local group = DataTable_CreateComponent( "GROUP_COMPONENT", groupTable )
 	groupEntity:AddComponent( group )
 	
 	return groupEntity
@@ -321,36 +336,36 @@ function Group_StartBuildingConstruction( group, id )
 end
 
 function Group_StartUpgradingConstruction( group, id, target_id )
-	local constr = CONSTRUCTION_DATATABLE_Get( id )
-	if not constr then DBG_Error( "Construction is invalid! ID=", id ) return end
+	local target = CONSTRUCTION_DATATABLE_Get( id )
+	if not target then DBG_Error( "Construction is invalid! ID=", id ) return end
 
 	local affair = {}
 	affair.type = "UPGRADE_CONSTRUCTION"
 	affair.construction = id
 	affair.target = target_id
-	affair.time = constr.costs.time or 1
+	affair.time = target.costs.time or 1
 
 	--use the assets and resources one time
-	if constr.costs.assets then
-		for name, data in pairs( constr.costs.assets ) do
+	if target.costs.assets then
+		for name, data in pairs( target.costs.assets ) do
 			group:UseAssets( name, data.value )
 		end
 	end
-	if constr.costs.resources then
-		for name, data in pairs( constr.costs.resources ) do
+	if target.costs.resources then
+		for name, data in pairs( target.costs.resources ) do
 			group:UseResources( name, data.value )
 		end
 	end
-
 	table.insert( group.affairs, affair )
-	DBG_Trace( group.name, " start upgrading construction=" .. constr.name )
+	DBG_Trace( group.name, " start upgrading construction=" .. target.name )
 end
 
 function Group_BulidConstruction( group, affair, deltaTime )
-	local constr = CONSTRUCTION_DATATABLE_Get( affair.construction )
-	if not constr then DBG_Error( "Construction is invalid! ID=", id ) return end
 	affair.time = affair.time - deltaTime
 	if affair.time > 0 then return end
+
+	local constr = CONSTRUCTION_DATATABLE_Get( affair.construction )
+	if not constr then DBG_Error( "Construction is invalid! ID=", id ) return end
 
 	if affair.target then
 		--destroy the old one
@@ -367,9 +382,91 @@ end
 
 ---------------------------------------
 ---------------------------------------
+function Group_StartMakeItem( group, type, id )
+	local target
+	if type == "EQUIPMENT" then
+		target = EQUIPMENT_DATATABLE_Get( id )
+	else
+	end
+	if not target then DBG_Error( "Item is invalid! ID=", id ) return end
+
+	local affair = {}
+	affair.type = "MAKE_ITEM"
+	affair.maketype = type
+	affair.makeid   = id
+	affair.time = 1 --target.costs.time
+
+	if target.costs.assets then
+		for name, data in pairs( target.costs.assets ) do
+			group:UseAssets( name, data.value )
+		end
+	end
+	if target.costs.resources then
+		for name, data in pairs( target.costs.resources ) do			
+			group:UseResources( name, data.value )
+		end
+	end
+	table.insert( group.affairs, affair )
+	DBG_Trace( group.name, " start making item=" .. target.name )
+
+	--InputUtil_Pause( "start make item, remaintime=", affair.time )
+end
+
+
+function Group_MakeItem( group, affair, deltaTime )
+	affair.time = affair.time - deltaTime
+	if affair.time > 0 then return end
+
+	local target
+	if affair.maketype == "EQUIPMENT" then
+		target = EQUIPMENT_DATATABLE_Get( affair.makeid )
+	else
+	end
+	if not target then DBG_Error( "Item is invalid! ID=", affair.makeid ) return end
+
+	--finished
+	group:ObtainItem( affair.maketype, affair.makeid )
+
+	--InputUtil_Pause( "finish make item" )
+end
+
+
+---------------------------------------
+function Group_StartProduce( group, type )
+	local affair = {}
+	affair.type = "PRODUCE"
+	affair.produce = type
+	affair.time = 1 --target.costs.time
+
+	table.insert( group.affairs, affair )
+	DBG_Trace( group.name, " start produce=" .. type )
+
+	--InputUtil_Pause( "start produce, remaintime=", affair.time )
+end
+
+
+function Group_Produce( group, affair, deltaTime )
+	affair.time = affair.time - deltaTime	
+	if affair.time > 0 then return end
+
+	local number = 10
+	group:ObtainResource( affair.produce, number )
+
+	--InputUtil_Pause( "finish produce", affair.produce, number )
+end
+
+---------------------------------------
+---------------------------------------
 local function Group_DealAffair( group, affair, deltaTime )
 	if affair.type == "BUILD_CONSTRUCTION" or affair.type == "UPGRADE_CONSTRUCTION" then
 		return Group_BulidConstruction( group, affair, deltaTime )
+	elseif affair.type == "MAKE_ITEM" then
+		Group_MakeItem( group, affair, deltaTime )
+	elseif affair.type == "PROCESS" then
+	elseif affair.type == "PRODUCE" then
+		Group_Produce( group, affair, deltaTime )
+	else
+		DBG_Error( "Unhandletype=", affair.type )
 	end
 end
 

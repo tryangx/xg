@@ -38,12 +38,14 @@ function FIGHTSKILL_SYSTEM:Create( skill, id )
 		return
 	end
 
+	--skill.id       = id
 	skill.groupidx = template.groupidx
 	skill.lv       = template.lv
 	skill.template = template.id
 	skill.weapon   = MathUtil_ShallowCopy( template.weapon )
 	skill.conditions = MathUtil_ShallowCopy( template.conditions )
-	skill.actions  = {}	
+	skill.actions  = {}
+
 	--use skill id as seed
 	Random_SetSeed_Unsync( skill.id )
 

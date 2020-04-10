@@ -31,9 +31,13 @@ GROUP_PROPERTIES =
 
 	actionpts       = { type="DICT" },
 
-	assets          = { type="LIST" },
-	resources       = { type="LIST" },
+	lands           = { type="DICT" },
+	
+	assets          = { type="DICT" },
+	resources       = { type="DICT" },
 	books           = { type="LIST" },
+	--stored equipments, consumables
+	inventories     = { type="LIST" },
 
 	constructions   = { type="LIST" },
 
@@ -67,9 +71,46 @@ function GROUP_COMPONENT:Update()
 end
 
 ---------------------------------------
+function GROUP_COMPONENT:GetAttr( type )
+	return self._attrs[type] or 0
+end
+
+---------------------------------------
+function GROUP_COMPONENT:GetTempStatusValue( type )
+	return self._tempStatuses[type] or 0
+end
+
+function GROUP_COMPONENT:IncTempStatusValue( type )
+	return self._tempStatuses[type] or 0
+end
+
+---------------------------------------
+--
+-- @return default value is 0
+--
+---------------------------------------
+function GROUP_COMPONENT:GetStatusValue( type )
+	return self.statuses[type] or 0
+end
+
+
+function GROUP_COMPONENT:IncStatusValue( type, value )
+	if not value then value = 1 end	
+	self.statuses[type] = self.statuses[type] and self.statuses[type] + value or value
+	--InputUtil_Pause( self.name, "inc status", self.statuses[type], value )
+end
+
+
+function GROUP_COMPONENT:DecStatusValue( type, value )
+	self.statuses[type] = self.statuses[type] and math.max( 0, self.statuses[type] - value ) or 0
+	--InputUtil_Pause( self.name, "dec status", self.statuses[type], value )
+end
+
+
+---------------------------------------
 function GROUP_COMPONENT:FindMember( fn )
 	local roles = {}
-	MathUtil_Foreach( group.members, function ( _, ecsid )
+	MathUtil_Foreach( self.members, function ( _, ecsid )
 		if fn( ecsid ) == true then table.insert( roles, ecsid ) end
 	end )
 	return roles
@@ -109,6 +150,12 @@ function GROUP_COMPONENT:GetNumOfAffairs( type )
 	return num
 end
 
+
+---------------------------------------
+function GROUP_COMPONENT:GetNumOfLand( type )
+	return self.lands[type] or 0
+end
+
 ---------------------------------------
 -- 
 -- Get number of the exist constructions
@@ -134,30 +181,38 @@ end
 
 ---------------------------------------
 function GROUP_COMPONENT:UseAssets( type, value )
-	if not group.assets[type] then group.assets[type] = 0 end
+	if not self.assets[type] then self.assets[type] = 0 end
 	if value > 0 then
-		if group.assets[type] < value then
-			Dump( group.assets )
-			DBG_Error( group.name .. " doesn't have " .. type .. "=" .. math.abs( value ) )
-			group.assets[type] = 0
+		if self.assets[type] < value then
+			Dump( self.assets )
+			DBG_Error( self.name .. " doesn't have " .. type .. "=" .. math.abs( value ) )
+			self.assets[type] = 0
 		end
 	else
-		group.assets[type] = group.assets[type] + value
+		self.assets[type] = self.assets[type] + value
 	end
 end
 
 ---------------------------------------
+function GROUP_COMPONENT:GetNumOfResource( type )
+	if not self.resources[type] then self.resources[type] = 0 end
+	return self.resources[type]
+end
+
 function GROUP_COMPONENT:UseResources( type, value )
-	if not group.resources[type] then group.resources[type] = 0 end
+	if not self.resources[type] then self.resources[type] = 0 end
 	if value > 0 then
-		if group.resources[type] < value then
-			Dump( group.resources )
-			DBG_Error( group.name .. " doesn't have " .. type .. "=" .. math.abs( value ) )
-			group.resources[type] = 0
+		if self.resources[type] < value then
+			DBG_Error( self.name .. " doesn't have " .. type .. "=" .. math.abs( value ) )
+			self.resources[type] = 0
 		end
 	else
-		group.resources[type] = group.resources[type] + value
+		self.resources[type] = self.resources[type] + value
 	end
+end
+
+function GROUP_COMPONENT:ObtainResource( type, value )
+	self.resources[type] = self.resources[type] and self.resources[type] + value or value
 end
 
 ---------------------------------------
@@ -165,6 +220,13 @@ function GROUP_COMPONENT:ObtainBook( id )
 	Prop_Add( self, "books", id )
 	DBG_Trace( self.name .. " obtain book=" .. BOOK_DATATABLE_Get( id ).name )
 end
+
+
+function GROUP_COMPONENT:ObtainItem( type, id )
+	Prop_Add( self, "inventories", { type=type, id=id } )
+	DBG_Trace( self.name .. " obtain inventory=" .. type .. "," .. id )
+end
+
 
 ---------------------------------------
 function GROUP_COMPONENT:CompleteConstruction( id )
@@ -180,44 +242,8 @@ function GROUP_COMPONENT:DestroyConstruction( id )
 end
 
 ---------------------------------------
-function GROUP_COMPONENT:GetTempStatusValue( type )
-	return self._tempStatuses[type] or 0
-end
-
-function GROUP_COMPONENT:IncTempStatusValue( type )
-	return self._tempStatuses[type] or 0
-end
-
----------------------------------------
---
--- @return default value is 0
---
----------------------------------------
-function GROUP_COMPONENT:GetStatusValue( type )
-	return self.statuses[type] or 0
-end
 
 
-function GROUP_COMPONENT:IncStatusValue( type, value )
-	if not value then value = 1 end	
-	self.statuses[type] = self.statuses[type] and self.statuses[type] + value or value
-	--InputUtil_Pause( self.name, "inc status", self.statuses[type], value )
-end
-
-
-function GROUP_COMPONENT:DecStatusValue( type, value )
-	self.statuses[type] = self.statuses[type] and math.max( 0, self.statuses[type] - value ) or 0
-	--InputUtil_Pause( self.name, "dec status", self.statuses[type], value )
-end
-
-
----------------------------------------
--- @param attr references to GROUP_ATTR
----------------------------------------
-function GROUP_COMPONENT:GetAttr( attr )
-	if self._attrs[attr] then return self._attrs[attr] end
-	return 0
-end
 
 ---------------------------------------
 function GROUP_COMPONENT:ToString()
