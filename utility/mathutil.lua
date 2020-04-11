@@ -620,6 +620,13 @@ function MathUtil_CountIf( datas, condition )
 	return number
 end
 
+function MathUtil_FindNameByAccum( valueList, accValue )
+	for k, v in pairs( valueList ) do
+		if accValue < v then return k end
+		accValue = accValue - v
+	end
+end
+
 --[[
 	Return the string name equal the given value in the enum list
 ]]

@@ -33,12 +33,19 @@ GROUP_PROPERTIES =
 
 	lands           = { type="DICT" },
 	
+	--virtual assets
 	assets          = { type="DICT" },
-	resources       = { type="DICT" },
+	--reality mass assets
+	resources       = { type="DICT" },	
+	--books
 	books           = { type="LIST" },
-	--stored equipments, consumables
-	inventories     = { type="LIST" },
-
+	--horse
+	vehicls         = { type="LIST" },	
+	--weapon/armor
+	arms            = { type="LIST" },
+	--accessory,shoes,consumables
+	items           = { type="LIST" },
+	--construction
 	constructions   = { type="LIST" },
 
 	--datatable
@@ -50,8 +57,8 @@ GROUP_PROPERTIES =
 
 ---------------------------------------
 function GROUP_COMPONENT:__init()
+	--temporary data
 	self._attrs = {}
-	self._tempStatuses = {}
 end
 
 
@@ -67,7 +74,6 @@ end
 
 ---------------------------------------
 function GROUP_COMPONENT:Update()
-	self._tempStatuses = {}
 end
 
 ---------------------------------------
@@ -143,9 +149,21 @@ end
 function GROUP_COMPONENT:GetNumOfAffairs( type )
 	local num = 0
 	for _, affair in ipairs( self.affairs ) do
-		if affair.type == type then
-			num = num + 1
+		if affair.type == type then num = num + 1 end
+	end
+	return num
+end
+
+function GROUP_COMPONENT:GetNumOfAffairsByParams( params )
+	local num = 0	
+	for _, affair in ipairs( self.affairs ) do
+		local isMatch = true
+		if params then
+			for type, value in pairs( params ) do
+				if not affair[type] or affair[type] ~= value then isMatch = false break end
+			end
 		end
+		if isMatch then num = num + 1 end
 	end
 	return num
 end
@@ -178,6 +196,30 @@ function GROUP_COMPONENT:GetNumOfConstruction( type, id )
 	return num
 end
 
+---------------------------------------
+function GROUP_COMPONENT:GetPlot()
+	local map = ECS_SendEvent( "MAP_COMPONENT", "Get" )
+	local city = map:GetCity( self.location )
+	return city and map:GetPlot( city.x, city.y )
+end
+
+
+---------------------------------------
+function GROUP_COMPONENT:GetNumOfResource( type )
+	return self.resources[type] or 0
+end
+
+function GROUP_COMPONENT:UseResources( type, value )
+	if not self.resources[type] then self.resources[type] = 0 end
+	if value > 0 then
+		if self.resources[type] < value then
+			DBG_Error( self.name .. " doesn't have " .. type .. "=" .. math.abs( value ) )
+			self.resources[type] = 0
+		end
+	else
+		self.resources[type] = self.resources[type] + value
+	end
+end
 
 ---------------------------------------
 function GROUP_COMPONENT:UseAssets( type, value )
@@ -193,40 +235,34 @@ function GROUP_COMPONENT:UseAssets( type, value )
 	end
 end
 
+
 ---------------------------------------
-function GROUP_COMPONENT:GetNumOfResource( type )
-	if not self.resources[type] then self.resources[type] = 0 end
-	return self.resources[type]
-end
-
-function GROUP_COMPONENT:UseResources( type, value )
-	if not self.resources[type] then self.resources[type] = 0 end
-	if value > 0 then
-		if self.resources[type] < value then
-			DBG_Error( self.name .. " doesn't have " .. type .. "=" .. math.abs( value ) )
-			self.resources[type] = 0
-		end
-	else
-		self.resources[type] = self.resources[type] + value
-	end
-end
-
+-- Obtain resource, book, arm, item, vehicle
+---------------------------------------
 function GROUP_COMPONENT:ObtainResource( type, value )
-	self.resources[type] = self.resources[type] and self.resources[type] + value or value
+	Prop_Add( self, "resources", value, type )
+	DBG_Trace( self.name .. " obtain resource=" .. type .. "+" .. value )
 end
 
----------------------------------------
 function GROUP_COMPONENT:ObtainBook( id )
 	Prop_Add( self, "books", id )
 	DBG_Trace( self.name .. " obtain book=" .. BOOK_DATATABLE_Get( id ).name )
 end
 
-
-function GROUP_COMPONENT:ObtainItem( type, id )
-	Prop_Add( self, "inventories", { type=type, id=id } )
-	DBG_Trace( self.name .. " obtain inventory=" .. type .. "," .. id )
+function GROUP_COMPONENT:ObtainArm( type, id )
+	Prop_Add( self, "arms", { type=type, id=id } )
+	DBG_Trace( self.name .. " obtain arm=" .. EQUIPMENT_DATATALBE_Get( id ).name )
 end
 
+function GROUP_COMPONENT:ObtainItem( type, id )
+	Prop_Add( self, "items", { type=type, id=id } )
+	DBG_Trace( self.name .. " obtain item=" .. EQUIPMENT_DATATALBE_Get( id ).name )
+end
+
+function GROUP_COMPONENT:ObtainVehicle( type, id )
+	Prop_Add( self, "vehicls", { type=type, id=id } )
+	DBG_Trace( self.name .. " obtain vehicle=" .. EQUIPMENT_DATATALBE_Get( id ).name )
+end
 
 ---------------------------------------
 function GROUP_COMPONENT:CompleteConstruction( id )

@@ -25,7 +25,7 @@ local BOOK_DATATABLE =
 	{
 		name         = "采集",
 		lv           = 1,
-		commonskill  = "COLLLECTING",
+		commonskill  = "COLLLECTER",
 	},
 	[110] =
 	{

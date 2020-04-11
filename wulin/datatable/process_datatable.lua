@@ -29,7 +29,15 @@ local PROCESS_DATATABLE =
 	},
 	[40] =
 	{
-		name = "饲养",
+		name = "制药",
+		type = "MAKEMEDICINE",
+		material = { type="HERB", value=30 },
+		products = { consumable={type="MAKEMEDICINE", value=5} },
+		time     = { value=30 },
+	},
+	[50] =
+	{
+		name = "制药",
 		type = "MAKEMEDICINE",
 		material = { type="HERB", value=30 },
 		products = { consumable={type="MAKEMEDICINE", value=5} },
@@ -57,7 +65,7 @@ local function PROCESS_DATATABLE_Match( group, process )
 			local list = group:FindMember( function ( ecsid )
 				local role = ECS_FindComponent( ecsid, "ROLE_COMPONENT" )
 				return role and role.commonSkills[process.condition.commonskill]
-			end)
+			end )
 			if #list == 0 then return false end
 		end		
 	end
@@ -72,7 +80,7 @@ function PROCESS_DATATABLE_Find( group, type )
 	for _, process in pairs( PROCESS_DATATABLE ) do
 		if not types or type == process.type then
 			if PROCESS_DATATABLE_Match( group, process ) then
-				table.insert( list, equip )
+				table.insert( list, process )
 			end
 		end
 	end

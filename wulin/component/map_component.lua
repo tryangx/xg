@@ -44,6 +44,10 @@ function MAP_COMPONENT:GetPlotById( id )
 	return self.map:GetPlotById( id )
 end
 
+function MAP_COMPONENT:GetCity( id )
+	return self.cities[id]
+end
+
 ------------------------------------------------------------
 function MAP_COMPONENT:Setup( data )
 	local router = self.router

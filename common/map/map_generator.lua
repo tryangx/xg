@@ -125,6 +125,7 @@ local function Map_AddCityToPlot( map, city )
 
 	--InputUtil_Pause( "add city", city.x, city.y )
 	local data = {}
+	data.id    = city.id
 	data.name  = city.name
 	data.plot  = plot
 	data.x     = city.x

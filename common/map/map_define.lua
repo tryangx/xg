@@ -126,7 +126,7 @@ ResourceCondition =
 	AWAY_FROM_FEATURE_TYPE   = 25,
 }
 
-ResourceBonus = 
+PLOT_RESOURCE = 
 {
 	--traffic
 	LAND_TRANS  = 10,

@@ -50,7 +50,6 @@ local function MakeDecision( params )
 		_targetGroupCmp:IncTempStatusValue( "TESTFIGHT_MEMBER" )		
 	elseif params.cmd == "TESTFIGHT_OFFICER" then
 		_targetGroupCmp:IncTempStatusValue( "TESTFIGHT_MEMBER" )
-		InputUtil_Pause( "TESTFIGHT_OFFICER" )	
 	end
 	
 	if _roleCmp ~= _targetRoleCmp then
@@ -77,8 +76,22 @@ end
 
 ----------------------------------------
 ----------------------------------------
+local function GroupHasConstruction( params )
+	local num = _targetGroupCmp:GetNumOfConstruction( params.construction )
+	--should reduce the construction occpuied by the affairs
+	if num > 0 then
+		if params.affair then
+			num = num - _targetGroupCmp:GetNumOfAffairsByParams( params.affair )
+		end	
+	else
+		_targetGroupCmp._constructionWishList[params.construction] = _targetGroupCmp._constructionWishList[params.construction] and _targetGroupCmp._constructionWishList[params.construction] + 1 or 1
+		--InputUtil_Pause( "building", params.construction, num )
+	end	
+	return num > 0
+end
+
 local function GroupHasLand( params )
-	if not _targetGroupCmp then return false end
+	--if not _targetGroupCmp then return false end	local usin
 	if _targetGroupCmp:GetNumOfLand( params.type ) <= ( params.value or 0 ) then return false end
 	return true
 end
@@ -97,17 +110,19 @@ local function AddAffair( params )
 		Group_StartUpgradingConstruction( _roleGroupCmp, _variables.construction, _variables.target )
 	elseif params.type == "DESTROY_CONSTRUCTION" then
 
-	elseif params.type == "SMELTA" then
-		Group_Smelta( _roleGroupCmp, _variables.material )
+	elseif params.type == "SMELT" then
+		Group_Smelt( _roleGroupCmp, _variables.material )
 
 	elseif params.type == "MAKE_ITEM" then
 		if _variables.maketype and _variables.makeid then
-			Group_StartMakeItem( _roleGroupCmp, _variables.maketype, _variables.makeid )
+			Group_StartMakeItem( _roleGroupCmp, _variables.maketype, _variables.makeid )			
 		else
 			DBG_Error( "unspecified making item" )
 		end
 	elseif params.type == "PROCESS"	then
-
+		if _variables.processtype then
+			Group_StartProcess( _roleGroupCmp, _variables.processtype )
+		end		
 	elseif params.type == "PRODUCE" then
 		if _variables.producetype then
 			Group_StartProduce( _roleGroupCmp, _variables.producetype )
@@ -118,6 +133,9 @@ local function AddAffair( params )
 	else
 		DBG_Error( "unhandle", params.type )
 	end
+
+	DBG_Trace( _targetGroupCmp.name .. " add affair=" .. params.type )
+	--InputUtil_Pause( "Add affair", params.type )
 end
 
 
@@ -156,6 +174,11 @@ end
 local _DefaultDecision = 
 {
 	type="ACTION", desc="Decision", action = MakeDecision, params={ cmd="IDLE" },
+}
+
+local _Pause = 
+{
+	type="PAUSE", desc="Pause to debug",
 }
 
 
@@ -445,91 +468,127 @@ local _GroupDuty =
 
 ----------------------------------------
 ----------------------------------------
-local function GroupNeedProduce( params )
-	if not GroupHasAffairs( { type="PRODUCE", max=1 } ) then return false end
+local function GroupNeedProduceResource( params )
+	--affairs need follower to do
+	if _targetGroupCmp:GetNumOfAffairs( "PRODUCE" ) >= #_targetGroupCmp.members then return false end
 
-	--if _targetGroupCmp:GetAttr( "MAX_INVENTORY" ) >
-	_variables.producetype = params.type
+	--check wishlist first
+	local producetype
+	local total = MathUtil_Sum( _targetGroupCmp._resourceWishList )
+	if params.type then
+		producetype = params.type
+	else
+		if total > 0 then
+			local value = Random_GetInt_Sync( 1, total )
+			producetype = MathUtil_FindNameByAccum( _targetGroupCmp._resourceWishList, value )	
+		else
+			return false
+		end
+	end
+
+	if _targetGroupCmp:GetNumOfAffairsByParams( { type="PRODUCE", produce=params.type } ) > 0 then
+		--Dump( _targetGroupCmp.affairs ) print( "already has", params.type )
+		return false
+	end
+
+	local produce = PRODUCE_DATATABLE_Get( producetype )
+	if not produce then DBG_Error( "Produce is invalid! Type=", type ) end
+	if produce.conditions then
+		if produce.conditions.land then
+			for type, value in pairs( produce.conditions.land ) do
+				if _targetGroupCmp:GetNumOfLand( type ) < value then
+					return false
+				end
+			end
+		end
+		if produce.conditions.resources then
+			for type, value in pairs( produce.conditions.resources ) do
+				if _targetGroupCmp:GetNumOfResource( type ) < value then
+					return false
+				end
+			end
+		end
+	end
+
+	_variables.producetype = producetype
+
 	return true
 end
+
+
+local _GroupProducePriority =
+{
+	type="SEQUENCE", desc="group_priority", children = 
+	{
+		{ type="FILTER", condition=GroupNeedProduceResource, params={} },
+		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
+	}
+}
 
 
 local _GroupCollect =
 {
 	type="SEQUENCE", desc="group_collect", children = 
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
-		{ type="FILTER", condition=GroupHasLand, params={ type="JUNGLELAND", lv=1 } },
-		{ type="FILTER", condition=GroupNeedProduce, params={ type="FRUIT" } },
+		--{ type="FILTER", condition=GroupHasLand, params={ type="JUNGLELAND", lv=1 } },
+		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="FRUIT" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
 }
-
-
 
 local _GroupFish =
 {
 	type="SEQUENCE", desc="group_fish", children = 
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
-		{ type="FILTER", condition=GroupHasLand, params={ type="WATERLAND", lv=1 } },
-		{ type="FILTER", condition=GroupNeedProduce, params={ type="FISH" } },
+		--{ type="FILTER", condition=GroupHasLand, params={ type="WATERLAND", lv=1 } },
+		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="FISH" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
 }
-
-
 
 local _GroupFarm =
 {
 	type="SEQUENCE", desc="", children = 
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
-		{ type="FILTER", condition=GroupHasLand, params={ type="FARMLAND", lv=1 } },
-		{ type="FILTER", condition=GroupNeedProduce, params={ type="FOOD" } },
+		--{ type="FILTER", condition=GroupHasLand, params={ type="FARMLAND", lv=1 } },
+		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="FOOD" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
 }
-
 
 local _GroupCutWood =
 {
 	type="SEQUENCE", desc="", children =
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
-		{ type="FILTER", condition=GroupHasLand, params={ type="WOODLAND" } },
-		{ type="FILTER", condition=GroupNeedProduce, params={ type="WOOD" } },
+		--{ type="FILTER", condition=GroupHasLand, params={ type="WOODLAND" } },
+		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="WOOD" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
 }
-
 
 local _GroupMineStone =
 {
 	type="SEQUENCE", desc="", children = 
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
-		{ type="FILTER", condition=GroupHasLand, params={ type="STONEELAND", lv=1 } },
-		{ type="FILTER", condition=GroupNeedProduce, params={ type="STONE" } },
+		--{ type="FILTER", condition=GroupHasLand, params={ type="STONEELAND", lv=1 } },
+		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="STONE" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
 }
-
 
 local _GroupMineMineral =
 {
 	type="SEQUENCE", desc="", children = 
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
-		{ type="FILTER", condition=GroupHasLand, params={ type="MINELAND", lv=1 } },
-		{ type="FILTER", condition=GroupNeedProduce, params={ type="MINERAL" } },
+		--{ type="FILTER", condition=GroupHasLand, params={ type="MINELAND", lv=1 } },
+		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="MINERAL" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
 }
 
-
-local _GroupWork = 
+local _GroupProduce = 
 {
+	--type="RANDOM_SELECTOR", desc="", children =
 	type="SELECTOR", desc="", children =
 	{
 		_GroupCollect,
@@ -545,40 +604,37 @@ local _GroupWork =
 ----------------------------------------
 ----------------------------------------
 local function GroupNeedMakeEquip( params )
-	if not GroupHasAffairs( { type="MAKE_ITEM", max=1 } ) then return false end
-
 	if not _targetGroupCmp then return false end	
 	local list = EQUIPMENT_DATATABLE_Find( _targetGroupCmp, params.type )
 	local num = #list
 	if num == 0 then return false end
 	local index = Random_GetInt_Sync( 1, num )
 	local equip = list[index]
-	_variables.maketype = "EQUIPMENT"
+	_variables.maketype = params.type
 	_variables.makeid   = equip.id
 	return true
 end
 
 
 local function GroupNeedProcess( params )
-	if not GroupHasAffairs( { type="PROCESS", max=1 } ) then return false end
-
+	--if not GroupHasAffairs( { type="PROCESS", max=1 } ) then return false end
 	if not params.action then DBG_Error( "no action" ) return false end
 	local list = PROCESS_DATATABLE_Find( _targetGroupCmp, params.action )
 	local num = #list
-	if num == 0 then return false end
+	if num == 0 then error( "no process" .. num )return false end
 	local index = Random_GetInt_Sync( 1, num )
 	local id = list[index]
-	_variables.process = id
-
+	_variables.process = id	
+	--print( "Need Process", params.action )
 	return true
 end
 
 
-local _GroupMakeTool =
+local _GroupMakeAccessory =
 {
 	type="SEQUENCE", desc="", children = 
 	{
-		--{ type="FILTER", condition=TestProbability, params={ prob=20 } },		
+		{ type="FILTER", condition=GroupHasConstruction, params={ construction="ARMORY", affair={ type="MAKE_ITEM" } } },
 		{ type="FILTER", condition=GroupNeedMakeEquip, params={ type="ACCESSORY" } },
 		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
 	}
@@ -589,7 +645,7 @@ local _GroupMakeEquip =
 {
 	type="SEQUENCE", desc="", children = 
 	{
-		--{ type="FILTER", condition=TestProbability, params={ prob=20 } },		
+		{ type="FILTER", condition=GroupHasConstruction, params={ construction="ARMORY", affair={ type="MAKE_ITEM" } } },
 		{ type="FILTER", condition=GroupNeedMakeEquip, params={ type="WEAPON" } },
 		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
 	}
@@ -600,7 +656,7 @@ local _GroupMakeCloth =
 {
 	type="SEQUENCE", desc="", children =
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupHasConstruction, params={ construction="ARMORY", affair={ type="MAKE_ITEM" } } },
 		{ type="FILTER", condition=GroupNeedMakeEquip, params={ type="ARMOR" } },
 		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
 	}
@@ -610,9 +666,9 @@ local _GroupRaiseHorse =
 {
 	type="SEQUENCE", desc="", children =
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupHasConstruction, params={ construction="PASTURE", affair={ type="MAKE_ITEM" } } },
 		{ type="FILTER", condition=GroupNeedMakeEquip, params={ type="VEHICLE" } },
-		{ type="ACTION", action = AddAffair, params={ type="RAISELIVESTOCK" } },
+		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
 	}
 }
 
@@ -621,33 +677,19 @@ local _GroupSmelt =
 {
 	type="SEQUENCE", desc="", children =
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
-		{ type="FILTER", condition=GroupNeedProcess, params={ action="SMELT" } },
-		{ type="ACTION", action = AddAffair, params={ type="SMELT" } },
+		{ type="FILTER", condition=GroupHasConstruction, params={ construction="SMITHY", affair={ type="PROCESS", process="SMELT" } } },
+		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="STEEL" } },
+		{ type="ACTION", action = AddAffair, params={ type="PROCESS" } },
 	}
 }
-
-
---[[
-local _GroupSawWood =
-{
-	type="SEQUENCE", desc="", children =
-	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
-		{ type="FILTER", condition=GroupNeedProcess, params={ type="WOOD" } },
-		{ type="ACTION", action = AddAffair, params={ type="SAWWOOD" } },
-	}
-}
-]]
-
 
 local _GroupRaiseLivestock =
 {
 	type="SEQUENCE", desc="", children =
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupHasConstruction, params={ construction="FARM", affair={ type="PROCESS", process="RAISELIVESTOCK" } } },
 		{ type="FILTER", condition=GroupNeedProcess, params={ action="RAISELIVESTOK" } },
-		{ type="ACTION", action = AddAffair, params={ type="RAISELIVESTOCK" } },
+		{ type="ACTION", action = AddAffair, params={ type="PROCESS" } },
 	}
 }
 
@@ -656,9 +698,9 @@ local _GroupPlantHerb =
 {
 	type="SEQUENCE", desc="", children =
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupHasConstruction, params={ construction="GARDEN", affair={ type="PROCESS",process="PLANTHERB" } } },
 		{ type="FILTER", condition=GroupNeedProcess, params={ action="PLANTHERB" } },
-		{ type="ACTION", action = AddAffair, params={ type="PLANTHERB" } },
+		{ type="ACTION", action = AddAffair, params={ type="PROCESS" } },
 	}
 }
 
@@ -667,29 +709,26 @@ local _GroupMakeMedicine =
 {
 	type="SEQUENCE", desc="", children =
 	{
-		{ type="FILTER", condition=TestProbability, params={ prob=20 } },
+		{ type="FILTER", condition=GroupHasConstruction, params={ construction="PHARMACY", affair={ type="PROCESS", process="MAKEMEDICINE" } } },
 		{ type="FILTER", condition=GroupNeedProcess, params={ action="MAKEMEDICINE" } },
-		{ type="ACTION", action = AddAffair, params={ type="MAKEMEDICINE" } },
+		{ type="ACTION", action = AddAffair, params={ type="PROCESS" } },
 	}
 }
 
 
 local _GroupProcess = 
 {
-	type="SELECTOR", desc="", children =
+	type="RANDOM_SELECTOR", desc="", children =
 	{
 		_GroupMakeEquip,
+		_GroupMakeTool,
 		_GroupSmelt,
-		{ type="PAUSE_FALSE", desc="asdfadsf"},
-		--_GroupMakeTool,
 		_GroupMakeCloth,
-		_GroupSawWood,
 		_GroupRaiseLivestock,
 		_GroupPlantHerb,
 		_GroupMakeMedicine,
 	}		
 }
-
 
 
 ----------------------------------------
@@ -698,7 +737,6 @@ local _GroupProcess =
 --   Event( scenario )
 --	 
 ----------------------------------------
-
 
 ----------------------------------------
 -- Diplomacy
@@ -720,26 +758,38 @@ local _GroupProcess =
 ----------------------------------------
 
 ----------------------------------------
-local function GroupNeedToBuildConstruction()
+local function GroupNeedBuildConstruction()
 	if _roleGroupCmp:GetNumOfAffairs( "BUILD_CONSTRUCTION" ) > 0 or
 		_roleGroupCmp:GetNumOfAffairs( "UPGRADE_CONSTRUCTION" ) > 0 or
 		_roleGroupCmp:GetNumOfAffairs( "DESTROY_CONSTRUCTION" ) > 0 then
 		return false
 	end
 
+	--check wishlist first
+	local constrtype
+	local total = MathUtil_Sum( _targetGroupCmp._constructionWishList )
+	if total > 0 then
+		local value = Random_GetInt_Sync( 1, total )
+		constrtype = MathUtil_FindNameByAccum( _targetGroupCmp._constructionWishList, value )
+		--InputUtil_Pause( "need build", constrtype )
+	end
+
 	--find all constructions can be built
-	local list = CONSTRUCTION_DATATABLE_Find( nil, _roleGroupCmp )
+	local list = CONSTRUCTION_DATATABLE_Find( constrtype, _targetGroupCmp )
 	local num = #list
 	if num == 0 then return false end
 
 	local index = Random_GetInt_Sync( 1, num )
 	local id = list[index].id
 	_variables.construction = id
+
+	--InputUtil_Pause( "try to build", list[index].name )
+
 	return true
 end
 
 
-local function GroupNeedToUpgradeConstruction()
+local function GroupNeedUpgradeConstruction()
 	if _roleGroupCmp:GetNumOfAffairs( "BUILD_CONSTRUCTION" ) > 0 or
 		_roleGroupCmp:GetNumOfAffairs( "UPGRADE_CONSTRUCTION" ) > 0 or
 		_roleGroupCmp:GetNumOfAffairs( "DESTROY_CONSTRUCTION" ) > 0 then
@@ -763,7 +813,7 @@ local function GroupNeedToUpgradeConstruction()
 end
 
 
-local function GroupNeedToDestroyConstruction()
+local function GroupNeedDestroyConstruction()
 	if _roleGroupCmp:GetNumOfAffairs( "BUILD_CONSTRUCTION" ) > 0 or
 		_roleGroupCmp:GetNumOfAffairs( "UPGRADE_CONSTRUCTION" ) > 0 or
 		_roleGroupCmp:GetNumOfAffairs( "DESTROY_CONSTRUCTION" ) > 0 then
@@ -780,7 +830,7 @@ local _GroupBuildConstruction =
 {
 	type="SEQUENCE", desc="", children =
 	{
-		{ type="FILTER", condition=GroupNeedToBuildConstruction },
+		{ type="FILTER", condition=GroupNeedBuildConstruction },
 		{ type="ACTION", action = AddAffair, params={ type="BUILD_CONSTRUCTION" } },
 	}
 }
@@ -789,7 +839,7 @@ local _GroupUpgradeConstruction =
 {
 	type="SEQUENCE", desc="", children =
 	{
-		{ type="FILTER", condition=GroupNeedToUpgradeConstruction },
+		{ type="FILTER", condition=GroupNeedUpgradeConstruction },
 		{ type="ACTION", action = AddAffair, params={ type="UPGRADE_CONSTRUCTION" } },
 	}
 }
@@ -804,7 +854,15 @@ local _GroupDestroyConstruction =
 
 ----------------------------------------
 ----------------------------------------
-
+local _GroupConstruction = 
+{
+	type="SEQUENCE", desc="", children =	
+	{
+		_GroupBuildConstruction,
+		_GroupUpgradeConstruction,
+		_GroupDestroyConstruction,
+	}
+}
 
 ----------------------------------------
 ----------------------------------------
@@ -812,18 +870,15 @@ local GroupAffair =
 {
 	type="PARALLEL", desc = "scheudle_arrangement", children = 
 	{
-	--[[
-		--construction
-		_GroupBuildConstruction,
-		_GroupUpgradeConstruction,
-		_GroupDestroyConstruction,
+		--PROCESS always has the higher priority
+		_GroupProcess,
 
-		--human resource		
-		--_GroupApprenticed,
-]]
-		--make
-		_GroupWork,
-		--_GroupProcess,		
+		--CONSTRUCTION should be considered after the PROCESS
+		_GroupConstruction,
+
+		--PRODUCE should be the last thing to consider about.
+		_GroupProducePriority,		
+		_GroupProduce,
 	}
 }
 _groupAffairTree = BehaviorNode( true )
@@ -836,9 +891,6 @@ local ScheduleArrangement =
 	--find the right one
 	type="SELECTOR", desc = "scheudle_arrangement", children = 
 	{
-		--test slot
-		_GroupFight,
-
 		--normal priority
 		_PersonalHealthy,
 		_GroupTraining,
@@ -906,12 +958,14 @@ end
 ----------------------------------------
 function AI_DetermineGroupAffair( role_ecsid, params )
 	if not InitBehavior( role_ecsid, params ) then DBG_TraceBug( "Init role's ai failed" ) return end
-
 	if not _targetGroupCmp then DBG_Error( "Target isn't in group!" ) end
 
-	DBG_Trace( _roleCmp.name, "is thinking about group affairs" )
+	_targetGroupCmp._tempStatuses = {}
+	_targetGroupCmp._constructionWishList = {}
+	_targetGroupCmp._resourceWishList = {}
+
+	--DBG_Trace( _roleCmp.name, "is thinking about group affairs" )
 	Stat_Add( "RoleAI@Run_Times", nil, StatType.TIMES )
-	Log_Write( "roleai", _roleCmp.name .. " is thinking schedule" )
 
 	_behavior:Run( _groupAffairTree )
 end
@@ -925,7 +979,7 @@ function AI_DetermineSchedule( role_ecsid, params )
 
 	if not _targetGroupCmp then DBG_Error( "Target isn't in group!" ) end
 
-	DBG_Trace( _roleCmp.name, "is thinking about schedule. target=" .. _targetRoleCmp.name )
+	--DBG_Trace( _roleCmp.name, "is thinking about schedule. target=" .. _targetRoleCmp.name )
 	Stat_Add( "RoleAI@Run_Times", nil, StatType.TIMES )
 
 	return _behavior:Run( _scheduleTree )
@@ -938,7 +992,7 @@ end
 function AI_DetermineAction( role_ecsid, params )
 	if not InitBehavior( role_ecsid, params ) then DBG_TraceBug( "Init role's ai failed" ) return end
 
-	DBG_Trace( _roleCmp.name, "is thinking about action" )
+	--DBG_Trace( _roleCmp.name, "is thinking about action" )
 	Stat_Add( "RoleAI@Run_Times", nil, StatType.TIMES )
 
 	return _behavior:Run( _actionTree )

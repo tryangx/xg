@@ -12,9 +12,8 @@ local GROUP_PARAMS =
 			member={min=3,max=5,ELDER={num=1}},
 			assets={ LAND={init=3}, REPUTATION={min=100,max=300}, INFLUENCE={min=100,max=300}, MONEY={min=1000,max=2000} },
 			resources=
-				{
-				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
-				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
+				{				
+				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 },
@@ -26,8 +25,7 @@ local GROUP_PARAMS =
 			assets={ LAND={init=10}, REPUTATION={min=200,max=500}, INFLUENCE={min=200,max=500}, MONEY={min=1000,max=2000} },
 			resources=
 				{
-				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
-				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
+				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 },
@@ -39,8 +37,7 @@ local GROUP_PARAMS =
 			assets={ LAND={init=30}, REPUTATION={min=300,max=1000}, INFLUENCE={min=0,max=100}, MONEY={min=1000,max=2000} },
 			resources=
 				{
-				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
-				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
+				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 },
@@ -52,8 +49,7 @@ local GROUP_PARAMS =
 			assets={ LAND={init=100}, REPUTATION={min=500,max=3000}, INFLUENCE={min=0,max=100}, MONEY={min=1000,max=2000} },
 			resources=
 				{
-				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
-				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
+				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 },
@@ -314,10 +310,6 @@ function Group_StartBuildingConstruction( group, id )
 	affair.type  = "BUILD_CONSTRUCTION"
 	affair.construction = id
 	affair.time  = constr.costs.time or 1
-
-	print( group.name, constr.name )
-	Track_Reset()
-	Track_Table( "group", group )		
 	--use the assets and resources one time
 	if constr.costs.assets then
 		for name, data in pairs( constr.costs.assets ) do
@@ -329,8 +321,7 @@ function Group_StartBuildingConstruction( group, id )
 			group:UseResources( name, data.value )
 		end
 	end
-	Track_Table( "group", group )
-	Track_Dump( nil, true )
+
 	table.insert( group.affairs, affair )
 	DBG_Trace( group.name, " start building construction=" .. constr.name )
 end
@@ -418,25 +409,38 @@ function Group_MakeItem( group, affair, deltaTime )
 	if affair.time > 0 then return end
 
 	local target
-	if affair.maketype == "EQUIPMENT" then
-		target = EQUIPMENT_DATATABLE_Get( affair.makeid )
+	if affair.maketype == "WEAPON"        then target = EQUIPMENT_DATATABLE_Get( affair.makeid )
+	elseif affair.maketype == "ARMOR"     then target = EQUIPMENT_DATATABLE_Get( affair.makeid )
+	elseif affair.maketype == "SHOES"     then target = EQUIPMENT_DATATABLE_Get( affair.makeid )
+	elseif affair.maketype == "ACCESSORY" then target = EQUIPMENT_DATATABLE_Get( affair.makeid )
+	elseif affair.maketype == "VEHICLE"   then target = EQUIPMENT_DATATABLE_Get( affair.makeid )
 	else
 	end
 	if not target then DBG_Error( "Item is invalid! ID=", affair.makeid ) return end
 
 	--finished
-	group:ObtainItem( affair.maketype, affair.makeid )
+	if affair.maketype == "WEAPON"        then group:ObtainArm( affair.maketype, affair.makeid )		
+	elseif affair.maketype == "ARMOR"     then group:ObtainArm( affair.maketype, affair.makeid )
+	elseif affair.maketype == "SHOES"     then group:ObtainItem( affair.maketype, affair.makeid )
+	elseif affair.maketype == "ACCESSORY" then group:ObtainItem( affair.maketype, affair.makeid )
+	elseif affair.maketype == "VEHICLE"   then group:ObtainVehicle( affair.maketype, affair.makeid )
+	else
+	end
 
-	--InputUtil_Pause( "finish make item" )
+	InputUtil_Pause( "finish make item", target.name )
 end
 
 
 ---------------------------------------
 function Group_StartProduce( group, type )
+	local produce = PRODUCE_DATATABLE_Get( type )
+	if not produce then DBG_Error( "Produce is invalid! Type=", type ) end
+
 	local affair = {}
 	affair.type = "PRODUCE"
 	affair.produce = type
-	affair.time = 1 --target.costs.time
+	affair.time    = produce.time.base	
+	affair.yield   = 0
 
 	table.insert( group.affairs, affair )
 	DBG_Trace( group.name, " start produce=" .. type )
@@ -445,14 +449,88 @@ function Group_StartProduce( group, type )
 end
 
 
-function Group_Produce( group, affair, deltaTime )
+function Group_Produce( group, affair, deltaTime, actor )
+	local produce = PRODUCE_DATATABLE_Get( affair.produce )
+	if not produce then DBG_Error( "Produce is invalid! Type=", type ) return end
+
+	if actor then
+		--commonskill
+		local timeEff = 0
+		if produce.time.commonskill then
+			for _, data in ipairs( produce.time.commonskill ) do
+				if actor:HasCommonSkill( data.type, data.lv ) then
+					timeEff = math.max( timeEff, data.acc )
+				end
+			end
+		end
+		deltaTime = deltaTime * timeEff
+	end
+	affair.time = affair.time - deltaTime
+
+	local yieldEff = 1	
+	--land
+	if produce.yield.land then
+		for _, land in ipairs( produce.yield.land ) do
+			if land.num <= group:GetNumOfLand( land.type ) then
+				yieldEff = math.max( yieldEff, land.eff )
+			end
+		end
+	end
+	--resource
+	if produce.yield.resource then
+		local plot = group:GetPlot()
+		if plot and plot.resource then
+			for _, res in ipairs( produce.yield.resource ) do
+				if plot.resource[res.type] and plot.resource[res.type] <= res.lv then
+					yieldEff = math.max( yieldEff, res.eff )
+				end
+			end
+		end
+	end
+	--commonskill
+	if actor then
+		if produce.yield.commonskill then
+			for _, data in ipairs( produce.yield.commonskill ) do
+				if actor:HasCommonSkill( data.type, data.lv ) then
+					yieldEff = math.max( yieldEff, data.acc )
+				end
+			end
+		end
+	end
+	
+	local product = math.ceil( produce.yield.base * yieldEff )
+	affair.yield = affair.yield + product
+
+	DBG_Trace( "produce=" .. produce.name .. " ramintime=" .. affair.time .. " yield=" .. affair.yield )
+
+	if affair.time > 0 then return end
+
+	group:ObtainResource( affair.produce, affair.yield )
+
+	--InputUtil_Pause( "finish produce", affair.produce, affair.yield )
+end
+
+
+---------------------------------------
+---------------------------------------
+function Group_StartProcess( group, type )
+	local affair = {}
+	affair.type = "PROCESS"
+	affair.process = type
+	affair.time = 1 --target.costs.time
+
+	table.insert( group.affairs, affair )
+	DBG_Trace( group.name, " start produce=" .. type )
+end
+
+
+function Group_Process( group, affair, deltaTime )
 	affair.time = affair.time - deltaTime	
 	if affair.time > 0 then return end
 
-	local number = 10
-	group:ObtainResource( affair.produce, number )
-
-	--InputUtil_Pause( "finish produce", affair.produce, number )
+	error( "todo" )
+	--local number = 10
+	--group:ObtainResource( affair.produce, number )
 end
 
 ---------------------------------------
@@ -463,6 +541,7 @@ local function Group_DealAffair( group, affair, deltaTime )
 	elseif affair.type == "MAKE_ITEM" then
 		Group_MakeItem( group, affair, deltaTime )
 	elseif affair.type == "PROCESS" then
+		Group_Process( group, affair, deltaTime )
 	elseif affair.type == "PRODUCE" then
 		Group_Produce( group, affair, deltaTime )
 	else

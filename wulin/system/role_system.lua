@@ -64,7 +64,7 @@ end
 --
 ---------------------------------------
 local function Role_Idle( role )
-	print( role.name, "idle" )
+	--print( role.name, "idle" )
 end
 
 

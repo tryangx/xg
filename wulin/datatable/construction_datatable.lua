@@ -132,6 +132,90 @@ local CONSTRUCTION_DATATABLE =
 		effects    = { store_slot=100 },
 		costs      = { time=2, assets={ MONEY={ value=100 } }, resources={ WOOD={ value=100 } } },
 	},
+
+	[400] =
+	{
+		name       = "铁匠铺",
+		type       = "SMITHY",
+		lv         = 1,
+		conditions = { size="FAMILY", assets = { REPUTATION={ value=100 } }, number = 1 },
+		limits     = { FAMILY=0, SMALL=1, MID=1, BIG=2, HUGE=3 },
+		effects    = { store_slot=100 },
+		costs      = { time=2, assets={ MONEY={ value=100 } }, resources={ WOOD={ value=100 } } },
+	},
+	[410] =
+	{
+		name       = "兵器库",
+		type       = "ARMORY",
+		lv         = 1,
+		conditions = { size="FAMILY", assets = { REPUTATION={ value=100 } }, number = 1 },
+		limits     = { FAMILY=0, SMALL=1, MID=1, BIG=2, HUGE=3 },
+		effects    = { store_slot=100 },
+		costs      = { time=2, assets={ MONEY={ value=100 } }, resources={ WOOD={ value=100 } } },
+	},
+
+	[500] =
+	{
+		name       = "牧场",
+		type       = "PASTURE",
+		lv         = 1,
+		conditions = { size="FAMILY", assets = { REPUTATION={ value=100 } }, number = 1 },
+		limits     = { FAMILY=0, SMALL=1, MID=1, BIG=2, HUGE=3 },
+		effects    = { store_slot=100 },
+		costs      = { time=2, assets={ MONEY={ value=100 } }, resources={ WOOD={ value=100 } } },
+	},
+	[510] =
+	{
+		name       = "马厩",
+		type       = "STABLE",
+		lv         = 1,
+		conditions = { size="FAMILY", assets = { REPUTATION={ value=100 } }, number = 1 },
+		limits     = { FAMILY=0, SMALL=1, MID=1, BIG=2, HUGE=3 },
+		effects    = { store_slot=100 },
+		costs      = { time=2, assets={ MONEY={ value=100 } }, resources={ WOOD={ value=100 } } },
+	},
+
+	[610] =
+	{
+		name       = "农田",
+		type       = "FIELD",
+		lv         = 1,
+		conditions = { size="FAMILY", assets = { REPUTATION={ value=100 } }, number = 1 },
+		limits     = { FAMILY=0, SMALL=1, MID=1, BIG=2, HUGE=3 },
+		effects    = { store_slot=100 },
+		costs      = { time=2, assets={ MONEY={ value=100 } }, resources={ WOOD={ value=100 } } },
+	},
+	[600] =
+	{
+		name       = "农场",
+		type       = "FARM",
+		lv         = 1,
+		conditions = { size="FAMILY", assets = { REPUTATION={ value=100 } }, number = 1 },
+		limits     = { FAMILY=0, SMALL=1, MID=1, BIG=2, HUGE=3 },
+		effects    = { store_slot=100 },
+		costs      = { time=2, assets={ MONEY={ value=100 } }, resources={ WOOD={ value=100 } } },
+	},
+
+	[700] =
+	{
+		name       = "花园",
+		type       = "GARDEN",
+		lv         = 1,
+		conditions = { size="FAMILY", assets = { REPUTATION={ value=100 } }, number = 1 },
+		limits     = { FAMILY=0, SMALL=1, MID=1, BIG=2, HUGE=3 },
+		effects    = { store_slot=100 },
+		costs      = { time=2, assets={ MONEY={ value=100 } }, resources={ WOOD={ value=100 } } },
+	},
+	[710] =
+	{
+		name       = "药房",
+		type       = "PHARMACY",
+		lv         = 1,
+		conditions = { size="FAMILY", assets = { REPUTATION={ value=100 } }, number = 1 },
+		limits     = { FAMILY=0, SMALL=1, MID=1, BIG=2, HUGE=3 },
+		effects    = { store_slot=100 },
+		costs      = { time=2, assets={ MONEY={ value=100 } }, resources={ WOOD={ value=100 } } },
+	},
 }
 
 
@@ -197,9 +281,16 @@ local function Construction_MatchCondition( constr, group, upgrade )
 		if constr.costs.assets then
 			if not Construction_Compare( group.assets, constr.costs.assets ) then return false end
 		end
-
+		
 		if constr.costs.resources then
-			if not Construction_Compare( group.resources, constr.costs.resources ) then return false end
+			if not Construction_Compare( group.resources, constr.costs.resources ) then				
+				for type, data in pairs( constr.costs.resources ) do
+					if group._resourceWishList then
+						group._resourceWishList[type] = math.max( group._resourceWishList[type] or 0, data.value )
+					end
+				end				
+				return false
+			end
 		end
 	end
 

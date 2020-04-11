@@ -13,8 +13,10 @@ local GROUP_DATATABLE =
 		name     = "少林派",
 		size     = "MID",
 		assets   = { land=200 },
-		lands    = { FARMLAND=100, WOODLAND=10, STONELAND=10, MINELAND=10 },
+		lands    = { JUNGLELAND=20, FARMLAND=100, WOODLAND=10, STONELAND=10, MINELAND=10 },
+		--constructions = { 400, 410, 500, 510, 600, 610, 700, 710 },
 	},
+	--[[]]
 	[2] =
 	{
 		name    = "武当派",
@@ -29,6 +31,7 @@ local GROUP_DATATABLE =
 		assets   = { land=200 },
 		lands    = { FARMLAND=100, WOODLAND=10, STONELAND=10, MINELAND=10 },
 	},
+	--]]
 }
 --[[
 {

@@ -124,11 +124,11 @@ function Prop_Add( container, name, data, id )
 					container[name][id] = v
 				end
 			else
-				container[name][id] = data
+				container[name][id] = container[name][id] and container[name][id] + data or data
 			end
 		else
-			container[name][id] = data
-	end
+			container[name][id] = container[name][id] and container[name][id] + data or data
+		end
 	else
 		DBG_Error( "Unhanlde type=" .. prop.type )
 	end
