@@ -4,8 +4,8 @@ local PROCESS_DATATABLE =
 {
 	[10] =
 	{
-		name = "炼钢",
-		type = "SMELT",
+		name     = "炼钢",
+		type     = "SMELT",
 		condition = { commonskill="BLACKSMITH" },
 		material = { type="IRON_ORE", value=100 },
 		products = { resource={type="STEEL", value=20} },
@@ -13,32 +13,32 @@ local PROCESS_DATATABLE =
 	},
 	[20] =
 	{
-		name = "饲养",
-		type = "RAISELIVESTOK",
+		name     = "饲养",
+		type     = "RAISELIVESTOK",
 		material = { },
 		products = { resource={type="LIVESTOCK", value=20} },
 		time     = { value=180 },
 	},
 	[30] =
 	{
-		name = "种草药",
-		type = "PLANTHERB",
+		name     = "种草药",
+		type     = "PLANTHERB",
 		material = { },
 		products = { resource={type="HERB", value=20} },
 		time     = { value=90 },
 	},
 	[40] =
 	{
-		name = "制药",
-		type = "MAKEMEDICINE",
+		name     = "制药",
+		type     = "MAKEMEDICINE",
 		material = { type="HERB", value=30 },
 		products = { consumable={type="MAKEMEDICINE", value=5} },
 		time     = { value=30 },
 	},
 	[50] =
 	{
-		name = "制药",
-		type = "MAKEMEDICINE",
+		name     = "制药",
+		type     = "MAKEMEDICINE",
 		material = { type="HERB", value=30 },
 		products = { consumable={type="MAKEMEDICINE", value=5} },
 		time     = { value=30 },
@@ -78,7 +78,7 @@ end
 function PROCESS_DATATABLE_Find( group, type )
 	local list = {}
 	for _, process in pairs( PROCESS_DATATABLE ) do
-		if not types or type == process.type then
+		if not types or type     == process.type then
 			if PROCESS_DATATABLE_Match( group, process ) then
 				table.insert( list, process )
 			end

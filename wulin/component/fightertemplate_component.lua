@@ -33,7 +33,7 @@ FIGHTERTEMPLATE_PROPERTIES =
 FIGHTERTEMPLATE_COMPONENT = class()
 
 ---------------------------------------
-function FIGHTERTEMPLATE_COMPONENT:_init()
+function FIGHTERTEMPLATE_COMPONENT:Activate()
 end
 
 ---------------------------------------

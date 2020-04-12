@@ -4,6 +4,9 @@
 ---------------------------------------
 FIGHTER_PROPERTIES = 
 {
+	fighteff   = { type="NUMBER" },
+	ranking    = { type="NUMBER" },
+
 	--points
 	-- type : object
 	-- value: cur/max
@@ -40,12 +43,7 @@ FIGHTER_PROPERTIES =
 FIGHTER_COMPONENT = class()
 
 ---------------------------------------
-function FIGHTER_COMPONENT:_init()	
-end
-
----------------------------------------
-function FIGHTER_COMPONENT:Activate()	
-	--print( "Activate Fighter" )
+function FIGHTER_COMPONENT:Activate()
 end
 
 ---------------------------------------
@@ -53,7 +51,7 @@ function FIGHTER_COMPONENT:Deactivate()
 end
 
 ---------------------------------------
-function FIGHTER_COMPONENT:Update()
+function FIGHTER_COMPONENT:Update()	
 end
 
 ---------------------------------------

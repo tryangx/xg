@@ -29,30 +29,39 @@ GROUP_PROPERTIES =
 	members         = { type="LIST", }, --list of role entity id
 	leaderid        = { type="ECSID", }, --role entity id
 
+	--actions
 	actionpts       = { type="DICT" },
-
-	lands           = { type="DICT" },
-	
+	--land asset
+	lands           = { type="DICT" },	
 	--virtual assets
 	assets          = { type="DICT" },
 	--reality mass assets
 	resources       = { type="DICT" },	
 	--books
+	--{ id=id, ... }
 	books           = { type="LIST" },
 	--horse
-	vehicls         = { type="LIST" },	
+	--{ id=id, ... }
+	vehicles        = { type="LIST" },	
 	--weapon/armor
+	--{ id=id, ... }
 	arms            = { type="LIST" },
 	--accessory,shoes,consumables
+	--{ id=id, ... }
 	items           = { type="LIST" },
 	--construction
+	--{ id=id, ... }
 	constructions   = { type="LIST" },
 
-	--datatable
-	membertemplates = { type="LIST" }, --list of number	
+	relationship    = { type="DICT" },
+
+	intels          = { type="DICT" },
 
 	--runtime data
 	affairs         = { type="LIST" }, 
+
+	--datatable
+	membertemplates = { type="LIST" }, --list of number	
 }
 
 ---------------------------------------
@@ -78,7 +87,21 @@ end
 
 ---------------------------------------
 function GROUP_COMPONENT:GetAttr( type )
-	return self._attrs[type] or 0
+	local ret = self._attrs[type]
+	if not ret then
+		--need to calculated
+		if type == "POWER" then			
+			local power = 0
+			self:ForeachMember( function ( ecsid )
+				local fighter = ECS_FindComponent( ecsid, "FIGHTER_COMPONENT" )
+				if fighter then power = power + fighter.fighteff end
+			end)
+			self._attrs[type] = power
+		elseif type == "" then
+		end
+		ret = self._attrs[type]
+	end
+	return ret
 end
 
 ---------------------------------------
@@ -116,10 +139,17 @@ end
 ---------------------------------------
 function GROUP_COMPONENT:FindMember( fn )
 	local roles = {}
-	MathUtil_Foreach( self.members, function ( _, ecsid )
-		if fn( ecsid ) == true then table.insert( roles, ecsid ) end
-	end )
+	for _, memberid in pairs( self.members ) do
+		if fn( memberid ) == true then table.insert( roles, memberid ) end
+	end
 	return roles
+end
+
+
+function GROUP_COMPONENT:ForeachMember( fn )	
+	for _, memberid in pairs( self.members ) do
+		fn( memberid )
+	end
 end
 
 
@@ -185,11 +215,11 @@ function GROUP_COMPONENT:GetNumOfConstruction( type, id )
 	if type and id then DBG_Error( "Only one condition works at the same time" ) end
 	local num = 0
 	if type then id = nil end
-	for _, cid in ipairs( self.constructions ) do
-		if cid == id then
+	for _, data in ipairs( self.constructions ) do
+		if data.id == id then
 			num = num + 1
 		else
-			local constr = CONSTRUCTION_DATATABLE_Get( cid )
+			local constr = CONSTRUCTION_DATATABLE_Get( data.id )
 			if constr and constr.type == type then num = num + 1 end
 		end
 	end
@@ -245,7 +275,7 @@ function GROUP_COMPONENT:ObtainResource( type, value )
 end
 
 function GROUP_COMPONENT:ObtainBook( id )
-	Prop_Add( self, "books", id )
+	Prop_Add( self, "books", { book=id } )
 	DBG_Trace( self.name .. " obtain book=" .. BOOK_DATATABLE_Get( id ).name )
 end
 
@@ -260,20 +290,18 @@ function GROUP_COMPONENT:ObtainItem( type, id )
 end
 
 function GROUP_COMPONENT:ObtainVehicle( type, id )
-	Prop_Add( self, "vehicls", { type=type, id=id } )
+	Prop_Add( self, "vehicles", { type=type, id=id } )
 	DBG_Trace( self.name .. " obtain vehicle=" .. EQUIPMENT_DATATALBE_Get( id ).name )
 end
 
 ---------------------------------------
 function GROUP_COMPONENT:CompleteConstruction( id )
-	Prop_Add( self, "constructions", id )
+	Prop_Add( self, "constructions", { id=id } )
 	DBG_Trace( self.name .. " complete construction=" .. CONSTRUCTION_DATATABLE_Get( id ).name )
 end
 
 function GROUP_COMPONENT:DestroyConstruction( id )
-	--MathUtil_Remove( self.constructions, id )
-	--not pass test
-	Prop_Remove( self, "constructions", id )
+	Prop_Remove( self, "constructions", id, "id" )
 	DBG_Trace( self.name .. " destroy construction=" .. CONSTRUCTION_DATATABLE_Get( id ).name )
 end
 
@@ -318,8 +346,8 @@ function GROUP_COMPONENT:ToString()
 
 	--constructions
 	content = content .. " constructions=["
-	for inx, id in ipairs( self.constructions ) do
-		content = content .. ( inx > 1 and "," or "" ) .. CONSTRUCTION_DATATABLE_Get( id ).name
+	for inx, data in ipairs( self.constructions ) do
+		content = content .. ( inx > 1 and "," or "" ) .. CONSTRUCTION_DATATABLE_Get( data.id ).name
 	end
 	content = content .. "]"
 

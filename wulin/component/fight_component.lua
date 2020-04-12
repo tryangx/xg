@@ -85,21 +85,31 @@ end
 ---------------------------------------
 function FIGHT_COMPONENT:ToString()
 	local content = "FIGHT BETWEEN"
+	local str = 0
+	local name = ""
 	local atk = ECS_FindEntity( self.redgroupid )
 	local def = ECS_FindEntity( self.bluegroupid )
 	if atk then
-		content = content .. "[" .. atk:GetComponent( "GROUP_COMPONENT" ).name .."]"		
+		content = content .. "[" .. atk:GetComponent( "GROUP_COMPONENT" ).name .."]"
 	end
-	for _, role in ipairs( self.reds ) do
-		content = content .. " " .. ECS_FindComponent( role, "ROLE_COMPONENT" ).name
-	end
-	content = content .. " VS "
+	str = 0
+	name = ""
+	for _, id in ipairs( self.reds ) do
+		name = name .. " " .. ECS_FindComponent( id, "ROLE_COMPONENT" ).name
+		str = str + ECS_FindComponent( id, "FIGHTER_COMPONENT" ).fighteff
+	end	
+	content = content .. "+" .. str .. " " .. name
+
+	content = content .. "\n VS "
+
 	if def then
 		content = content .. "[".. def:GetComponent( "GROUP_COMPONENT" ).name .. "]"
+	end	
+	for _, id in ipairs( self.blues ) do
+		name = name .. " " .. ECS_FindComponent( id, "ROLE_COMPONENT" ).name
+		str = str + ECS_FindComponent( id, "FIGHTER_COMPONENT" ).fighteff
 	end
-	for _, role in ipairs( self.blues ) do
-		content = content .. " " .. ECS_FindComponent( role, "ROLE_COMPONENT" ).name
-	end
+	content = content .. "+" .. str .. " " .. name
 	return content
 end
 

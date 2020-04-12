@@ -24,6 +24,8 @@ require "all_systems"
 ECS_RegisterComponent( "MAP_COMPONENT",                MAP_COMPONENT,                MAP_PROPERTIES )
 ECS_RegisterComponent( "GAME_COMPONENT",               GAME_COMPONENT,               GAME_PROPERTIES )
 ECS_RegisterComponent( "DATA_COMPONENT",               DATA_COMPONENT,               DATA_PROPERTIES )
+ECS_RegisterComponent( "RELATION_COMPONENT",           RELATION_COMPONENT,           RELATION_PROPERTIES )
+ECS_RegisterComponent( "INTEL_COMPONENT",              INTEL_COMPONENT,              INTEL_PROPERTIES )
 ECS_RegisterComponent( "GROUP_COMPONENT",              GROUP_COMPONENT,              GROUP_PROPERTIES )
 ECS_RegisterComponent( "ROLE_COMPONENT",               ROLE_COMPONENT,               ROLE_PROPERTIES )
 ECS_RegisterComponent( "FOLLOWER_COMPONENT",           FOLLOWER_COMPONENT,           FOLLOWER_PROPERTIES )

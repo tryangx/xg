@@ -58,6 +58,7 @@ end
 
 --------------------------------------------------
 local function Equipment_MatchCondition( group, equip )
+	--constructions
 	if equip.conditions then
 		if equip.conditions.constructions then
 			for type, value in pairs( equip.conditions.constructions ) do
@@ -66,6 +67,7 @@ local function Equipment_MatchCondition( group, equip )
 		end
 	end
 
+	--costs
 	if equip.costs then
 		if equip.costs.resources then
 			for type, data in pairs( equip.costs.resources ) do

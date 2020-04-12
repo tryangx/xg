@@ -1,3 +1,17 @@
+function Fighter_CalcFightEff( fighter )
+	local value = 0
+	value = value + fighter.maxhp * 0.6
+	value = value + fighter.maxmp * 0.25
+	value = value + fighter.maxst * 0.25
+	value = value + fighter.internal  * 0.8
+	value = value + fighter.strength  * 0.8
+	value = value + fighter.technique * 0.6
+	value = value + fighter.agility   * 0.6
+	return value
+end
+
+---------------------------------------
+---------------------------------------
 FIGHTER_SYSTEM = class()
 
 ---------------------------------------

@@ -81,6 +81,12 @@ GROUP_ATTR =
 	MAX_MEMBER       = 1,
 	MAX_CONSTRUCTION = 2,
 	MAX_INVENTORY    = 3,
+
+	MAX_ALLY         = 10,
+	MAX_VASSAL       = 11,
+	MAX_SUBJECT      = 12,
+
+	POWER            = 100,
 }
 
 
@@ -99,6 +105,8 @@ GROUP_TEMPSTATUS =
 	READBOOK_MEMBER = 3,
 
 	NEED_CONSTRUCTION = 4,
+
+	NEED_CONTEST      = 5,
 }
 
 

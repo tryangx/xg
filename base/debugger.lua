@@ -156,7 +156,7 @@ function Log_Create( type, single )
 	if not logger then
 		local fileName
 		if not single then
-			fileName = "run/" .. type .. ".log" 
+			fileName = "run/" .. type .. ".log"
 		else
 			fileName = "run/" .. type .. "_" .. g_gameId .. ".log" 
 		end
@@ -170,10 +170,10 @@ end
 
 
 -----------------------------------
-function Log_Write( type, content, single )
+function Log_Write( type, ... )
 	local logger = Log_Create( type )
 	if logger then
-		logger:WriteLog( content )
+		logger:WriteLog( ... )
 	end
 end
 

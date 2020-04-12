@@ -14,6 +14,9 @@ function Role_SetStatus( ecsid, statuses )
 	end	
 end
 
+
+---------------------------------------
+-- Initialize the data
 ---------------------------------------
 function Role_Prepare( role )
 	local traveler = ECS_FindComponent( role.entityid, "TRAVELER_COMPONENT")
@@ -27,6 +30,10 @@ function Role_Prepare( role )
 		traveler.location = city.id
 		DBG_Trace( role.name .. " stay at " .. city.name )
 	end
+
+	--prepare fighter data
+	local fighter = ECS_FindComponent( role.entityid, "FIGHTER_COMPONENT" )
+	fighter.fighteff = Fighter_CalcFightEff( fighter )
 end
 
 ---------------------------------------
@@ -52,9 +59,7 @@ function Role_Dead( ecsid )
 	
 	Stat_Add( "RoleDeath", role.name, StatType.LIST )	
 	DBG_AddData( role.entityid )
-	DBG_Trace( role.name, "Dead" )
-
-	error( "")
+	DBG_Trace( role.name, role.entityid, "Dead" )
 end
 
 

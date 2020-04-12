@@ -7,13 +7,14 @@ ROLE_PROPERTIES =
 {
 	name       = { type="STRING", },
 	age        = { type="NUMBER", },
-	sex        = { type="NUMBER", }, --0:male, 1:female
-
-	groupid    = { type="ECSID", },
-
-	category   = { type="NUMBER", }, --0
+	sex        = { type="NUMBER", }, --0:male, 1:female	
+	category   = { type="STRING", }, --0
 
 	statuses   = { type="LIST" },
+
+	renown     = { type="NUMBER" },
+
+	groupid    = { type="ECSID", },
 
 	--mental
 	-- valuetype: { type: string, init_value = number, post_value = number }

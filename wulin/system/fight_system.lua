@@ -66,9 +66,8 @@ function FIGHT_SYSTEM:CreateFight( atkgroup, defgroup, atk_eids, def_eids )
 	Prop_Add( fight, "blues", def_eids )
 	entity:AddComponent( fight )
 	Data_GetRoot( "FIGHT_DATA" ):AddChild( entity )
-	entity:Activate()
 
-	Log_Write( "fight", "Create fight id=" .. entity.ecsid )
+	DBG_Trace( "Create fight id=" .. entity.ecsid )
 end
 
 

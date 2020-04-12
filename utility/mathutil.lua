@@ -173,6 +173,14 @@ function MathUtil_FindTableKey_Ascend( source, value )
 	return findKey
 end
 
+
+---------------------------------------------
+---------------------------------------------
+function MathUtil_ToNumber( str )	
+	return string.sub( str, string.find( str, "%d+" ) )
+end
+
+
 function MathUtil_ToString( source )
 	local content = ""
 	for k, v in pairs( source ) do

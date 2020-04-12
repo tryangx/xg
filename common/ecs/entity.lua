@@ -50,6 +50,7 @@ function ECSEntity:AddChild( entity )
 	--print( entity.ecsid, "set parent=", self.ecsid )
 
 	if self.status == ECSSTATUS.ACTIVATED then
+		--try to activate the entity after added
 		entity:Activate()
 	end
 end

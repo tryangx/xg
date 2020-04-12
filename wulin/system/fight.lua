@@ -27,12 +27,19 @@
 ------------------------------------------------------------------------------
 local _fight
 
+
+---------------------------------------
+local function Fight_Debug( ... )
+	print( ... )
+	Log_Write( "fight", ... )
+end
+
+---------------------------------------
 local function Fight_ForeachRole( teams, fn, ... )
 	for _, actor in ipairs( teams ) do
 		fn ( actor, ... )
 	end
 end
-
 
 ---------------------------------------
 local function Fight_DumpRole( actor, type )
@@ -147,7 +154,8 @@ local function Fight_GetPassiveSkill( actor, action )
 			--prob
 			if not skillAction.prob or Random_GetInt_Sync( 1, 50 ) < skillAction.prob then
 				--cooldown
-				if not skillAction.cd or skillAction.cd.max >= ( actor.passiveSkillDelays and actor.passiveSkillDelays[skill.id] or 0 ) then
+				local cd = actor.passiveSkillDelays[skill.id]
+				if not skillAction.cd or skillAction.cd.max >= ( cd and cd[action] or 0 ) then
 					passiveSkill = skill
 					break
 				end
@@ -584,7 +592,7 @@ local function Fight_ProcessDuel( atk, def )
 					final_damage = final_damage - atk.fighter._shield
 					atk.fighter._shield = 0
 				end				
-				Log_Write( "fight", def.role.name .. " resist damage " .. resistDamage )
+				Fight_Debug( def.role.name .. " resist damage " .. resistDamage )
 			end
 			
 			if final_damage > 0 then
@@ -633,7 +641,7 @@ local function Fight_ProcessDuel( atk, def )
 		end
 	end
 
-	Log_Write( "fight", atk.role.name .. " hit " .. def.role.name ..  " " .. _hitTimes .. "/" .. #atkSkill.actions .. " times, deal damage=" .. atk.fighter._skillDamage )
+	Fight_Debug( atk.role.name .. " hit " .. def.role.name ..  " " .. _hitTimes .. "/" .. #atkSkill.actions .. " times, deal damage=" .. atk.fighter._skillDamage )
 end	
 
 
@@ -717,6 +725,7 @@ function Fight_Process( fight )
 		actor.fighter._priority = table.remove( priorities, 1 )
 		actor.fighter._ap       = 0
 		actor.fighter._dp       = 0
+		actor.passiveSkillDelays = {}
 		DetermineATB( actor )
 		table.insert( actionSequence, actor )
 	end	

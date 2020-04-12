@@ -22,9 +22,15 @@ end
 
 local function InitGroups( scene )
 	local entity = ECS_CreateEntity( "GROUP_DATA" )
-	GROUP_DATATABLE_Foreach( function ( groupTable ) entity:AddChild( Group_CreateByTableData( groupTable ) ) end )
+	GROUP_DATATABLE_Foreach( function ( groupTable )
+		local groupEntity = Group_CreateByTableData( groupTable )
+		entity:AddChild( groupEntity )
+		groupEntity:AddComponent( ECS_CreateComponent( "RELATION_COMPONENT" ) )
+		groupEntity:AddComponent( ECS_CreateComponent( "INTEL_COMPONENT" ) )
+	end )
 	scene:GetRootEntity():AddChild( entity )
 	entity:CreateComponent( "DATA_COMPONENT" ).type = "GROUP_DATA"
+	--ECS_Dump( entity )	InputUtil_Pause()
 	return entity
 end
 
@@ -54,7 +60,7 @@ local function InitGame( scene )
 	entity:CreateComponent( "GAME_COMPONENT" ).endTime = 10
 
 	local mapData = MAP_DATATABLE_Get( 1 )
-	local map = entity:CreateComponent( "MAP_COMPONENT" )	
+	local map = entity:CreateComponent( "MAP_COMPONENT" )
 	map:Setup( mapData )
 	map:Generate( mapData )	
 	map:GenerateRoutes( mapData )
@@ -132,6 +138,8 @@ function Data_Prepare()
 		--initialized the necessary datas
 		Group_Prepare( group )
 	end )
+
+	--Group may recruit some role
 	ECS_Foreach( "ROLE_COMPONENT", function ( role )
 		Role_Prepare( role )
 	end)

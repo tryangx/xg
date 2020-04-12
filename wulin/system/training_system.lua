@@ -3,9 +3,9 @@
 local function Training_Drill( role, data )
 	local fighter = ECS_FindComponent( role.entityid, "FIGHTER_COMPONENT" )
 	if not fighter then
-		print( "eid=", role.entityid )
-		ECS_Dump( ECS_FindEntity( role.entityid ) )
-		DBG_Error( "No fighter component" )	return end
+		if not DBG_FindData( role.entityid ) then DBG_Error( "No fighter component" ) end
+		return
+	end
 	
 	--role's work
 	local min = 100 - fighter.lv
@@ -92,17 +92,16 @@ local function Training_ObtainBookSkill( role )
 	local group = ECS_FindComponent( role.groupid, "GROUP_COMPONENT" )
 	if not group then DBG_Error( "No group component" ) return end
 
-	--for _, bookid in ipairs( group.books ) do
 	local index = #group.books
-	local bookid = group.books[index]
-		local book = BOOK_DATATABLE_Get( bookid )
-		if book.commonskill then
-			role:ObtainCommonSkill( book )
-		elseif book.passiveSkill then
-			fighter:ObtainSkill( book.passiveSkill )
-		elseif book.fightSkill then
-			fighter:ObtainSkill( book.fightSkill )
-		end
+	local bookid = group.books[index].id
+	local book = BOOK_DATATABLE_Get( bookid )
+	if book.commonskill then
+		role:ObtainCommonSkill( book )
+	elseif book.passiveSkill then
+		fighter:ObtainSkill( book.passiveSkill )
+	elseif book.fightSkill then
+		fighter:ObtainSkill( book.fightSkill )
+	end
 	--end
 end
 

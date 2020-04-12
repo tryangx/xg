@@ -65,7 +65,7 @@ ROLE_COMMONSKILL =
 	TACTIC      = 30,  --Increase tactic points
 
 	--Survive
-	COLLLECTING = 100,
+	COLLLECTER = 100,
 	FISHER      = 110,
 	FARMER      = 120,
 	MINER       = 130,

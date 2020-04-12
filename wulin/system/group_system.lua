@@ -196,6 +196,17 @@ function Group_Prepare( group )
 		end
 	end
 
+	--relations & intels initialized
+	ECS_Foreach( "GROUP_COMPONENT", function ( target )
+		if group.entityid == target.entityid then return end
+
+		ECS_FindComponent( group.entityid, "RELATION_COMPONENT" ):GetRelation( target.entityid )
+		ECS_FindComponent( target.entityid, "RELATION_COMPONENT" ):GetRelation( group.entityid )
+
+		ECS_FindComponent( group.entityid, "INTEL_COMPONENT" ):GetGroupIntel( target.entityid )
+		ECS_FindComponent( target.entityid, "INTEL_COMPONENT" ):GetGroupIntel( group.entityid )
+	end )
+
 	--Dump( group )
 	--InputUtil_Pause()
 
@@ -528,9 +539,57 @@ function Group_Process( group, affair, deltaTime )
 	affair.time = affair.time - deltaTime	
 	if affair.time > 0 then return end
 
+	local process = PROCESS_DATATABLE_Get( affair.process )
+	if not process then return end	
+
 	error( "todo" )
 	--local number = 10
 	--group:ObtainResource( affair.produce, number )
+end
+
+
+---------------------------------------
+---------------------------------------
+function Group_StartGrantGift( group, target )
+	local affair   = {}
+	affair.type    = "GRANT_GIFT"
+	affair.groupid = target
+	affair.time    = 1 --target.costs.time
+
+	table.insert( group.affairs, affair )
+	DBG_Trace( group.name, " start grant gift" )
+end
+
+
+function Group_GrantGift( group, affair, deltaTime )
+	affair.time = affair.time - deltaTime	
+	if affair.time > 0 then return end
+
+	local eval = 10
+	local relationCmp = ECS_FindComponent( group.entityid, "RELATION_COMPONENT" )
+	Relation_AlterRelationship( relationCmp:GetRelation( affair.groupid ), eval )
+
+	--InputUtil_Pause( group.name, " grant gift to", ECS_FindComponent( affair.groupid, "GROUP_COMPONENT" ).name )
+end
+
+
+function Group_StartSignPact( group, target, pact )
+	local affair   = {}
+	affair.type    = "SIGN_PACT"
+	affair.groupid = target
+	affair.pact    = pact
+	affair.time    = 1 --target.costs.time
+
+	table.insert( group.affairs, affair )
+	DBG_Trace( group.name, " start sign pact=" .. pact )
+end
+
+function Group_SignPact( group, affair, deltaTime )
+	affair.time = affair.time - deltaTime	
+	if affair.time > 0 then return end
+
+	local relationCmp = ECS_FindComponent( group.entityid, "RELATION_COMPONENT" )
+	HandlePactResult( relationCmp:GetRelation( affair.groupid ), affair.pact )
 end
 
 ---------------------------------------
@@ -538,12 +597,28 @@ end
 local function Group_DealAffair( group, affair, deltaTime )
 	if affair.type == "BUILD_CONSTRUCTION" or affair.type == "UPGRADE_CONSTRUCTION" then
 		return Group_BulidConstruction( group, affair, deltaTime )
+
 	elseif affair.type == "MAKE_ITEM" then
 		Group_MakeItem( group, affair, deltaTime )
+
 	elseif affair.type == "PROCESS" then
 		Group_Process( group, affair, deltaTime )
+
 	elseif affair.type == "PRODUCE" then
 		Group_Produce( group, affair, deltaTime )
+
+	elseif affair.type == "RECONN" then
+		Group_Reconn( group, affair, deltaTime )
+	elseif affair.type == "SABOTAGE" then
+		Group_Sabotage( group, affair, deltaTime )
+	elseif affair.type == "STOLE" then
+		Group_Stole( group, affair, deltaTime )
+
+	elseif affair.type == "GRANT_GIFT" then
+		Group_GrantGift( group, affair, deltaTime )
+	elseif affair.type == "SIGN_PACT" then
+		Group_SignPact( group, affair, deltaTime )
+
 	else
 		DBG_Error( "Unhandletype=", affair.type )
 	end
@@ -553,6 +628,7 @@ function Group_UpdateAffairs( group, deltaTime )
 	--print( group.name, "affairs=" .. #group.affairs )
 	MathUtil_RemoveListItemIf( group.affairs, function ( affair )
 		Group_DealAffair( group, affair, deltaTime )
+		return affair.time <= 0
 	end )
 end
 
@@ -643,7 +719,7 @@ end
 
 ---------------------------------------
 ---------------------------------------
-function Group_Attack( group )
+function Group_Attack( group, id )
 	if #group.members == 0 then return end
 
 	if group:GetStatusValue( "UNDER_ATTACK" ) > 0 then
@@ -651,22 +727,27 @@ function Group_Attack( group )
 		return
 	end
 
-	local list = {}
-	ECS_Foreach( "GROUP_COMPONENT", function ( target )
-		if group == target then return end
-		if target:GetStatusValue( "UNDER_ATTACK" ) > 0 then
-			--print( target.name .. "is under attack! Cann't be the target" )
+	local target
+	if not target then
+		local list = {}
+		ECS_Foreach( "GROUP_COMPONENT", function ( target )
+			if group == target then return end
+			if target:GetStatusValue( "UNDER_ATTACK" ) > 0 then
+				--print( target.name .. "is under attack! Cann't be the target" )
+				return
+			end
+			table.insert( list, target )
+		end )
+		local num = #list
+		if num == 0 then
+			--print( group.name .. "doesn't have activate target" )
 			return
 		end
-		table.insert( list, target )
-	end )
-	local num = #list
-	if num == 0 then
-		--print( group.name .. "doesn't have activate target" )
-		return
+		local index = Random_GetInt_Sync( 1, num )
+		target = list[index]
+	else
+		target = ECS_FindComponent( id, "GROUP_COMPONENT" )
 	end
-	local index = Random_GetInt_Sync( 1, num )
-	local target = list[index]
 
 	--choice follower to attack
 	local atk_eids = Group_ListRoles( group, nil, { "OUTING" } )
@@ -677,7 +758,7 @@ function Group_Attack( group )
 		return
 	end
 
-	print( group.name .. "(" .. #atk_eids ..  ") "  .. "attack" .. " " .. target.name .. "(".. #def_eids .. ")" )
+	InputUtil_Pause( group.name .. "(" .. #atk_eids ..  ") "  .. "attack" .. " " .. target.name .. "(".. #def_eids .. ")" )
 	
 	--[[
 	print( "atk eids", #atk_eids )
@@ -697,6 +778,31 @@ function Group_Attack( group )
 end
 
 
+function Group_StartReconn( group, target )
+	local affair  = {}
+	affair.type   = "RECONN"
+	affair.time   = 1 --need calcualte distance
+
+	table.insert( group.affairs, affair )
+	DBG_Trace( group.name, " start reconn=" .. affair.type )
+end
+
+function Group_Reconn( group, affair, deltaTime )
+	--actor should stay at the destination
+	--but for test procedure, we ignore 
+	affair.time = affair.time - deltaTime	
+	if affair.time > 0 then return end
+
+	table.insert( group.affairs, affair )
+	DBG_Trace( group.name, "end reconn=" )
+end
+
+function Group_Sabotage( group, target )
+end
+
+function Group_Stole( group, target )	
+end
+
 ---------------------------------------
 ---------------------------------------
 function Group_HoldMeeting( group )
@@ -705,6 +811,7 @@ function Group_HoldMeeting( group )
 	--Determine affair for group
 	AI_DetermineGroupAffair( group.leaderid )
 	
+	--Determine follower's action
 	local list = {}
 	function CheckPriority( follower )
 		--InputUtil_Pause( ECS_FindComponent( follower.entityid, "ROLE_COMPONENT" ).name, follower.rank )
@@ -755,7 +862,6 @@ function GROUP_SYSTEM:Update( deltaTime )
 		Group_UpdateAffairs( group, deltaTime )
 		Group_SelectLeader( group )
 		Group_HoldMeeting( group )
-		--Group_Attack( group )
 	end )
 	--print( "Update group", ECS_GetNum( "GROUP_COMPONENT" ) )	
 end

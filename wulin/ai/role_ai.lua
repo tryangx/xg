@@ -112,7 +112,6 @@ local function AddAffair( params )
 
 	elseif params.type == "SMELT" then
 		Group_Smelt( _roleGroupCmp, _variables.material )
-
 	elseif params.type == "MAKE_ITEM" then
 		if _variables.maketype and _variables.makeid then
 			Group_StartMakeItem( _roleGroupCmp, _variables.maketype, _variables.makeid )			
@@ -128,6 +127,32 @@ local function AddAffair( params )
 			Group_StartProduce( _roleGroupCmp, _variables.producetype )
 		else
 			DBG_Error( "unspecified produce type" )
+		end
+
+	elseif params.type == "RECONN" then
+		if _variables.targetgroup then
+			Group_StartReconn( _roleGroupCmp, _variables.targetgroup )
+		end
+	elseif params.type == "SABOTAGE" then
+		if _variables.targetgroup then
+			Group_Sabotage( _roleGroupCmp, _variables.targetgroup )
+		end
+	elseif params.type == "ATTACK" then
+		if _variables.targetgroup then
+			Group_Attack( _roleGroupCmp, _variables.targetgroup )
+		end
+	elseif params.type == "STOLE" then
+		if _variables.targetgroup then
+			Group_Stole( _roleGroupCmp, _variables.targetgroup )
+		end
+
+	elseif params.type == "GRANT_GIFT" then
+		if _variables.targetgroup then
+			Group_StartGrantGift( _roleGroupCmp, _variables.targetgroup )
+		end
+	elseif params.type == "SIGN_PACT" then
+		if _variables.targetgroup and _variables.pact then
+			Group_StartSignPact( _roleGroupCmp, _variables.targetgroup, _variables.pact )
 		end
 
 	else
@@ -617,7 +642,6 @@ end
 
 
 local function GroupNeedProcess( params )
-	--if not GroupHasAffairs( { type="PROCESS", max=1 } ) then return false end
 	if not params.action then DBG_Error( "no action" ) return false end
 	local list = PROCESS_DATATABLE_Find( _targetGroupCmp, params.action )
 	local num = #list
@@ -678,7 +702,7 @@ local _GroupSmelt =
 	type="SEQUENCE", desc="", children =
 	{
 		{ type="FILTER", condition=GroupHasConstruction, params={ construction="SMITHY", affair={ type="PROCESS", process="SMELT" } } },
-		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="STEEL" } },
+		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="SMELT" } },
 		{ type="ACTION", action = AddAffair, params={ type="PROCESS" } },
 	}
 }
@@ -737,18 +761,168 @@ local _GroupProcess =
 --   Event( scenario )
 --	 
 ----------------------------------------
+local _GroupTaskExecute = 
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=GroupHasTask },
+		{ type="ACTION", action = AddAffair, params={ type="EXECUTETASK" } },
+	}
+}
+
+local _GroupTask = 
+{
+	type="SELECTOR", desc="", children =	
+	{
+		_GroupTaskExecute,
+	}
+}
 
 ----------------------------------------
 -- Diplomacy
 --
 -- Send envy
---   Friend
+--   GrantGift
 --   Threaten
 --   Sign pact
 --   Declare war
 --   Make peace
 ----------------------------------------
+local function GroupNeedGrantGift()
+	--conditions
+	--  1.has diplomatic with enough points
+	--  2.has gift
+	--target
+	--  1.friend with our neighbor low power
+	--  2.the enemy of the enemy is our friend
+	--  3.potential to be ally
+	local power = _targetGroupCmp:GetAttr( "POWER" )
+	local list = {}
+	local totalprob = 0
+	local intelCmp = ECS_FindComponent( _targetGroupCmp.entityid, "INTEL_COMPONENT" )
+	local relationCmp = ECS_FindComponent( _targetGroupCmp.entityid, "RELATION_COMPONENT" )
+	relationCmp:Foreach( function ( relation )
+		--is at war
+		if not Relation_CanGrantGift( relation ) then return end
+		local prob = 0
+		local opp_power = Intel_GetGroupPower( intelCmp:GetGroupIntel( relation.id ) )
+		if Relation_HasSameEnemy( relation ) then			
+			prob = opp_power * 100 / ( opp_power + power )			
+			table.insert( list, { id=relation.id, prob=prob } )
+		elseif Relation_IsPotentialAlly( relation ) then
+			 prob = opp_power * 100 / ( opp_power + power )
+			table.insert( list, { id=relation.id, prob=prob } )
+		else
+			if power < opp_power * 2 then
+				prob = opp_power * 100 / ( opp_power + power )
+				table.insert( list, { id=relation.id, prob=prob } )
+			end
+		end
+		totalprob = totalprob + prob
+	end )
 
+	local prob = Random_GetInt_Sync( 1, totalprob )
+	for _, data in ipairs( list ) do
+		if prob < data.prob then
+			_variables.targetgroup = data.id
+			return true
+		end
+		prob = prob - data.prob
+	end
+
+	return false	
+end
+
+
+local function GroupNeedSignPact()
+	local power = _targetGroupCmp:GetAttr( "POWER" )
+	local list = {}
+	local totalprob = 0
+	local intelCmp = ECS_FindComponent( _targetGroupCmp.entityid, "INTEL_COMPONENT" )
+	local relationCmp = ECS_FindComponent( _targetGroupCmp.entityid, "RELATION_COMPONENT" )
+
+	function HandleRelation( relation )
+		local oppRelationCmp = ECS_FindComponent( relation.id, "RELATION_COMPONENT" )
+		local oppRelation = oppRelationCmp:GetRelation( _targetGroupCmp.entityid )
+		local opp_power = Intel_GetGroupPower( intelCmp:GetGroupIntel( relation.id ) )
+
+		function MatchPactCondition( pact, relation )
+			local condition = pact.conditions
+			if condition.elapsed then
+				if relation.elapsed < condition.elapsed then return false end
+			end
+			if condition.adv_prop then
+				local prop = math.abs( relation.advantage / ( relation.advantage + oppRelation.advantage ) )
+				if prop < condition.adv_prop.min or prop > condition.adv_prop.max then return false end
+			end				
+			if condition.power_prop then
+				local prop = math.abs( power / ( power + opp_power ) )
+				if prop < condition.power_prop.min or prop > condition.power_prop.max then return false end
+			end
+			return true
+		end
+		--reference RELATION_STATUSCAPACITY
+		local capacity = RELATION_STATUSCAPACITY[relation.status]
+		if capacity.diplomacy == 0 then return end
+
+		for type, pact in pairs( RELATION_PACT ) do
+			--check conditions
+			if MatchPactCondition( pact, relation ) then
+				local prob=50
+				totalprob = totalprob + prob
+				table.insert( list, { targetgroup=relation.id, pact=type, prob=prob } )
+				--HandlePactResult( pact, relation )
+			end
+		end
+	end
+
+	relationCmp:Foreach( HandleRelation )
+
+	local prob = Random_GetInt_Sync( 1, totalprob * 2 )
+	for _, data in ipairs( list ) do
+		if prob < data.prob then
+			_variables.targetgroup = data.targetgroup
+			_variables.pact = data.pact
+			return true
+		end
+		prob = prob - data.prob
+	end
+
+	return false
+end
+
+
+local function GroupNeedDeclareWar()
+	--need expand
+end
+
+
+local _GroupGrantGift = 
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=GroupNeedGrantGift },
+		{ type="ACTION", action = AddAffair, params={ type="GRANT_GIFT" } },
+	}
+}
+
+local _GroupSignPact = 
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=GroupNeedSignPact },
+		{ type="ACTION", action = AddAffair, params={ type="SIGN_PACT" } },
+	}
+}
+
+local _GroupDipomacy = 
+{
+	type="SELECTOR", desc="Diplomacy Branch", children =	
+	{
+		_GroupSignPact,
+		_GroupGrantGift,
+	}
+}
 
 ----------------------------------------
 -- Operation
@@ -756,7 +930,163 @@ local _GroupProcess =
 --   Sabotage
 --	 Attack
 ----------------------------------------
+local function GroupNeedReconn( params )
+	local list = {}
+	local totalprob = 0
+	local intelCmp = ECS_FindComponent( _targetGroupCmp.entityid, "INTEL_COMPONENT" )
+	intelCmp:ForeachGroupIntel( function ( intel )
+		local eval = Intel_GetEval( intel )
+		if eval < INTEL_GRADE["MID"] then
+			local prob = INTEL_GRADE["FULL"] - eval
+			totalprob = totalprob + prob
+			table.insert( list, { intel=intel, prob=prob } )
+		else
+			local prob = ( eval - INTEL_GRADE["MID"] ) * 0.25
+			totalprob = totalprob + prob
+			table.insert( list, { intel=intel, prob=prob } )
+		end
+	end )
 
+	local prob = Random_GetInt_Sync( 1, totalprob * 2 )
+	for _, data in ipairs( list ) do
+		if prob < data.prob then
+			_variables.targetgroup = data.intel.id
+			return true
+		end
+		prob = prob - data.prob
+	end
+
+	return false
+end
+
+
+local function GroupNeedAttack( group )
+	if #_targetGroupCmp.members == 0 then return end
+
+	local intelCmp = ECS_FindComponent( _targetGroupCmp.entityid, "INTEL_COMPONENT" )
+
+	--find the target which match
+	--  1.at war
+	--  2.has enough power
+	local power = _targetGroupCmp:GetAttr( "POWER" )
+	local list = {}	
+	local relationCmp = ECS_FindComponent( _targetGroupCmp.entityid, "RELATION_COMPONENT" )
+	relationCmp:Foreach( function ( relation )
+		--is at war
+		if Relation_CanAttack( relation ) then return end
+
+		--power compare
+		local intel = intelCmp:GetGroupIntel( relation.id )
+
+		local opp_power = Intel_GetGroupPower( intel )
+		--print( _targetGroupCmp.entityid, relation.id )
+		--InputUtil_Pause( "power", power, opp_power )
+		if power > opp_power * 0.5 then
+			table.insert( list, relation )
+		end
+	end )
+
+	local num = #list
+	if num == 0 then return false end
+	local index = Random_GetInt_Sync( 1, num )
+	local id = list[index].id
+	_variables.targetgroup = id
+	
+	return true
+end
+
+local function GroupNeedSabotage( group )
+	--find the most highest hostility
+	local targetgroup
+	local maxEval = 0
+	local relationCmp = ECS_FindComponent( _targetGroupCmp.entityid, "RELATION_COMPONENT" )
+	relationCmp:Foreach( function ( relation )
+		if not targetgroup then targetgroup = relation.id end
+		local eval = Relation_GetEval( relation )
+		if eval < maxEval then
+			targetgroup = relation.id
+			maxEval = eval
+		end
+	end )
+
+	--enough power
+
+	return false
+end
+
+
+local function GroupNeedStole( params )
+	--find the most highest hostility
+	local targetgroup
+	local maxEval = 0
+	local relationCmp = ECS_FindComponent( _targetGroupCmp.entityid, "RELATION_COMPONENT" )
+	relationCmp:Foreach( function ( relation )
+		if not targetgroup then targetgroup = relation.id end
+		local eval = Relation_GetEval( relation )
+		if eval < maxEval then
+			targetgroup = relation.id
+			maxEval = eval
+		end
+	end )
+
+	--enough intel
+
+	--low power
+
+	--very strong person	
+	return false
+end
+
+
+local _GroupReconnaissance = 
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=GroupNeedReconn },
+		{ type="ACTION", action = AddAffair, params={ type="RECONN" } },
+	}
+}
+
+local _GroupSabotage = 
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=GroupNeedSabotage },
+		{ type="ACTION", action = AddAffair, params={ type="SABOTAGE" } },
+	}
+}
+
+local _GroupAttack = 
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=GroupNeedAttack },
+		{ type="ACTION", action = AddAffair, params={ type="ATTACK" } },
+	}
+}
+
+local _GroupStole = 
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=GroupNeedStole },
+		{ type="ACTION", action = AddAffair, params={ type="STOLE" } },
+	}
+}
+
+local _GroupOperation = 
+{
+	type="SELECTOR", desc="Opeartion Branch", children =	
+	{
+		_GroupReconnaissance,
+		--_GroupSabotage,
+		_GroupAttack,
+		--_GroupStole,
+	}
+}
+
+
+----------------------------------------
 ----------------------------------------
 local function GroupNeedBuildConstruction()
 	if _roleGroupCmp:GetNumOfAffairs( "BUILD_CONSTRUCTION" ) > 0 or
@@ -879,6 +1209,10 @@ local GroupAffair =
 		--PRODUCE should be the last thing to consider about.
 		_GroupProducePriority,		
 		_GroupProduce,
+
+		--external
+		_GroupDipomacy,
+		--_GroupOperation,
 	}
 }
 _groupAffairTree = BehaviorNode( true )

@@ -29,7 +29,7 @@ BehaviorNodeType =
 	SEQUENCE          = 120,
 	
 	-- Run all nodes in given sequence one by one, return true when any node return true, default return false
-	PARALLEL          = 130,	
+	PARALLEL          = 130,
 	
 
 	------------------------
@@ -156,7 +156,7 @@ function BehaviorNode:BuildTree( data )
 		self.action = data.action
 		if not self.action then
 			Dump( data )			
-			debugmsg( "ACTION function is invalid", self.type )
+			error( "ACTION function is invalid", self.type )
 			return false
 		end
 	elseif self.type == BehaviorNodeType.CONDITION_ACTION then
@@ -164,14 +164,14 @@ function BehaviorNode:BuildTree( data )
 		self.condition = data.condition
 		if ( not self.condition or not self.action ) then
 			Dump( data )
-			debugmsg( "ACTION or CONDITION function is invalid" )
+			error( "ACTION or CONDITION function is invalid" )
 			return false
 		end
 	elseif self.type == BehaviorNodeType.FILTER then
 		self.condition = data.condition
 		if not self.condition then
 			Dump( data )
-			debugmsg( "FILTER function is invalid", self.type )
+			error( "FILTER function is invalid", self.type )
 			return false
 		end
 	end
