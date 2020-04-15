@@ -40,13 +40,13 @@ ECS_RegisterComponent( "FIGHTERTEMPLATE_COMPONENT",    FIGHTERTEMPLATE_COMPONENT
 ---------------------------------------------------
 ---------------------------------------------------
 --register system
-ECS_RegisterSystem( GAME_SYSTEM() )
 ECS_RegisterSystem( GROUP_SYSTEM() )
 ECS_RegisterSystem( ROLE_SYSTEM() )
 ECS_RegisterSystem( FIGHT_SYSTEM() )
 ECS_RegisterSystem( FIGHTER_SYSTEM() )
 ECS_RegisterSystem( FIGHTSKILL_SYSTEM() )
 ECS_RegisterSystem( TRAINING_SYSTEM() )
+ECS_RegisterSystem( GAME_SYSTEM() )
 
 
 ---------------------------------------------------
@@ -54,8 +54,10 @@ ECS_RegisterSystem( TRAINING_SYSTEM() )
 function run()
 	Data_Prepare()
 
-	while ECS_Update( 1 ) do
+	local ret = true
+	while ret do
 		if pause_menu() == true then return end
+		ret = ECS_Update( GAME_RULE.PASS_TIME )
 	end
 
 	--ECS_DumpSystem()
@@ -247,9 +249,9 @@ function test_fightsystem()
 	local fightDataEntity = InitFight( scene )
 
 	local fight = ECS_CreateComponent( "FIGHT_COMPONENT" )
-	Prop_Add( fight, "reds",  roleDataEntity:GetChild( 1 ).ecsid )
+	Prop_Add( fight, "atks",  roleDataEntity:GetChild( 1 ).ecsid )
 	--Prop_Add( fight, "reds",  roleDataEntity:GetChild( 3 ).ecsid )
-	Prop_Add( fight, "blues", roleDataEntity:GetChild( 3 ).ecsid )
+	Prop_Add( fight, "defs", roleDataEntity:GetChild( 3 ).ecsid )
 	--Prop_Add( fight, "blues", roleDataEntity:GetChild( 4 ).ecsid )
 	fightDataEntity:AddComponent( fight )
 

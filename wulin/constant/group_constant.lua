@@ -16,6 +16,46 @@ GROUP_SIZE =
 	HUGE       = 5,	--
 }
 
+
+------------------------------------------------------------------------------
+-- The end of game:
+--   1. Time End 
+--     1.1 20 years in Single Generation
+--     1.2 40 years in Two Generations 
+--   2. Any group become Overload 
+--     1.1 No enemy group( other group is vassal or subject or ally )
+--     1.2 Group controls over 50% power ( subject + vassal )
+--     1.3 No other group over 25% power
+--
+-- The winner of the game:
+--   1. The Overlord
+--   2. The High Score
+--
+-- Goal is the object that group chasing for, then score will be calculated.
+--
+-- The rule of score:
+--   1. Overload 
+--   2. First 3 Reach any goal( Survive, Independent, Alliance Leader )
+--   3. Power : Power in all groups's Percent * 1000 
+--   4. Ranking : First 20 fighters score bonus
+--   5. Make any vassal at first time
+------------------------------------------------------------------------------
+GROUP_GOAL = 
+{
+	NONE            = 0,
+
+	--NORMAL
+	SURVIVE         = 1,
+
+	INDEPENDENT     = 2,
+	
+	--other is SUBJECT or ALLY
+	ALLIANCE_LEADER = 100,
+
+	--other is VASSAL
+	OVERLORD        = 101,
+}
+
 ---------------------------------------
 -- Virtual Asset
 ---------------------------------------
@@ -72,7 +112,7 @@ GROUP_DEPOT =
 	BOOK       = 1,
 	VEHICLE    = 2,
 	EQUIPMENT  = 3,
-	CONSUMABLE = 4,
+	ITEM       = 4,
 }
 
 
@@ -92,8 +132,31 @@ GROUP_ATTR =
 
 GROUP_ACTIONPOINT = 
 {
+	---------------------------------------
+	-- Assign Internal Affairs
+	--   BUILD_CONSTRUCTION
+	--   PRODUCE
+	--   PROCESS
+	--   MAKE_ITEM
+	---------------------------------------
 	MANAGEMENT = 1,
+
+	---------------------------------------
+	-- Assign Diplomacy Affairs
+	--   GRANT_GIFT
+	--   SIGNPACT
+	--   TASK
+	--   BuyLA/SELL
+	---------------------------------------
 	STRATEGIC  = 2,
+
+	---------------------------------------
+	-- Assign Extern Affairs
+	--   RECONNAISSANCE
+	--   SABOTAGE
+	--   STOLE
+	--   TACTIC
+	---------------------------------------
 	TACTIC     = 3,
 }
 

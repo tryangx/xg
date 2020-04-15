@@ -149,7 +149,6 @@ end
 --------------------------------------------------
 function GROUP_DATATABLE_Foreach( fn )
 	for id, group in pairs( GROUP_DATATABLE ) do
-		group.id = id
 		fn( group )
 	end
 end

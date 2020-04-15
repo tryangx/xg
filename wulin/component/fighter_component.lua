@@ -51,10 +51,6 @@ function FIGHTER_COMPONENT:Deactivate()
 end
 
 ---------------------------------------
-function FIGHTER_COMPONENT:Update()	
-end
-
----------------------------------------
 function FIGHTER_COMPONENT:ToString( ... )
 	local content = "	"
 	content = content .. " " .. "lv=" .. self.lv
@@ -81,7 +77,6 @@ end
 ---------------------------------------
 function FIGHTER_COMPONENT:ObtainSkill( id )
 	Prop_Add( self, "skills", id )
-	print( id, ECS_FindComponent( self.entityid, "ROLE_COMPONENT" ), FIGHTSKILL_DATATABLE_Get( id ) )
 	DBG_Trace( ECS_FindComponent( self.entityid, "ROLE_COMPONENT" ).name .. " obtain fightskill=" .. FIGHTSKILL_DATATABLE_Get( id ).name )
 end
 

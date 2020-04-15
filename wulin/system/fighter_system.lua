@@ -82,7 +82,6 @@ function FIGHTER_SYSTEM:Generate( fighter, fightertemplate, id )
 		lv = Random_GetInt_Sync( traits.init_lv or 1, fightertemplate.potential )
 	end
 	--test
-	lv = 20
 
 	--initialize fighter's attributes
 	self:LevelUp( fighter, fightertemplate, lv )

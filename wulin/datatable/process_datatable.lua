@@ -32,7 +32,7 @@ local PROCESS_DATATABLE =
 		name     = "制药",
 		type     = "MAKEMEDICINE",
 		material = { type="HERB", value=30 },
-		products = { consumable={type="MAKEMEDICINE", value=5} },
+		products = { item={type="MAKEMEDICINE", value=5} },
 		time     = { value=30 },
 	},
 	[50] =
@@ -40,7 +40,7 @@ local PROCESS_DATATABLE =
 		name     = "制药",
 		type     = "MAKEMEDICINE",
 		material = { type="HERB", value=30 },
-		products = { consumable={type="MAKEMEDICINE", value=5} },
+		products = { item={type="MAKEMEDICINE", value=5} },
 		time     = { value=30 },
 	},
 }

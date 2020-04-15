@@ -1,26 +1,20 @@
 ---------------------------------------
 ---------------------------------------
-FIGHT_REUSLT = 
-{
-	NONE     = 0,
-	DRAW     = 1,
-	RED_WIN  = 2,
-	BLUE_WIN = 3,
-}
-
-
----------------------------------------
----------------------------------------
 FIGHT_COMPONENT = class()
 
 ---------------------------------------
 FIGHT_PROPERTIES = 
 {
-	redgroupid = { type="ECSID" },
-	bluegroupid= { type="ECSID" },
-	reds       = { type="LIST" },--store the entity id of fighter
-	blues      = { type="LIST" },--store the entity id of fighter
+	type       = { type="STRING" },
+
+	atkgroupid = { type="ECSID" },
+	defgroupid = { type="ECSID" },
+
+	atks       = { type="LIST" },--store the entity id of fighter
+	defs       = { type="LIST" },--store the entity id of fighter
+
 	result     = { type="STRING", default="NONE" },
+
 	rules      = { type="DICT" },
 
 	remainTime = { type="NUMBER", default=100 },
@@ -28,18 +22,17 @@ FIGHT_PROPERTIES =
 
 ---------------------------------------
 function FIGHT_COMPONENT:__init()
-	--self.ecsname     = "FIGHT_COMPONENT"
-	--self._properties = FightProperties	
 end
 
 ---------------------------------------
 function FIGHT_COMPONENT:Activate()
 	ECS_GetSystem( "FIGHT_SYSTEM" ):AppendFight( self.entityid )
+
 	--prepare datas
 
 	--get fighter datas
 	function PrepareFight( teams, positions )
-		--      Red              Blue
+		--      ATK              DEF
 		-- Row(r) Line(l)    Row(r) Line(l)
 		--  R2L1  R1L1        R1L1   R2L1
 		--  R2L2  R1L2        R1L2   R2L2
@@ -68,10 +61,12 @@ function FIGHT_COMPONENT:Activate()
 			end
 		end
 	end
-	self._blues = {}
-	self._reds  = {}
-	PrepareFight( self.blues, self._blues )
-	PrepareFight( self.reds,  self._reds )
+	self._atks = {}
+	self._defs  = {}
+	PrepareFight( self.defs, self._defs )
+	PrepareFight( self.atks, self._atks )
+
+	if #self.defs == 0 or #self.atks == 0 then DBG_Error( "Invalid fight data" ) end
 end
 
 function FIGHT_COMPONENT:Deactivate()
@@ -87,25 +82,25 @@ function FIGHT_COMPONENT:ToString()
 	local content = "FIGHT BETWEEN"
 	local str = 0
 	local name = ""
-	local atk = ECS_FindEntity( self.redgroupid )
-	local def = ECS_FindEntity( self.bluegroupid )
+	local atk = ECS_FindEntity( self.atkgroupid )
+	local def = ECS_FindEntity( self.defgroupid )
 	if atk then
 		content = content .. "[" .. atk:GetComponent( "GROUP_COMPONENT" ).name .."]"
 	end
 	str = 0
 	name = ""
-	for _, id in ipairs( self.reds ) do
+	for _, id in ipairs( self.atks ) do		
 		name = name .. " " .. ECS_FindComponent( id, "ROLE_COMPONENT" ).name
 		str = str + ECS_FindComponent( id, "FIGHTER_COMPONENT" ).fighteff
 	end	
 	content = content .. "+" .. str .. " " .. name
 
-	content = content .. "\n VS "
+	content = content .. " VS "
 
 	if def then
 		content = content .. "[".. def:GetComponent( "GROUP_COMPONENT" ).name .. "]"
 	end	
-	for _, id in ipairs( self.blues ) do
+	for _, id in ipairs( self.defs ) do
 		name = name .. " " .. ECS_FindComponent( id, "ROLE_COMPONENT" ).name
 		str = str + ECS_FindComponent( id, "FIGHTER_COMPONENT" ).fighteff
 	end
@@ -122,4 +117,18 @@ end
 function FIGHT_COMPONENT:InitTestFight()
 	self.rules["NO_DEAD"]   = 1
 	self.rules["TESTFIGHT"] = 1
+	self.remainTime = 50
+end
+
+---------------------------------------
+function FIGHT_COMPONENT:InitSiegeFight()
+	self.rules["DEATHFIGHT"] = 1
+	self.rules["SIEGE"] = 1
+	self.remainTime = 200
+end
+
+---------------------------------------
+function FIGHT_COMPONENT:InitDeathFight()
+	self.rules["DEATHFIGHT"] = 1
+	self.remainTime = 300
 end

@@ -37,3 +37,14 @@ FIGHTER_STATUSTYPE =
 	AGILITY_ENHANCED   = 140,
 	AGILITY_WEAKEN     = 141,
 }
+
+
+FIGHTERTEMPLATE_GRADE = 
+{
+	COMMON     = 1,--lv 10~20
+	RARE       = 2,--lv 20~40
+	VERY_RARE  = 3,--lv 20~60
+	SUPER_RARE = 4,--lv 60~80
+	SS_RARE    = 5,--lv 70~90
+	ULTRA_RARE = 6,--lv 80~100
+}

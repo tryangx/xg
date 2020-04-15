@@ -57,7 +57,10 @@ local function InitGame( scene )
 	
 	entity:CreateComponent( "DATA_COMPONENT" ).type = "GAME_DATA"
 	
-	entity:CreateComponent( "GAME_COMPONENT" ).endTime = 10
+	local gameCmp = entity:CreateComponent( "GAME_COMPONENT" );
+	gameCmp.startTime = Time_CalcDateValue( 960, 1, 1 )
+	gameCmp.endTime   = Time_CalcDateValue( 960, 2, 1 )
+	gameCmp.curTime   = gameCmp.startTime
 
 	local mapData = MAP_DATATABLE_Get( 1 )
 	local map = entity:CreateComponent( "MAP_COMPONENT" )

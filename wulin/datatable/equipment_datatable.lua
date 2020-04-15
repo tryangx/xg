@@ -6,41 +6,61 @@ local EQUIPMENT_DATATABLE =
 	{
 		name       = "倚天剑", 		
 		type       = "WEAPON",
+		lv         = 8,
 		value      = { money=1000 },
 		condition  = { commonskill="BLACKSMITH" },
 		costs      = { time=100, resources={ IRON_ORE={value=100} } },
 		atkAction  = { hit={mod=10}, agi={ratio=0.8}, dmg={} },
 	},
-	--[[
 	[1001] =
 	{
 		name       = "屠龙刀",
 		type       = "WEAPON",
-		atkAction  = {dmg={}}
+		lv         = 8,
+		value      = { money=1000 },
+		condition  = { commonskill="BLACKSMITH" },
+		costs      = { time=100, resources={ IRON_ORE={value=100} } },
+		atkAction  = { hit={mod=10}, agi={ratio=0.8}, dmg={} },
 	},
+
 	[2000] =
 	{
 		name       = "软猬甲",
 		type       = "ARMOR",
-		defAction  = {hit={mod=1}},
+		lv         = 8,
+		value      = { money=1000 },
+		condition  = { commonskill="BLACKSMITH" },
+		costs      = { time=100, resources={ IRON_ORE={value=100} } },
+		defAction  = { hit={mod=10}, agi={ratio=0.8}, dmg={} },
 	},
+
 	[3000] =
 	{
 		name       = "鹿皮靴",
-		type       = "SHOES",		
+		type       = "SHOES",
+		lv         = 6,
+		value      = { money=1000 },
+		condition  = { commonskill="LETHER_FACTORY" },
 	},
+
 	[4000] =
 	{
 		name       = "玉佩",
 		type       = "ACCESSORY",		
+		lv         = 6,
+		value      = { money=1000 },
+		condition  = { commonskill="FACTORY" },
 	},
-	[10000] =
+
+	[5000] =
 	{
 		name       = "汗血宝马",
 		type       = "VEHICLE",
+		lv         = 7,
+		value      = { money=1000 },
+		condition  = { commonskill="PASTURE" },
 		moveAction = {reduce_time=0.5},
 	},
-	]]
 }
 
 

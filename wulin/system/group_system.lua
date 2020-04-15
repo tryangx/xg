@@ -1,5 +1,4 @@
----------------------------------------
--- Group Prepare
+--------------------------------------- -- Group Prepare
 --   Init group data by params
 --   Now just for test
 ---------------------------------------
@@ -15,9 +14,13 @@ local GROUP_PARAMS =
 				{				
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
+			vehicles={ num={min=1,max=1, tot_lv=10}, pool={5000}},
+			arms={ num={min=3, max=5, tot_lv=10}, pool={ 1000, 1001, 2000, 3000, 4000 } },
+			items={num={min=1,max=2,tot_lv=2}, pool={100,110}},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 },
 			lands={},
+			goal={name="SURVIVE", day=360*20},
 			},
 		SMALL      =
 			{
@@ -27,9 +30,13 @@ local GROUP_PARAMS =
 				{
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
+			vehicles={ num={min=1,max=1, tot_lv=10}, pool={5000}},
+			arms={ num={min=3, max=5, tot_lv=10}, pool={ 1000, 1001, 2000, 3000, 4000 } },
+			items={num={min=1,max=2,tot_lv=2}, pool={100,110}},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 },
 			lands={},
+			goal={name="SURVIVE", day=360*20},
 			},
 		MID        =
 			{
@@ -39,9 +46,13 @@ local GROUP_PARAMS =
 				{
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
+			vehicles={ num={min=1,max=1, tot_lv=10}, pool={5000}},
+			arms={ num={min=3, max=5, tot_lv=10}, pool={ 1000, 1001, 2000, 3000, 4000 } },
+			items={num={min=1,max=2,tot_lv=2}, pool={100,110}},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 },
 			lands={},
+			goal={name="INDEPENDENT", day=360*20},
 			},			
 		BIG        =
 			{
@@ -51,9 +62,13 @@ local GROUP_PARAMS =
 				{
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
+			vehicles={ num={min=1,max=1, tot_lv=10}, pool={5000}},
+			arms={ num={min=3, max=5, tot_lv=10}, pool={ 1000, 1001, 2000, 3000, 4000 } },
+			items={num={min=1,max=2,tot_lv=2}, pool={100,110}},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 },
 			lands={},
+			goal={name="ALLIANCE_LEADER", day=360*20},
 			},		
 		HUGE       =
 			{
@@ -64,9 +79,13 @@ local GROUP_PARAMS =
 				CLOTH={min=100,max=200}, FOOD={min=100,max=200}, MEAT={min=100,max=200}, WOOD={min=100,max=200}, 
 				LEATHER={min=100,max=200}, STONE={min=100,max=200}, IRON_ORE={min=100,max=200}, DRAKSTEEL={min=100,max=200},
 				},
+			vehicles={ num={min=1,max=1, tot_lv=10}, pool={5000}},
+			arms={ num={min=3, max=5, tot_lv=10}, pool={ 1000, 1001, 2000, 3000, 4000 } },
+			items={num={min=1,max=2,tot_lv=2}, pool={100,110}},
 			books= { num={min=3,max=5,tot_lv=10}, pool={20,30,40,100,110,120,130,140,150,160,170,180,190,200,210,220,230,400,410,420,430,440,1000,2000}, },
 			constrs={ HOUSE=1 },
 			lands={},
+			goal={name="OVERLORD", day=360*20},
 			},
 	},
 
@@ -85,7 +104,7 @@ function Group_Prepare( group )
 
 	if group.location == 0 then
 		--we should find a location
-		local map = ECS_SendEvent( "MAP_COMPONENT", "Get" )
+		local map = CurrentMap
 		local index = Random_GetInt_Unsync( 1, #map.cities )
 		local city = map.cities[index]		
 		group.location = city.id
@@ -155,17 +174,73 @@ function Group_Prepare( group )
 
 	--books
 	if start.books and #group.books == 0 then		
-		local numOfBook = start.books.num.init or 0
+		local num = start.books.num.init or 0
 		if start.books.num.min and start.books.num.max then
-			numOfBook = Random_GetInt_Sync( start.books.num.min, start.books.num.max )
+			num = Random_GetInt_Sync( start.books.num.min, start.books.num.max )
 		end
 		local leftLv = start.books.num.tot_lv
 		local pool = MathUtil_Shuffle_Sync( start.books.pool )
 		for _, id in ipairs( pool ) do
 			local book = BOOK_DATATABLE_Get( id )
-			leftLv = leftLv - book.lv
-			group:ObtainBook( id )
+			group:ObtainBook( type, id )
+			leftLv = leftLv - book.lv			
 			if leftLv and leftLv <= 0 then break end
+			num = num - 1
+			if num <= 0 then break end
+		end
+	end
+
+	--vehicles
+	if start.vehicles and #group.vehicles == 0 then
+		local num = start.vehicles.num.init or 0
+		if start.vehicles.num.min and start.vehicles.num.max then
+			num = Random_GetInt_Sync( start.vehicles.num.min, start.vehicles.num.max )
+		end
+		local leftLv = start.books.num.tot_lv
+		local pool = MathUtil_Shuffle_Sync( start.vehicles.pool )
+		for _, id in ipairs( pool ) do
+			local vehicle = EQUIPMENT_DATATABLE_Get( id )
+			group:ObtainVehicle( vehicle.type, id )
+			leftLv = leftLv - vehicle.lv			
+			if leftLv and leftLv <= 0 then break end
+			num = num - 1
+			if num <= 0 then break end
+		end
+	end
+
+	--arms
+	if start.arms and #group.arms == 0 then		
+		local num = start.arms.num.init or 0
+		if start.arms.num.min and start.arms.num.max then
+			num = Random_GetInt_Sync( start.arms.num.min, start.arms.num.max )
+		end
+		local leftLv = start.arms.num.tot_lv
+		local pool = MathUtil_Shuffle_Sync( start.arms.pool )
+		for _, id in ipairs( pool ) do
+			local arm = EQUIPMENT_DATATABLE_Get( id )
+			group:ObtainArm( arm.type, id )
+			leftLv = leftLv - arm.lv
+			if leftLv and leftLv <= 0 then break end
+			num = num - 1
+			if num <= 0 then break end
+		end
+	end
+
+	--items
+	if start.items and #group.items == 0 then		
+		local num = start.items.num.init or 0
+		if start.items.num.min and start.items.num.max then
+			num = Random_GetInt_Sync( start.items.num.min, start.items.num.max )
+		end
+		local leftLv = start.items.num.tot_lv
+		local pool = MathUtil_Shuffle_Sync( start.items.pool )
+		for _, id in ipairs( pool ) do			
+			local item = ITEM_DATATABLE_Get( id )
+			group:ObtainItem( item.type, id )
+			leftLv = leftLv - item.lv
+			if leftLv and leftLv <= 0 then break end
+			num = num - 1
+			if num <= 0 then break end
 		end
 	end
 
@@ -207,10 +282,13 @@ function Group_Prepare( group )
 		ECS_FindComponent( target.entityid, "INTEL_COMPONENT" ):GetGroupIntel( group.entityid )
 	end )
 
+	--goal
+	group.goal = MathUtil_Copy( start.goal )
+
 	--Dump( group )
 	--InputUtil_Pause()
 
-	DBG_Trace( group.name, "Start=", group.size )
+	DBG_Trace( group.name, "PrepareStart=", group.size )
 end
 
 
@@ -222,7 +300,6 @@ function Group_AddMember( group, entity )
 	if not role then DBG_Error( "Can't find role component, Failed to AddMember()" ) end
 
 	Prop_Add( group, "members", entity.ecsid )
-	--table.insert( group.members, entity.ecsid )
 
 	role.groupid = group.entityid
 	role.name = group.name .. role.name .. memberidx
@@ -512,7 +589,7 @@ function Group_Produce( group, affair, deltaTime, actor )
 	local product = math.ceil( produce.yield.base * yieldEff )
 	affair.yield = affair.yield + product
 
-	DBG_Trace( "produce=" .. produce.name .. " ramintime=" .. affair.time .. " yield=" .. affair.yield )
+	DBG_Trace( group.name .. " produce=" .. produce.name .. " ramintime=" .. affair.time .. " yield=" .. affair.yield )
 
 	if affair.time > 0 then return end
 
@@ -557,7 +634,7 @@ function Group_StartGrantGift( group, target )
 	affair.time    = 1 --target.costs.time
 
 	table.insert( group.affairs, affair )
-	DBG_Trace( group.name, " start grant gift" )
+	DBG_Trace( group.name, " start grant gift", ECS_FindComponent( affair.groupid, "GROUP_COMPONENT ") )
 end
 
 
@@ -590,6 +667,53 @@ function Group_SignPact( group, affair, deltaTime )
 
 	local relationCmp = ECS_FindComponent( group.entityid, "RELATION_COMPONENT" )
 	HandlePactResult( relationCmp:GetRelation( affair.groupid ), affair.pact )
+
+	--InputUtil_Pause( "Sign pact", affair.pact )
+end
+
+
+---------------------------------------
+---------------------------------------
+function Group_StartReconn( group, target )
+	local affair  = {}
+	affair.type   = "RECONN"
+	affair.time   = 1 --need calcualte distance
+	affair.groupid = target
+
+	table.insert( group.affairs, affair )
+	DBG_Trace( group.name, " start reconn=" .. affair.type )
+end
+
+function Group_Reconn( group, affair, deltaTime )
+	--actor should stay at the destination
+	--but for test procedure, we ignore 
+	affair.time = affair.time - deltaTime	
+	if affair.time > 0 then return end
+
+	local intelCmp = ECS_FindComponent( group.entityid, "INTEL_COMPONENT" )
+	intelCmp:AcquireGroupIntel( affair.groupid, 10 )
+
+	DBG_Trace( group.name, "end reconn" )
+end
+
+function Group_Sabotage( group, target )
+end
+
+function Group_Stole( group, target )	
+end
+
+
+---------------------------------------
+function Group_RewardFollower( group, roleid, invtype, invid )
+	local roleCmp = ECS_FindComponent( roleid, "ROLE_COMPONENT" )
+	if ROLE_EQUIP[invtype] then
+		--puton equipment		
+		--roleCmp:SetupEquip( invid )
+		roleCmp:AddToBag( invtype, invid )
+	else
+		--add into bag
+		roleCmp:AddToBag( invtype, invid )
+	end
 end
 
 ---------------------------------------
@@ -636,15 +760,20 @@ end
 ---------------------------------------
 ---------------------------------------
 function Group_UpdateActionPoints( group )
-	if not group.leaderid or group.leaderid == "" then return end
-	local entity = ECS_FindEntity( group.leaderid )	
-	if not entity then DBG_TraceBug( "Group master is invalid!" ) return end
-	local role = entity:GetComponent( "ROLE_COMPONENT" )
-	if not role then DBG_Error( "No role component" ) end
+	local role = ECS_FindComponent( group.leaderid, "ROLE_COMPONENT" )
+
 	local param = GROUP_PARAMS.ACTION_PTS[group.size]
-	group.MANAGEMENT = param.std + ( role.commonSkills.MANAGEMENT or 0 )
-	group.STRATEGIC  = param.std + ( role.commonSkills.STRATEGIC or 0 )
-	group.TACTIC     = param.std + ( role.commonSkills.TACTIC or 0 )
+	group.MANAGEMENT = param.std + ( role and role.commonSkills.MANAGEMENT or 0 )
+	group.STRATEGIC  = param.std + ( role and role.commonSkills.STRATEGIC or 0 )
+	group.TACTIC     = param.std + ( role and role.commonSkills.TACTIC or 0 )
+end
+
+function Group_UpdateGoal( group, day )
+	group.goal.day = group.goal.day - day 
+	if group.goal.day <= 0 then
+		--finish
+		CurrentGame:ReachAchievement( group.entityid, "FINISH_GOAL", group.goal.name )
+	end
 end
 
 
@@ -705,6 +834,7 @@ end
 
 
 ---------------------------------------
+-- @return the ecsid list of members match conditions
 ---------------------------------------
 function Group_ListRoles( group, status_includes, status_excludes )
 	local roles = {}
@@ -750,15 +880,15 @@ function Group_Attack( group, id )
 	end
 
 	--choice follower to attack
-	local atk_eids = Group_ListRoles( group, nil, { "OUTING" } )
-	local def_eids = Group_ListRoles( target, nil, { "OUTING" } )
+	local atkeids = Group_ListRoles( group, nil, { "OUTING" } )
+	local defeids = Group_ListRoles( target, nil, { "OUTING" } )
 
-	if #atk_eids == 0 then
-		--DBG_Trace( target.name .. "doesn't have enough followr to attack" )
+	if #atkeids == 0 then
+		DBG_Error( target.name .. "doesn't have enough followr to attack" )
 		return
 	end
 
-	InputUtil_Pause( group.name .. "(" .. #atk_eids ..  ") "  .. "attack" .. " " .. target.name .. "(".. #def_eids .. ")" )
+	--InputUtil_Pause( group.name .. "(" .. #atkeids ..  ") "  .. "attack" .. " " .. target.name .. "(".. #defeids .. ")" )
 	
 	--[[
 	print( "atk eids", #atk_eids )
@@ -769,43 +899,20 @@ function Group_Attack( group, id )
 
 	--process status
 	target:IncStatusValue( "UNDER_ATTACK", 1 )
-	for _, ecsid in ipairs( atk_eids ) do Role_SetStatus( ecsid, { BUSY=1, OUTING=1 } ) end
-	for _, ecsid in ipairs( def_eids ) do Role_SetStatus( ecsid, { BUSY=1 } ) end
+	for _, ecsid in ipairs( atkeids ) do Role_SetStatus( ecsid, { BUSY=1, OUTING=1 } ) end
+	for _, ecsid in ipairs( defeids ) do Role_SetStatus( ecsid, { BUSY=1 } ) end
 
-	ECS_GetSystem( "FIGHT_SYSTEM" ):CreateFight( group.entityid, target.entityid, atk_eids, def_eids )
+	ECS_GetSystem( "FIGHT_SYSTEM" ):CreateFight( { issiege=true, atkgroupid=group.entityid, defgroupid=target.entityid, atkeids=atkeids, defeids=defeids } )
 
 	--print( target.name .. " is been attack by " .. group.name )
+	return true
 end
 
-
-function Group_StartReconn( group, target )
-	local affair  = {}
-	affair.type   = "RECONN"
-	affair.time   = 1 --need calcualte distance
-
-	table.insert( group.affairs, affair )
-	DBG_Trace( group.name, " start reconn=" .. affair.type )
-end
-
-function Group_Reconn( group, affair, deltaTime )
-	--actor should stay at the destination
-	--but for test procedure, we ignore 
-	affair.time = affair.time - deltaTime	
-	if affair.time > 0 then return end
-
-	table.insert( group.affairs, affair )
-	DBG_Trace( group.name, "end reconn=" )
-end
-
-function Group_Sabotage( group, target )
-end
-
-function Group_Stole( group, target )	
-end
 
 ---------------------------------------
 ---------------------------------------
 function Group_HoldMeeting( group )
+	--No leader
 	if not group.leaderid then return end
 
 	--Determine affair for group
@@ -834,6 +941,8 @@ function Group_HoldMeeting( group )
 		end
 	end )
 	]]
+
+	--InputUtil_Pause( group.name, "Hold meeting" )
 end
 
 
@@ -853,15 +962,22 @@ end
 ---------------------------------------
 ---------------------------------------
 function GROUP_SYSTEM:Update( deltaTime )
+	if not CurrentGame:IsNewDay() then return end
 	--print( "update group", ECS_GetNum( "GROUP_COMPONENT" ) )
 	local sys = self
 	ECS_Foreach( "GROUP_COMPONENT", function ( group )
-		print( "[GROUP]" .. group.name .. " action......" )
+		print( "[GROUP]" .. group.name .. " action......" )		
 		group:Update()
+		
+		Group_UpdateGoal( group, 1 )
+
 		Group_UpdateActionPoints( group )
+		
 		Group_UpdateAffairs( group, deltaTime )
-		Group_SelectLeader( group )
-		Group_HoldMeeting( group )
+
+		if GAME_RULE.SELECT_LEADER( CurrentGame.time ) then Group_SelectLeader( group ) end
+
+		if GAME_RULE.HOLD_MEETING( CurrentGame.time ) then Group_HoldMeeting( group ) end
 	end )
 	--print( "Update group", ECS_GetNum( "GROUP_COMPONENT" ) )	
 end

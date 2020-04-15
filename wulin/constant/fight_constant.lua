@@ -1,31 +1,27 @@
-FIGHTER_RULE = 
+---------------------------------------
+---------------------------------------
+FIGHT_REUSLT = 
+{
+	NONE     = 0,
+	DRAW     = 1,
+	ATK_WIN  = 2,
+	DEF_WIN  = 3,
+}
+
+FIGHT_RULE = 
 {
 	NO_DEAD    = 1,
 	TESTFIGHT  = 2,	
-	DEATHFIGHT = 3,		
-}
-
-FightFormation = 
-{
-	
+	DEATHFIGHT = 3,
+	SIEGE      = 4,
 }
 
 
 FIGHT_SIDE = 
 {
-	NONE = 0,
-	RED  = 1,
-	BLUE = 2,
-}
---   Role will action after its action point is enough
---   
-
-FIGHT_ACTIONTIME = 
-{
-	DEFAULT  = 1000,
-	USESKILL = 3000,
-	REST     = 5000,
-	DEFEND   = 5000,
+	NONE     = 0,
+	ATTACKER = 1,
+	DEFENDER = 2,
 }
 
 
@@ -59,9 +55,21 @@ FIGHT_RULE =
 }
 
 
+---------------------------------------
+---------------------------------------
+FIGHT_ACTIONTIME = 
+{
+	DEFAULT  = 3000,
+	USESKILL = 5000,
+	REST     = 5000,
+	DEFEND   = 5000,
+}
+
 FIGHT_PARAMS = 
 {
 	DEFEND_COST_RATE    = 0.25,
 
 	DAMAGE_RATE         = 100,
+
+	ATB_AGI_BASE        = 300,
 }

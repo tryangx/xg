@@ -12,7 +12,7 @@ require "book_datatable"
 require "map_datatable"
 require "equipment_datatable"
 require "process_datatable"
-require "consumable_datatable"
+require "item_datatable"
 require "produce_datatable"
 
 

@@ -24,7 +24,7 @@ function Role_Prepare( role )
 	if group then
 		traveler.location = group.location
 	else
-		local map = ECS_SendEvent( "MAP_COMPONENT", "Get" )
+		local map = CurrentMap
 		local index = Random_GetInt_Unsync( 1, #map.cities )
 		local city = map.cities[index]		
 		traveler.location = city.id
@@ -206,6 +206,32 @@ local function Role_Update( role )
 	if role.groupid then role:IncStatusValue( "TESTFIGHT_INTERVAL", 1 ) end
 end
 
+
+local function Role_UpdateEquip( role )	
+	if #role.bags == 0 then return end
+	local list = {}
+	for _, data in ipairs( role.bags ) do
+		print( data.id, data.type )
+		if ROLE_EQUIP[data.type] then			
+			local equip = EQUIPMENT_DATATABLE_Get( data.id )
+			if not role.equips[equip.type] then
+				--No equipment, put on first
+				list[equip.type] = equip.id
+			else
+				--Stronger equipment
+				local curEquip = EQUIPMENT_DATATABLE_Get( role.equips[equip.type] )
+				if curEquip.lv < equip.lv then
+					list[equip.type] = equip.id
+				end
+			end
+		end
+	end
+	for _, id in pairs( list ) do
+		role:SetupEquip( id )
+	end
+end
+
+
 ---------------------------------------
 ---------------------------------------
 ROLE_SYSTEM = class()
@@ -219,8 +245,10 @@ end
 
 ---------------------------------------
 function ROLE_SYSTEM:Update( deltaTime )	
+	if not CurrentGame:IsNewDay() then return end
 	ECS_Foreach( "ROLE_COMPONENT", function ( role )
 		Role_Update( role )
+		Role_UpdateEquip( role )
 		Role_Act( role )
 	end )
 end

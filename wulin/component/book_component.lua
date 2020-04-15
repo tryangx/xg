@@ -12,8 +12,3 @@ BOOK_PROPERTIES =
 function BOOK_COMPONENT:__init()
 end
 
-
----------------------------------------
-function BOOK_COMPONENT:Create( book )
-	
-end

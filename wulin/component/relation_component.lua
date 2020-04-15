@@ -115,8 +115,6 @@ function HandlePactResult( relation, pact )
 		--todo
 	end
 	
-	Dump( relation )
-
 	relation.pacts[pact] = { time=time, elapsed=0 }
 end
 
@@ -135,8 +133,10 @@ end
 
 
 function Relation_CanAttack( relation )
-	if relation.status == ATWAR then return true end
-	return false
+	if relation.status == "ATWAR" then return true end
+	if relation.status == "ALLY" then return false end
+	if relation.status == "FRIEND" then return false end
+	return true
 end
 
 function Relation_HasSameEnemy( relation )
@@ -150,6 +150,42 @@ end
 function Relation_CanGrantGift( relation )
 	if relation.status ~= ATWAR then return true end
 	return false
+end
+
+---------------------------------------
+---------------------------------------
+function Relation_MakeVassal( monarchid, vassalid )
+	local monarchRelationCmp = ECS_FindComponent( monarchid, "RELATION_COMPONENT" )
+	local vassalRelationCmp = ECS_FindComponent( vassalid, "RELATION_COMPONENT" )
+	local monarchRelation = monarchRelationCmp:GetRelation( vassalid )
+	local vassalRelation = vassalRelationCmp:GetRelation( monarchid )
+
+	vassalRelation.status  = "VASSAL"
+	vassalRelation.elapsed = 0
+	vassalRelation.eval    = 0
+	
+	monarchRelation.status = "MONARCH"
+	monarchRelation.elapsed = 0
+	monarchRelation.eval    = 0
+	monarchRelationCmp.details["WE_ARE_MONARCH"] = 1
+
+	Dump( vassalRelationCmp.details )
+	if vassalRelationCmp.details["WE_ARE_MONARCH"] then
+		InputUtil_Pause( "vassal is monarch" )
+		for _, relation in pairs( vassalRelationCmp.relations ) do
+			if relation.id ~= monarchid and relation.status == "VASSAL" then
+				relation.status  = "NONE"
+				relation.elapsed = 0
+				relation.eval    = 0
+				print(  ECS_FindComponent( monarchid, "GROUP_COMPONENT" ).name )
+				 print( ECS_FindComponent( relation.id, "GROUP_COMPONENT" ).name )
+				 InputUtil_Pause( "vassal's vassal" )
+				Relation_MakeVassal( monarchid, relation.id )
+			end
+		end
+	end
+
+	InputUtil_Pause( ECS_FindComponent( monarchid, "GROUP_COMPONENT" ).name .. " make " .. ECS_FindComponent( vassalid, "GROUP_COMPONENT" ).name .. " as vassal" )
 end
 
 ---------------------------------------
@@ -187,6 +223,13 @@ function RELATION_COMPONENT:Update( deltaTime )
 end
 
 ---------------------------------------
+function RELATION_COMPONENT:Foreach( fn )
+	for _, relation in pairs( self.relations ) do
+		fn( relation )
+	end
+end
+
+---------------------------------------
 function RELATION_COMPONENT:GetRelation( id )
 	if not self.relations[id] then
 		self.relations[id] = { entityid=self.entityid, id=id, opinion="NEUTRAL", status="NONE", eval=0, elapsed=0, pacts={}, details={} }
@@ -194,12 +237,15 @@ function RELATION_COMPONENT:GetRelation( id )
 	return self.relations[id]
 end
 
-function RELATION_COMPONENT:Foreach( fn )
+function RELATION_COMPONENT:GetNumOfRelation( params )
+	local num = 0
 	for _, relation in pairs( self.relations ) do
-		fn( relation )
+		if params.status and relation.status == params.status then num = num + 1 end
 	end
+	return num
 end
 
+---------------------------------------
 function RELATION_COMPONENT:SetStatus()
 
 end

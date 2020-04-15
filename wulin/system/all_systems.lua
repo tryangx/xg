@@ -1,3 +1,5 @@
+---------------------------------------------------
+---------------------------------------------------
 require "rolecreator_system"
 require "fighter_system"
 require "fightskill_system"
@@ -8,3 +10,6 @@ require "data_system"
 require "game_system"
 require "training_system"
 require "diplomacy_system"
+
+---------------------------------------------------
+---------------------------------------------------

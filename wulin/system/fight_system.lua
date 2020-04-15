@@ -36,12 +36,18 @@ function FIGHT_SYSTEM:Update( deltaTime )
 			local group = groupentity:GetComponent( "GROUP_COMPONENT" )
 			group:DecStatusValue( "UNDER_ATTACK", 1 )
 		end
+
+		--siege
+		if fight.rules["SIEGE"] then
+			if fight.result == "ATK_WIN" then
+				Relation_MakeVassal( fight.atkgroupid, fight.defgroupid )
+			end
+		end
+
+		--destroy fight entity
 		ECS_DestroyEntity( entity )
-
 		Log_Write( "fight", "fight removed id=" .. ecsid )
-
-		--InputUtil_Pause( "End Fight" )
-
+		InputUtil_Pause( "End Fight" )
 		return true
 	end)
 
@@ -52,19 +58,23 @@ end
 ------------------------------ ---------
 function FIGHT_SYSTEM:AppendFight( entityid )
 	table.insert( self._fights, entityid )
-	--InputUtil_Pause( "add fight" )
 end
 
 
 ---------------------------------------
-function FIGHT_SYSTEM:CreateFight( atkgroup, defgroup, atk_eids, def_eids )
+function FIGHT_SYSTEM:CreateFight( params )
 	local entity = ECS_CreateEntity( "FightData" )	
-	local fight = ECS_CreateComponent( "FIGHT_COMPONENT" )
-	Prop_Set( fight, "redgroupid", atkgroup )
-	Prop_Set( fight, "bluegroupid", defgroup )
-	Prop_Add( fight, "reds",  atk_eids )
-	Prop_Add( fight, "blues", def_eids )
-	entity:AddComponent( fight )
+	local fightCmp = ECS_CreateComponent( "FIGHT_COMPONENT" )
+	if params.istestfight then
+		fightCmp:InitTestFight()
+	elseif params.issiege then
+		fightCmp:InitSiegeFight()
+	end
+	Prop_Set( fightCmp, "atkgroupid", params.atkgroupid )
+	Prop_Set( fightCmp, "defgroupid", params.defgroupid )
+	Prop_AddByTable( fightCmp, "atks", params.atkeids )
+	Prop_AddByTable( fightCmp, "defs", params.defeids )
+	entity:AddComponent( fightCmp )
 	Data_GetRoot( "FIGHT_DATA" ):AddChild( entity )
 
 	DBG_Trace( "Create fight id=" .. entity.ecsid )
@@ -83,7 +93,6 @@ function FIGHT_SYSTEM:ProcessFight( ecsid )
 	end
 	
 	local fight = entity:GetComponent( "FIGHT_COMPONENT" )
-
 	Fight_Process( fight )
 end
 

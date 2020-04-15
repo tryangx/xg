@@ -15,10 +15,7 @@ function StringUtil_Trim( str, finalLength, curLength )
 	local length = string.len( str )
 	if finalLength then
 		if length < finalLength then
-			ret = str
-			for k = 1, finalLength - length do
-				ret = ret .. " "
-			end
+			ret = str .. string.rep( "-", finalLength - length )
 		else
 			ret = string.sub( str, 1, finalLength )
 		end

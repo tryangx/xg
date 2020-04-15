@@ -19,11 +19,9 @@ local function NearDistrct( params )
 	return true
 end
 
-
 local function IsInGroup()
 	return _targetRoleCmp.groupid
 end
-
 
 local function CanDo( params )
 	--check whether role can be teacher
@@ -33,7 +31,46 @@ local function CanDo( params )
 	return abilities[params.action] == 1
 end
 
+local function StayInGroup()
+	return _targetFighterCmp ~= nil
+end
 
+local function TestProbability( params )
+	if params.prob then
+		local max = params.maxprob or 100
+		if Random_GetInt_Sync( 1, max ) > params.prob then return false end
+	end
+	return true
+end
+
+----------------------------------------
+local function GroupHasConstruction( params )
+	local num = _targetGroupCmp:GetNumOfConstruction( params.construction )
+	--should reduce the construction occpuied by the affairs
+	if num > 0 then
+		if params.affair then
+			num = num - _targetGroupCmp:GetNumOfAffairsByParams( params.affair )
+		end	
+	else
+		_targetGroupCmp._constructionWishList[params.construction] = _targetGroupCmp._constructionWishList[params.construction] and _targetGroupCmp._constructionWishList[params.construction] + 1 or 1
+		--InputUtilf( "building", params.construction, num )
+	end	
+	return num > 0
+end
+
+local function GroupHasLand( params )
+	--if not _targetGroupCmp then return false end	local usin
+	if _targetGroupCmp:GetNumOfLand( params.type ) <= ( params.value or 0 ) then return false end
+	return true
+end
+
+
+local function GroupHasAffairs( params )
+	if _roleGroupCmp:GetNumOfAffairs( params.type ) >= params.max then return false end
+	return true
+end
+
+----------------------------------------
 local function MakeDecision( params )
 	Stat_Add( "MakeDecidsion", params.cmd, StatType.TIMES )
 
@@ -54,105 +91,72 @@ local function MakeDecision( params )
 	
 	if _roleCmp ~= _targetRoleCmp then
 		DBG_Trace( _roleCmp.name .. " order " .. _targetRoleCmp.name .. " to do=" .. params.cmd )
+
+		--Stat_Add( "RoleDecision", _roleCmp.name .. "=" .. params.cmd, StatType.LIST )
+		Stat_Add( _roleCmp.name .. "_" .. params.cmd, 1, StatType.TIMES )
 	else
 		DBG_Trace( _targetRoleCmp.name .. " decide to do=" .. params.cmd )
+
+		--Stat_Add( "RoleDecision", _targetRoleCmp.name .. "=" .. params.cmd, StatType.LIST )
+		Stat_Add( _targetRoleCmp.name .. "_" .. params.cmd, 1, StatType.TIMES )
 	end
 end
 
-
-local function StayInGroup()
-	return _targetFighterCmp ~= nil
-end
-
-
-local function TestProbability( params )
-	if params.prob then
-		local max = params.maxprob or 100
-		if Random_GetInt_Sync( 1, max ) > params.prob then return false end
-	end
-	return true
-end
-
-
-----------------------------------------
-----------------------------------------
-local function GroupHasConstruction( params )
-	local num = _targetGroupCmp:GetNumOfConstruction( params.construction )
-	--should reduce the construction occpuied by the affairs
-	if num > 0 then
-		if params.affair then
-			num = num - _targetGroupCmp:GetNumOfAffairsByParams( params.affair )
-		end	
-	else
-		_targetGroupCmp._constructionWishList[params.construction] = _targetGroupCmp._constructionWishList[params.construction] and _targetGroupCmp._constructionWishList[params.construction] + 1 or 1
-		--InputUtil_Pause( "building", params.construction, num )
-	end	
-	return num > 0
-end
-
-local function GroupHasLand( params )
-	--if not _targetGroupCmp then return false end	local usin
-	if _targetGroupCmp:GetNumOfLand( params.type ) <= ( params.value or 0 ) then return false end
-	return true
-end
-
-
-local function GroupHasAffairs( params )
-	if _roleGroupCmp:GetNumOfAffairs( params.type ) >= params.max then return false end
-	return true
-end
 
 ----------------------------------------
 local function AddAffair( params )
 	if params.type == "BUILD_CONSTRUCTION" then
-		Group_StartBuildingConstruction( _roleGroupCmp, _variables.construction )		
+		Group_StartBuildingConstruction( _targetGroupCmp, _variables.construction )		
 	elseif params.type == "UPGRADE_CONSTRUCTION" then
-		Group_StartUpgradingConstruction( _roleGroupCmp, _variables.construction, _variables.target )
+		Group_StartUpgradingConstruction( _targetGroupCmp, _variables.construction, _variables.target )
 	elseif params.type == "DESTROY_CONSTRUCTION" then
 
-	elseif params.type == "SMELT" then
-		Group_Smelt( _roleGroupCmp, _variables.material )
 	elseif params.type == "MAKE_ITEM" then
 		if _variables.maketype and _variables.makeid then
-			Group_StartMakeItem( _roleGroupCmp, _variables.maketype, _variables.makeid )			
+			Group_StartMakeItem( _targetGroupCmp, _variables.maketype, _variables.makeid )			
 		else
 			DBG_Error( "unspecified making item" )
 		end
 	elseif params.type == "PROCESS"	then
 		if _variables.processtype then
-			Group_StartProcess( _roleGroupCmp, _variables.processtype )
+			Group_StartProcess( _targetGroupCmp, _variables.processtype )
 		end		
 	elseif params.type == "PRODUCE" then
 		if _variables.producetype then
-			Group_StartProduce( _roleGroupCmp, _variables.producetype )
+			Group_StartProduce( _targetGroupCmp, _variables.producetype )
 		else
 			DBG_Error( "unspecified produce type" )
 		end
 
 	elseif params.type == "RECONN" then
 		if _variables.targetgroup then
-			Group_StartReconn( _roleGroupCmp, _variables.targetgroup )
+			Group_StartReconn( _targetGroupCmp, _variables.targetgroup )
 		end
 	elseif params.type == "SABOTAGE" then
 		if _variables.targetgroup then
-			Group_Sabotage( _roleGroupCmp, _variables.targetgroup )
+			Group_Sabotage( _targetGroupCmp, _variables.targetgroup )
 		end
 	elseif params.type == "ATTACK" then
 		if _variables.targetgroup then
-			Group_Attack( _roleGroupCmp, _variables.targetgroup )
+			Group_Attack( _targetGroupCmp, _variables.targetgroup )
 		end
 	elseif params.type == "STOLE" then
 		if _variables.targetgroup then
-			Group_Stole( _roleGroupCmp, _variables.targetgroup )
+			Group_Stole( _targetGroupCmp, _variables.targetgroup )
 		end
 
 	elseif params.type == "GRANT_GIFT" then
 		if _variables.targetgroup then
-			Group_StartGrantGift( _roleGroupCmp, _variables.targetgroup )
+			Group_StartGrantGift( _targetGroupCmp, _variables.targetgroup )
 		end
 	elseif params.type == "SIGN_PACT" then
 		if _variables.targetgroup and _variables.pact then
-			Group_StartSignPact( _roleGroupCmp, _variables.targetgroup, _variables.pact )
+			Group_StartSignPact( _targetGroupCmp, _variables.targetgroup, _variables.pact )
+		end
+
+	elseif params.type == "REWARD_FOLLOWER" then
+		if _variables.targetrole and _variables.targettype and _variables.targetid then
+			Group_RewardFollower( _targetGroupCmp, _variables.targetrole, _variables.targettype, _variables.targetid )
 		end
 
 	else
@@ -161,6 +165,8 @@ local function AddAffair( params )
 
 	DBG_Trace( _targetGroupCmp.name .. " add affair=" .. params.type )
 	--InputUtil_Pause( "Add affair", params.type )
+	--Stat_Add( "GroupAffair", _targetGroupCmp.name .. "=" .. params.type, StatType.LIST )
+	Stat_Add( _targetGroupCmp.name .. "_" .. params.type, 1, StatType.TIMES )
 end
 
 
@@ -285,7 +291,7 @@ local function TargetNeedSeclude()
 		if _targetGroupCmp:GetNumOfConstruction( "BACKROOM" ) <= _targetGroupCmp:GetTempStatusValue( "SECLUDE_MEMBER" ) then return false end
 	else
 		--in a secrect area
-		local map = ECS_SendEvent( "MAP_COMPONENT", "Get" )		
+		local map = CurrentMap
 		local plot = map:GetPlotById( _traveler.location )
 		if not plot then return false end
 		if plot.type == "MOUNTAIN" then
@@ -751,7 +757,7 @@ local _GroupProcess =
 		_GroupRaiseLivestock,
 		_GroupPlantHerb,
 		_GroupMakeMedicine,
-	}		
+	}
 }
 
 
@@ -847,7 +853,13 @@ local function GroupNeedSignPact()
 		local opp_power = Intel_GetGroupPower( intelCmp:GetGroupIntel( relation.id ) )
 
 		function MatchPactCondition( pact, relation )
+			if not pact.conditions then return false end
 			local condition = pact.conditions
+
+			if condition.status then
+				if relation.status ~= condition.status then return false end
+			end
+
 			if condition.elapsed then
 				if relation.elapsed < condition.elapsed then return false end
 			end
@@ -861,24 +873,27 @@ local function GroupNeedSignPact()
 			end
 			return true
 		end
+
 		--reference RELATION_STATUSCAPACITY
 		local capacity = RELATION_STATUSCAPACITY[relation.status]
 		if capacity.diplomacy == 0 then return end
 
-		for type, pact in pairs( RELATION_PACT ) do
+		for pactname, pact in pairs( RELATION_PACT ) do
 			--check conditions
 			if MatchPactCondition( pact, relation ) then
 				local prob=50
 				totalprob = totalprob + prob
-				table.insert( list, { targetgroup=relation.id, pact=type, prob=prob } )
-				--HandlePactResult( pact, relation )
+				table.insert( list, { targetgroup=relation.id, pact=pactname, prob=prob } )
 			end
 		end
 	end
 
 	relationCmp:Foreach( HandleRelation )
 
-	local prob = Random_GetInt_Sync( 1, totalprob * 2 )
+	--mod=1 means should select a pact
+	--mod>1 means we may not choice any pact
+	local mod = 1
+	local prob = Random_GetInt_Sync( 1, totalprob * mod )
 	for _, data in ipairs( list ) do
 		if prob < data.prob then
 			_variables.targetgroup = data.targetgroup
@@ -960,8 +975,11 @@ local function GroupNeedReconn( params )
 end
 
 
-local function GroupNeedAttack( group )
+local function GroupNeedAttack()
 	if #_targetGroupCmp.members == 0 then return end
+
+	local atkeids = Group_ListRoles( _targetGroupCmp, nil, { "OUTING" } )
+	if #atkeids == 0 then return false end
 
 	local intelCmp = ECS_FindComponent( _targetGroupCmp.entityid, "INTEL_COMPONENT" )
 
@@ -973,14 +991,13 @@ local function GroupNeedAttack( group )
 	local relationCmp = ECS_FindComponent( _targetGroupCmp.entityid, "RELATION_COMPONENT" )
 	relationCmp:Foreach( function ( relation )
 		--is at war
-		if Relation_CanAttack( relation ) then return end
+		if not Relation_CanAttack( relation ) then return end
 
 		--power compare
 		local intel = intelCmp:GetGroupIntel( relation.id )
 
 		local opp_power = Intel_GetGroupPower( intel )
 		--print( _targetGroupCmp.entityid, relation.id )
-		--InputUtil_Pause( "power", power, opp_power )
 		if power > opp_power * 0.5 then
 			table.insert( list, relation )
 		end
@@ -991,7 +1008,7 @@ local function GroupNeedAttack( group )
 	local index = Random_GetInt_Sync( 1, num )
 	local id = list[index].id
 	_variables.targetgroup = id
-	
+
 	return true
 end
 
@@ -1042,7 +1059,7 @@ local _GroupReconnaissance =
 {
 	type="SEQUENCE", desc="", children =
 	{
-		{ type="FILTER", condition=GroupNeedReconn },
+		{ type="FILTER", condition=GroupNeedReconn },		
 		{ type="ACTION", action = AddAffair, params={ type="RECONN" } },
 	}
 }
@@ -1080,6 +1097,7 @@ local _GroupOperation =
 	{
 		_GroupReconnaissance,
 		--_GroupSabotage,
+		
 		_GroupAttack,
 		--_GroupStole,
 	}
@@ -1194,6 +1212,120 @@ local _GroupConstruction =
 	}
 }
 
+
+----------------------------------------
+local function GroupNeedRewardFollower()
+	if #_targetGroupCmp.arms == 0 and #_targetGroupCmp.items == 0 then return false end
+	
+	--local list = Group_ListRoles( _targetGroupCmp, { "NEED_REWARD" }, { "OUTING" } )
+	local list = Group_ListRoles( _targetGroupCmp, {}, { "OUTING" } )
+	if #list == 0 then return false end
+
+	local needs = {}
+	for _, ecsid in ipairs( list ) do
+		local roleCmp = ECS_FindComponent( ecsid, "ROLE_COMPONENT" )
+		--equipment
+		for type, _ in pairs( ROLE_EQUIP ) do 
+			if not roleCmp.equips[type] then
+				if not needs[type] then needs[type] = {} end
+				table.insert( needs[type], roleCmp )
+			end
+		end
+		--items
+		if roleCmp:CanAddToBag() then
+			if not needs["MEDICINE"] then needs["MEDICINE"] = {} end
+			table.insert( needs["MEDICINE"], roleCmp )
+		end
+	end
+
+	--equpiment
+	for _, inv in ipairs( _targetGroupCmp.arms ) do
+		local data = EQUIPMENT_DATATABLE_Get( inv.id )
+		if needs[data.type] then
+			local index = Random_GetInt_Sync( 1, #needs[data.type] )
+			_variables.targetrole = needs[data.type][index].entityid
+			_variables.targettype = data.type
+			_variables.targetid   = inv.id
+			return true
+		end
+	end
+
+	--vehicle
+	for _, inv in ipairs( _targetGroupCmp.vehicles ) do			
+		local data = EQUIPMENT_DATATABLE_Get( inv.id )
+		if needs[data.type] then
+			local index = Random_GetInt_Sync( 1, #needs[data.type] )
+			_variables.targetrole = needs[data.type][index].entityid
+			_variables.targettype = data.type
+			_variables.targetid   = inv.id
+			return true
+		end
+	end
+
+	--item
+	for _, inv in ipairs( _targetGroupCmp.items ) do
+		local data = ITEM_DATATABLE_Get( inv.id )
+		if needs[data.type] then
+			local index = Random_GetInt_Sync( 1, #needs[data.type] )
+			_variables.targetrole = needs[data.type][index].entityid
+			_variables.targettype = data.type
+			_variables.targetid   = inv.id
+			return true
+		end
+	end
+
+	return false
+end
+
+
+local function GroupNeedSellItem()
+	return false
+end
+
+local function GroupBuyItem()
+	return false
+end
+
+
+local _GroupRewardFollower = 
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=GroupNeedRewardFollower },
+		{ type="ACTION", action = AddAffair, params={ type="REWARD_FOLLOWER" } },
+	}
+}
+
+local _GroupSellItem = 
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=GroupNeedSellItem },
+		{ type="ACTION", action = AddAffair, params={ type="SELL_ITEM" } },
+	}
+}
+
+local _GroupBuyItem = 
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=GroupBuyItem },
+		{ type="ACTION", action = AddAffair, params={ type="BUY_ITEM" } },
+	}
+}
+
+
+local _GroupItemManagement = 
+{
+	type="SEQUENCE", desc="", children =	
+	{
+		_GroupRewardFollower,
+		_GroupSellItem,
+		_GroupBuyItem,
+	}
+}
+
+
 ----------------------------------------
 ----------------------------------------
 local GroupAffair = 
@@ -1207,18 +1339,19 @@ local GroupAffair =
 		_GroupConstruction,
 
 		--PRODUCE should be the last thing to consider about.
-		_GroupProducePriority,		
+		_GroupProducePriority,
 		_GroupProduce,
+
+		_GroupItemManagement,		
 
 		--external
 		_GroupDipomacy,
-		--_GroupOperation,
+		_GroupOperation,
 	}
 }
 _groupAffairTree = BehaviorNode( true )
 _groupAffairTree:BuildTree( GroupAffair )
 
-----------------------------------------
 ----------------------------------------
 local ScheduleArrangement = 
 {
@@ -1236,8 +1369,6 @@ local ScheduleArrangement =
 _scheduleTree = BehaviorNode( true )
 _scheduleTree:BuildTree( ScheduleArrangement )
 
-
-----------------------------------------
 ----------------------------------------
 local DetermineAction = 
 {
@@ -1253,6 +1384,7 @@ local DetermineAction =
 }
 _actionTree = BehaviorNode( true )
 _actionTree:BuildTree( DetermineAction )
+
 
 ----------------------------------------
 ----------------------------------------
@@ -1287,9 +1419,9 @@ local function InitBehavior( role_ecsid, params )
 end
 
 
-----------------------------------------
--- Group master
-----------------------------------------
+--------------------------------------------------------------------------------
+-- Group master determine group's affair
+--------------------------------------------------------------------------------
 function AI_DetermineGroupAffair( role_ecsid, params )
 	if not InitBehavior( role_ecsid, params ) then DBG_TraceBug( "Init role's ai failed" ) return end
 	if not _targetGroupCmp then DBG_Error( "Target isn't in group!" ) end
@@ -1305,9 +1437,9 @@ function AI_DetermineGroupAffair( role_ecsid, params )
 end
 
 
-----------------------------------------
--- Group master
-----------------------------------------
+--------------------------------------------------------------------------------
+-- Group master or Elder determine follower's schedule
+--------------------------------------------------------------------------------
 function AI_DetermineSchedule( role_ecsid, params )	
 	if not InitBehavior( role_ecsid, params ) then DBG_TraceBug( "Init role's ai failed" ) return end
 
@@ -1321,7 +1453,7 @@ end
 
 
 ----------------------------------------
--- All roles
+-- Role determine his action
 ----------------------------------------
 function AI_DetermineAction( role_ecsid, params )
 	if not InitBehavior( role_ecsid, params ) then DBG_TraceBug( "Init role's ai failed" ) return end

@@ -30,7 +30,7 @@ local function Intel_LowDownIntelGrade( intel )
 	intel.eval = 0
 end
 
-local function Intel_Update( intel )
+local function Intel_Update( intel, deltaTime )
 	if intel.eval > 0 then
 		intel.eval = math.max( 0, intel.eval - deltaTime )
 	elseif intel.eval > 0 then
@@ -80,8 +80,8 @@ INTEL_PROPERTIES =
 ---------------------------------------
 
 function INTEL_COMPONENT:Update( deltaTime )
-	for _, intel in pairs( self.groupintels ) do Intel_Update( intel ) end
-	for _, intel in pairs( self.roleintels ) do Intel_Update( intel ) end
+	for _, intel in pairs( self.groupintels ) do Intel_Update( intel, deltaTime ) end
+	for _, intel in pairs( self.roleintels ) do Intel_Update( intel, deltaTime ) end
 end
 
 ---------------------------------------

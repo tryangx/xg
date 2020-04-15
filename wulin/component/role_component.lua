@@ -12,9 +12,14 @@ ROLE_PROPERTIES =
 
 	statuses   = { type="LIST" },
 
+	groupid    = { type="ECSID", },
+
+	---------------------------------------
+	--
+	---------------------------------------
 	renown     = { type="NUMBER" },
 
-	groupid    = { type="ECSID", },
+	actions    = { type="DICT" },
 
 	--mental
 	-- valuetype: { type: string, init_value = number, post_value = number }
@@ -22,6 +27,8 @@ ROLE_PROPERTIES =
 
 	traits     = { type="LIST" },
 
+	--bags, include equipment, medicine
+	--{ { type="EQUIPMENT", id=, } }
 	bags       = { type="LIST" },
 
 	equips     = { type="DICT" },
@@ -102,16 +109,30 @@ end
 
 
 ---------------------------------------
-function ROLE_COMPONENT:AppendBag( item )
-	Prop_Add( self, "bags", item )
+function ROLE_COMPONENT:AddToBag( type, id )
+	Prop_Add( self, "bags", { type=type, id=id } )
+	if ROLE_EQUIP[type] then
+		DBG_Trace( self.name .. " add " .. EQUIPMENT_DATATABLE_Get( id ).name .. " into bag." )
+	else
+		DBG_Trace( self.name .. " add " .. ITEM_DATATABLE_Get( id ).name .. " into bag." )
+	end
 end
 
 
----------------------------------------
-function ROLE_COMPONENT:RemoveBag( bag )
-	Prop_Remove( self, "bags", item )
+function ROLE_COMPONENT:RemoveFromBag( type, id )
+	for _, data in pairs( self.bags ) do
+		if data.type == type and data.id == id then
+			table.remove( self.bags, k )
+			return
+		end
+	end
 end
 
+
+function ROLE_COMPONENT:CanAddToBag( num )
+	if not num then num = 1 end
+	return num < 5
+end
 
 ---------------------------------------
 -- @params type reference to EQUIPMENT_TYPE
@@ -121,16 +142,16 @@ function ROLE_COMPONENT:GetEquip( type )
 end
 
 
-function ROLE_COMPONENT:SetupEquip( type, equip )
-	if not equip then
-		--remove
-		equip = self.equips[type]
-		self.equips[type] = nil
-		MathUtil_Add( self.bags, equip )
-	else
-		self.equips[type] = equip
-		MathUtil_Remove( self.bags, equipe )
+function ROLE_COMPONENT:SetupEquip( id )
+	local equip = EQUIPMENT_DATATABLE_Get( id )
+	print( equip, id )
+	if self.equips[equip.type] then
+		--takeoff
+		self:RemoveFromBag( equip.type, self.equips[equip.type].id )
+		DBG_Trace( self.name .. " takeoff equipment=" .. equip.type )
 	end
+	self.equips[equip.type] = id
+	DBG_Trace( self.name .. " put on equipment=" .. equip.name )
 end
 
 

@@ -36,7 +36,7 @@ local PASSIVESKILL_DATATABLE =
 		name         = "混合内功",
 		type         = "RESIDENT",
 		conditions   = {},
-		atkAction    = {cd={max=100,step=30}, hit={times=1,mod=10}, dmg={mod=10}},
+		atkAction    = {cd={max=100,step=30}, hit={times=1,mod=10}, dmg={mod=1.1}},
 		restAction   = {cd={max=100,step=30}, hp={max=0.5, ratio=0.05}, mp={max=0.5, ratio=0.05}},
 	},
 	[1001] =

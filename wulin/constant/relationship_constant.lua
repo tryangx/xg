@@ -46,19 +46,25 @@ RELATION_DETAIL =
 {
 	WE_AT_WAR          = 1,
 	THEY_DECLAREWAR    = 2,
+	WE_DECLAREWAR      = 3,
 
-	THEY_OWE_RIGHT     = 10,
+	WE_ARE_MONARCH     = 10,
+	WE_ARE_SUZERAIN    = 11,
+
+	THEY_OWE_RIGHT     = 20,
 	
-	THEY_BREAK_PROMISE = 20,
-	WE_BREAK_PROMISE   = 21,
+	THEY_BREAK_PROMISE = 30,
+	WE_BREAK_PROMISE   = 31,
 
-	THEY_BETRAYED      = 30,
-	WE_BETRAYED        = 31,
+	THEY_BETRAYED      = 40,
+	WE_BETRAYED        = 41,
 }
-
 
 --------------------------------------------------------------------------------
 -- Sign pact need some conditions
+--   1.elapsed
+--   2.adv_prop
+--   3.power_prop
 --
 -- Sign pact will leads some results:
 --   1. Change Relation Status                   ==> change_status={ opp=%status%, our=%status% }
@@ -70,56 +76,56 @@ RELATION_DETAIL =
 RELATION_PACT = 
 {
 	DECLAREWAR = {
-					conditions = { },
+					--conditions = { elapsed=0, power_prop={min=0.4, max=0.6} },
 					results = { change_status={ opp="ATWAR" }, detail={ opp={THEY_DECLAREWAR=1}, our={WE_AT_WAR=1} } }
 				 },	
 	NOWAR      = { 
-					conditions = {},
+					conditions = { status="TRUST", elapsed=360, power_prop={min=0.4, max=0.6} },
 					results = { time=360 },
 				 },
 	TRADE      = {
-					conditions = {},
+					--conditions = {},
 					results = { time=360 },
 				 },
 	CONTEST    = { 
-					conditions = {},
+					--conditions = {},
 					results = { time=360 },
 				 },
 	THREATEN   = { 
-					conditions = {}, 
+					--conditions = {}, 
 					results = { change_status={ opp="VASSAL", our="MONARCH" },
 				 },
 	PROTECT    = { 
-					conditions = {}, 
+					--conditions = {}, 
 					results ={ change_status={ opp="SUBJECT", our="SUBZERAIN" } },
 				 },
 	TRIBUTE    = { 
-					conditions = {}, 
+					--conditions = {}, 
 					results ={ time=180, tribute_stock_ratio={ SUBJECT=0.3, VASSAL=0.5 } } },
 				 },
 	ANNEX      = { 
-					conditions = {}, 
+					--conditions = {}, 
 					results ={ time=360 },
 				 },	
 	ALLY       = {
-					conditions = { power_prop={min=40, max=60} },
+					conditions = { status="FRIEND", power_prop={min=0.4, max=0.6} },
 					results ={ change_status={ opp="ALLY", our="ALLY" } },
 				 },
 	BREAK      = {
-					conditions = {}, 
+					--conditions = {},
 					results ={ change_status={ opp="NONE", our="NONE"}, detail={ opp={THEY_BREAK_PROMISE=1}, our={WE_BREAK_PROMISE=1} } },
 				 },
 	HELP       = {
-					conditions = {},
+					--conditions = {},
 					results ={ detail={ opp={THEY_OWE_RIGHT=1} } },
 				 },
 	BETRAY     = {
-					conditions = { },
+					--conditions = {},
 					results ={ change_status={ opp="NONE", our="NONE" }, independ={our=1} },
 				 },
 
 	PEACE      = { 
-					conditions = { elapsed=360, adv_prop={min=0.4,max=0.6} },
+					--conditions = { elapsed=360, adv_prop={min=0.4,max=0.6} },
 					results = { detail={ opp={WE_AT_WAR=-1}, our={WE_AT_WAR=-1} } },
 				 },
 }

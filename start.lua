@@ -16,6 +16,7 @@ package.path = package.path .. ";wulin/?.lua"
 
 require "wulin"
 
+
 ---------------------------------------------
 --Test ECS
 --[[

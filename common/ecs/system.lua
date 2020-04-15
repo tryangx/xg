@@ -9,7 +9,10 @@ ECSSYSTEM_STATE =
 
 }
 
----------------------------------------
+------------------------------------------------------------------------------
+-- Register the system to handle the process of each component
+-- @note System has priority which is determined by the Register Order
+------------------------------------------------------------------------------
 function ECS_RegisterSystem( sys )
 	if not sys._name then
 		DBG_Error( "System name is invalid" )
@@ -21,7 +24,7 @@ function ECS_RegisterSystem( sys )
 			DBG_Error( "System is already registered" )
 			return
 		end
-	end	
+	end
 	table.insert( _ecsSystems, sys )
 	_ecsSystemDict[sys._name] = sys
 	print( "Register System=" .. sys._name )

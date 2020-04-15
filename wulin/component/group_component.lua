@@ -22,12 +22,17 @@ GROUP_PROPERTIES =
 	name            = { type="STRING", },
 
 	size            = { type="STRING", default="FAMILY" },
-	location        = { type="NUMBER" },
+	location        = { type="NUMBER" },	
 
 	statuses        = { type="DICT" },	
 
 	members         = { type="LIST", }, --list of role entity id
 	leaderid        = { type="ECSID", }, --role entity id
+
+	--goal
+	--{ type=GROUP_GOAL, remaintime=0 }
+	goal            = { type="OBJECT" },
+	ranking         = { type="NUMBER" },
 
 	--actions
 	actionpts       = { type="DICT" },
@@ -46,7 +51,7 @@ GROUP_PROPERTIES =
 	--weapon/armor
 	--{ id=id, ... }
 	arms            = { type="LIST" },
-	--accessory,shoes,consumables
+	--accessory,shoes,medicine
 	--{ id=id, ... }
 	items           = { type="LIST" },
 	--construction
@@ -228,7 +233,7 @@ end
 
 ---------------------------------------
 function GROUP_COMPONENT:GetPlot()
-	local map = ECS_SendEvent( "MAP_COMPONENT", "Get" )
+	local map = CurrentMap
 	local city = map:GetCity( self.location )
 	return city and map:GetPlot( city.x, city.y )
 end
@@ -274,24 +279,24 @@ function GROUP_COMPONENT:ObtainResource( type, value )
 	DBG_Trace( self.name .. " obtain resource=" .. type .. "+" .. value )
 end
 
-function GROUP_COMPONENT:ObtainBook( id )
-	Prop_Add( self, "books", { book=id } )
+function GROUP_COMPONENT:ObtainBook( type, id )
+	Prop_Add( self, "books", { type=type, id=id } )	
 	DBG_Trace( self.name .. " obtain book=" .. BOOK_DATATABLE_Get( id ).name )
 end
 
 function GROUP_COMPONENT:ObtainArm( type, id )
 	Prop_Add( self, "arms", { type=type, id=id } )
-	DBG_Trace( self.name .. " obtain arm=" .. EQUIPMENT_DATATALBE_Get( id ).name )
+	DBG_Trace( self.name .. " obtain arm=" .. EQUIPMENT_DATATABLE_Get( id ).name )
 end
 
 function GROUP_COMPONENT:ObtainItem( type, id )
 	Prop_Add( self, "items", { type=type, id=id } )
-	DBG_Trace( self.name .. " obtain item=" .. EQUIPMENT_DATATALBE_Get( id ).name )
+	DBG_Trace( self.name .. " obtain item=" .. ITEM_DATATABLE_Get( id ).name )
 end
 
 function GROUP_COMPONENT:ObtainVehicle( type, id )
 	Prop_Add( self, "vehicles", { type=type, id=id } )
-	DBG_Trace( self.name .. " obtain vehicle=" .. EQUIPMENT_DATATALBE_Get( id ).name )
+	DBG_Trace( self.name .. " obtain vehicle=" .. EQUIPMENT_DATATABLE_Get( id ).name )
 end
 
 ---------------------------------------
@@ -304,9 +309,6 @@ function GROUP_COMPONENT:DestroyConstruction( id )
 	Prop_Remove( self, "constructions", id, "id" )
 	DBG_Trace( self.name .. " destroy construction=" .. CONSTRUCTION_DATATABLE_Get( id ).name )
 end
-
----------------------------------------
-
 
 
 ---------------------------------------
@@ -353,6 +355,7 @@ function GROUP_COMPONENT:ToString()
 
 	return content
 end
+
 
 ---------------------------------------
 function GROUP_COMPONENT:Dump()

@@ -1,13 +1,13 @@
 ---------------------------------------
 ---------------------------------------
-CONSTRUCTION_COMPONENT = class()
+CITY_COMPONENT = class()
 
 ---------------------------------------
-CONSTRUCTION_PROPERTIES = 
+CITY_PROPERTIES = 
 {
-	
 }
 
 ---------------------------------------
-function CONSTRUCTION_COMPONENT:__init()
+function CITY_COMPONENT:__init()
 end
+

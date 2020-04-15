@@ -13,6 +13,8 @@ CONSTRUCTION_TYPE =
 
 	SMITHY        = 40,
 	ARMORY        = 41,
+	FACTORY       = 42,
+	LETHER_FACTORY= 43,
 	
 	PASTURE       = 50,
 	STABLE        = 51,

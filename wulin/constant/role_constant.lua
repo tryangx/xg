@@ -15,6 +15,12 @@ ROLE_CATEGORY =
 }
 
 
+ROLE_ACTION = 
+{
+
+}
+
+
 ROLE_MENTAL = 
 {
 	--MOOD            = 1,  --changing easy, visible, when it reach maximum, it'll leads buff / debuff, the latter is more often.	
@@ -80,6 +86,7 @@ ROLE_COMMONSKILL =
 	GROWER      = 210,
 	MEDIC       = 220,
 	APOTHECARIES= 230,
+	TEXTILE_MILL= 240,	
 
 	LEADERSHIP  = 400,  --Increase Management points
 	TEACHER     = 410,
@@ -93,6 +100,8 @@ ROLE_STATUS =
 {
 	BUSY        = 1,
 	OUTING      = 2,
+
+	NEED_REWARD        = 10,
 
 	TESTFIGHT_INTERVAL = 100,
 	TESTFIGHT_APPLY    = 101,
@@ -121,13 +130,18 @@ ROLE_COMMAND =
 }
 
 
-MATERIAL_TYPE = 
+ROLE_GOAL = 
 {
-	FOOD        = 100,
+	SURVIVE   = 0,
+	MASTER    = 10,		
+}
 
-	MEDICINE    = 200,
 
-	WOOD        = 300,
-
-	MINERAL     = 400,
+ROLE_EQUIP = 
+{
+	WEAPON    = 1,
+	ARMOR     = 2,
+	SHOES     = 3,
+	ACCESSORY = 4,
+	VEHICLE   = 5,
 }

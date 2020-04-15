@@ -1,4 +1,8 @@
 ---------------------------------------
+-- Global data
+CurrentMap = nil
+
+---------------------------------------
 ---------------------------------------
 MAP_COMPONENT = class()
 
@@ -22,6 +26,8 @@ function MAP_COMPONENT:Activate()
 	local cmp = self
 	ECS_AddListener( self, "Get", nil, function( ... ) return cmp end )
 
+	CurrentMap = self
+
 	self.map.width  = self.width
 	self.map.height = self.height
 	self.map.plots  = self.plots
@@ -32,6 +38,8 @@ end
 function MAP_COMPONENT:Dectivate()
 	local cmp = self
 	ECS_RemoveListener( self, "Get", nil, function( ... ) return cmp end )
+
+	CurrentMap = nil
 end
 
 ---------------------------------------
@@ -128,5 +136,5 @@ end
 
 ---------------------------------------
 function MAP_COMPONENT:Update()
-	self.map:Draw( Map_Printer )
+	--self.map:Draw( Map_Printer )
 end

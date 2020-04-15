@@ -98,14 +98,14 @@ local function Fight_CheckResult( cmp )
 		end
 	end
 
-	if not HasAlive( cmp._reds ) then
-		--print( "red team are all dead" )
-		cmp.reuslt = "RED_WIN"
-		return FIGHT_SIDE.RED
-	elseif not HasAlive( cmp._blues ) then
-		--print( "blue team are all dead" )
-		cmp.reuslt = "BLUE_WIN"
-		return FIGHT_SIDE.BLUE
+	if not HasAlive( cmp._atks ) then
+		--print( "atk team are all dead" )
+		cmp.reuslt = "ATK_WIN"
+		return FIGHT_SIDE.ATTACKER
+	elseif not HasAlive( cmp._defs ) then
+		--print( "def team are all dead" )
+		cmp.reuslt = "DEF_WIN"
+		return FIGHT_SIDE.DEFENDER
 	end
 
 	cmp.result = "DRAW"
@@ -115,7 +115,7 @@ end
 
 ---------------------------------------
 local function Fight_FindTarget( actor, opps )
-	--      Red              Blue
+	--      ATK              DEF
 	-- Row(r) Line(l)    Row(r) Line(l)
 	--  R2L1  R1L1        R1L1   R2L1
 	--  R2L2  R1L2        R1L2   R2L2
@@ -301,8 +301,8 @@ local function Fight_MakeDuels( cmp )
 	local duels = {}
 
 	--make duels
-	Fight_MakeTeamDuel( cmp._reds, cmp._blues, duels )
-	Fight_MakeTeamDuel( cmp._blues, cmp._reds, duels )
+	Fight_MakeTeamDuel( cmp._atks, cmp._defs, duels )
+	Fight_MakeTeamDuel( cmp._defs, cmp._atks, duels )
 
 	--shuffle
 	MathUtil_Shuffle_Sync( duels )
@@ -402,7 +402,7 @@ local function Fight_AddSkillBuff( actor, comboeffect, buff )
 	SetStatusBuff( actor.statuses[#actor.statuses], comboeffect, buff )
 
 	--Dump( role.statuses, 6 )
-	--InputUtil_Pause( role.role.name, "gain buff", status.name )
+	--InputUtil_Pause( actor.role.name, "gain buff", status.name )
 end
 
 
@@ -435,10 +435,7 @@ end
 
 ---------------------------------------
 local function Fight_CalcRoleStatus( role, statusType )
-	if not role.statuses then 
-		--print( role.role.name, "no status" )
-		return
-	end
+	if not role.statuses then return end
 	local value = 0
 	local value_percent = 0
 	for _, status in ipairs( role.statuses ) do
@@ -561,10 +558,9 @@ local function Fight_ProcessDuel( atk, def )
 			local defPow = Fight_GetValueByBuff( def, FIGHTER_ATTR[atkAction.element] )
 			local atkSkillMod = ( atkAction.attack + ( atk.fighter._ap or 0 ) ) * Fight_GetRoleTireness( atk )
 
+			local critical = 100
 			local atkTec = Fight_GetValueByBuff( atk, FIGHTER_ATTR.TECHNIQUE )
-			local defTec = Fight_GetValueByBuff( def, FIGHTER_ATTR.TECHNIQUE )
-
-			local critical     = 100
+			local defTec = Fight_GetValueByBuff( def, FIGHTER_ATTR.TECHNIQUE )			
 			if FIGHT_RULE.ENABLE_CRITICAL ~= 0 then
 				local critical_prob = math.min( 90, ( atkAction.cri or 0 ) + math.ceil( ( atkTec * 1.2 - defTec * 0.8 ) * 100 / ( atkTec + defTec ) ) )
 				if Random_GetInt_Sync( 1, 10000 ) < critical_prob * 100 then
@@ -577,8 +573,9 @@ local function Fight_ProcessDuel( atk, def )
 			local defDefend    = defPow			
 			local base_damage  = atkDamage * atkDamage / ( atkDamage + defDefend )
 			local block        = ( defAction and defAction.defense or 0 ) + ( def.fighter._dp or 0 )
-			local final_damage = math.ceil( base_damage * FIGHT_PARAMS.DAMAGE_RATE / ( block + 100 ) )
-			--print( atkSkill.name, "finaldmg=" .. final_damage, "base_damage=" .. base_damage, "apow=" .. atkPow, "dpow=" .. defPow )
+			local final_damage = math.ceil( base_damage * FIGHT_PARAMS.DAMAGE_RATE / ( block + 100 ) )			
+			
+			--InputUtil_Pause( atkSkill.name, "finaldmg=" .. final_damage, "base_damage=" .. base_damage, "apow=" .. atkPow, "dpow=" .. defPow )
 
 			--block damage
 			if atk.fighter._shield then
@@ -601,6 +598,7 @@ local function Fight_ProcessDuel( atk, def )
 				atk.fighter._skillDamage = atk.fighter._skillDamage and atk.fighter._skillDamage + real_damage or real_damage
 				local statName = "_" .. atkAction.element .. "_DMG"
 				atk.fighter[statName] = atk.fighter[statName] and atk.fighter[statName] + real_damage or real_damage				
+				--print( atkPow, atkSkillMod, critical, atkDmgMod )
 				--print( atk.role.name .. " deal damage " .. real_damage .. " to " .. def.role.name .. " hp is " .. def.fighter.hp .. " now." )
 			end
 
@@ -679,21 +677,21 @@ end
 
 ---------------------------------------
 local function ForAllRole( component, fn )
-	for _, role in ipairs( component._reds ) do fn( role ) end
-	for _, role in ipairs( component._blues ) do fn( role ) end
+	for _, role in ipairs( component._atks ) do fn( role ) end
+	for _, role in ipairs( component._defs ) do fn( role ) end
 end
 
 
 local function FindOppside( component, side )
-	if side == FIGHT_SIDE.RED then return FIGHT_SIDE.BLUE
-	elseif side == FIGHT_SIDE.BLUE then return FIGHT_SIDE.RED end
+	if side == FIGHT_SIDE.ATTACKER then return FIGHT_SIDE.DEFENDER
+	elseif side == FIGHT_SIDE.DEFENDER then return FIGHT_SIDE.ATTACKER end
 	return FIGHT_SIDE.NONE
 end
 
 
 local function FindTeam( component, side )
-	if side == FIGHT_SIDE.RED then return component._reds
-	elseif side == FIGHT_SIDE.BLUE then return component._blues end
+	if side == FIGHT_SIDE.ATTACKER then return component._atks
+	elseif side == FIGHT_SIDE.DEFENDER then return component._defs end
 end
 
 
@@ -708,14 +706,14 @@ function Fight_Process( fight )
 	local actionSequence = {}	
 
 	--Create a shuffled sequence as roles's priority
-	local priorities = MathUtil_CreateShuffledSequence( #fight._reds + #fight._blues )
+	local priorities = MathUtil_CreateShuffledSequence( #fight._atks + #fight._defs )
 
 	function DetermineATB( actor, action, time )
 		if not action then action = "DEFAULT" end
 		local actionTime = time and time + FIGHT_ACTIONTIME[action] or FIGHT_ACTIONTIME[action]
-		local addTime = math.floor( actionTime / ( Fight_GetValueByBuff( actor, FIGHTER_ATTR.AGILITY ) + 100 ) )
+		local addTime = math.floor( actionTime / ( Fight_GetValueByBuff( actor, FIGHTER_ATTR.AGILITY ) + FIGHT_PARAMS.ATB_AGI_BASE ) )
 		actor.fighter._atb = actor.fighter._atb and actor.fighter._atb + addTime or addTime
-		--print( role.role.name, "atb=" .. role.fighter._atb .. " time=" .. addTime, actionTime )
+		--InputUtil_Pause( actor.role.name, "atb=" .. actor.fighter._atb .. " addtime=" .. addTime, actionTime )
 	end
 
 	--Determine all roles's action time
@@ -739,8 +737,8 @@ function Fight_Process( fight )
 		end )
 	end
 
-	for _, actor in ipairs( fight._reds ) do PrepareFight( actor, FIGHT_SIDE.RED ) end
-	for _, actor in ipairs( fight._blues ) do PrepareFight( actor, FIGHT_SIDE.BLUE ) end
+	for _, actor in ipairs( fight._atks ) do PrepareFight( actor, FIGHT_SIDE.ATTACKER ) end
+	for _, actor in ipairs( fight._defs ) do PrepareFight( actor, FIGHT_SIDE.DEFENDER ) end
 
 	SortActionSequence()
 
@@ -751,7 +749,7 @@ function Fight_Process( fight )
 	while result == FIGHT_SIDE.NONE do
 		local actionRole = table.remove( actionSequence, 1 )		
 
-		if not actionRole then DBG_Error( "why" ) end
+		if not actionRole then result = Fight_CheckResult( fight ) break end
 
 		--print( "Turn to", actionRole.role.name )
 
@@ -792,10 +790,10 @@ function Fight_Process( fight )
 				if not actionRole.fighter._useSkillList then
 					actionRole.fighter._useSkillList = {}
 				end
-				if actionRole.fighter._useSkillList[actionRole.fighter._usingSkill] then
-					actionRole.fighter._useSkillList[actionRole.fighter._usingSkill] = actionRole.fighter._useSkillList[actionRole.fighter._usingSkill] + 1
+				if actionRole.fighter._useSkillList[actionRole.fighter._usingSkill.id] then
+					actionRole.fighter._useSkillList[actionRole.fighter._usingSkill.id] = actionRole.fighter._useSkillList[actionRole.fighter._usingSkill.id] + 1
 				else
-					actionRole.fighter._useSkillList[actionRole.fighter._usingSkill] = 1
+					actionRole.fighter._useSkillList[actionRole.fighter._usingSkill.id] = 1
 				end				
 
 				--Determine
@@ -822,7 +820,7 @@ function Fight_Process( fight )
 
 		result = Fight_CheckResult( fight )
 
-		--print( "time", passTime, maxTime )
+		--print( "time", passTime .. "/" .. maxTime )
 		if passTime > maxTime then break end
 	end
 
@@ -839,8 +837,8 @@ function Fight_Process( fight )
 
 	print( "Fight End", fight:ToString() )
 
-	Fight_ForeachRole( fight._reds,  FightEnd );
-	Fight_ForeachRole( fight._blues, FightEnd );
+	Fight_ForeachRole( fight._atks,  FightEnd );
+	Fight_ForeachRole( fight._defs, FightEnd );
 
 	_fight = nil
 end
