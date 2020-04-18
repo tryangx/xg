@@ -30,7 +30,7 @@ local _fight
 
 ---------------------------------------
 local function Fight_Debug( ... )
-	print( ... )
+	--print( ... )
 	Log_Write( "fight", ... )
 end
 
@@ -135,9 +135,7 @@ local function Fight_FindTarget( actor, opps )
 			end
 		end
 	end
-	if not find then
-		print( actor.role.name .. " doesn't find target." )
-	end
+	if not find then Fight_Debug( actor.role.name .. " doesn't find target." ) end
 	return find
 end
 

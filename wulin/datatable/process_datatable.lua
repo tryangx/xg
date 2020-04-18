@@ -4,44 +4,114 @@ local PROCESS_DATATABLE =
 {
 	[10] =
 	{
-		name     = "炼钢",
-		type     = "SMELT",
-		condition = { commonskill="BLACKSMITH" },
-		material = { type="IRON_ORE", value=100 },
-		products = { resource={type="STEEL", value=20} },
-		time     = { value=60 },
+		name       = "炼钢",
+		type       = "SMELT",
+		targetType = "STEEL",
+		conditions = { commonskill={type="BLACKSMITH",lv=1}, construction={type="SMITHY"} },
+		materials  = { type="IRON_ORE", quantity=100 },
+		products   = {
+						{ restype="STEEL", quantity=20 },
+					 },
+		time       = { day=60 },
 	},
 	[20] =
 	{
-		name     = "饲养",
-		type     = "RAISELIVESTOK",
-		material = { },
-		products = { resource={type="LIVESTOCK", value=20} },
-		time     = { value=180 },
+		name       = "饲养",
+		type       = "RAISELIVESTOK",
+		targetType = "LIVESTOCK",
+		conditions = { commonskill={type="STOCKMAN",lv=1}, construction={type="FARM"} },
+		materials  = { },
+		products   = {
+						{restype="LIVESTOCK", quantity=20},
+					 },
+		time       = { day=180 },
 	},
 	[30] =
 	{
-		name     = "种草药",
-		type     = "PLANTHERB",
-		material = { },
-		products = { resource={type="HERB", value=20} },
-		time     = { value=90 },
+		name       = "种草药",		
+		type       = "PLANTHERB",
+		targetType = "HERB",
+		conditions = { commonskill={type="GROWER",lv=1}, construction={type="GARDEN"} },
+		materials  = { },
+		products   = {
+						{restype="HERB", quantity=20},
+					 },
+		time       = { day=90 },
 	},
 	[40] =
 	{
-		name     = "制药",
-		type     = "MAKEMEDICINE",
-		material = { type="HERB", value=30 },
-		products = { item={type="MAKEMEDICINE", value=5} },
-		time     = { value=30 },
+		name       = "制药",
+		type       = "MAKEMEDICINE",
+		targetType = "MEDICINE",
+		conditions = { commonskill={type="APOTHECARIES",lv=1}, construction={type="PHARMACY"} },
+		materials  = { type="HERB", quantity=30 },
+		products   = {
+			 			{itemtype="MEDICINE", itemid=100, quantity=1},
+			 			{itemtype="MEDICINE", itemid=110, quantity=1},
+			 			{itemtype="MEDICINE", itemid=120, quantity=1},
+			 		 },
+		time       = { day=30 },
 	},
-	[50] =
+
+	[1000] =
 	{
-		name     = "制药",
-		type     = "MAKEMEDICINE",
-		material = { type="HERB", value=30 },
-		products = { item={type="MAKEMEDICINE", value=5} },
-		time     = { value=30 },
+		name       = "武器打制",
+		type       = "MAKEITEM",
+		targetType = "WEAPON",
+		conditions = { commonskill={type="BLACKSMITH",lv=5}, construction={type="ARMORY"} },
+		materials  = { type="STEEL", quantity=30 },
+		products   = {
+						{itemtype="WEAPON", itemid=1000, quantity=1},
+					 },
+		time       = { day=30 },
+	},
+	[2000] =
+	{
+		name       = "护甲打制",
+		type       = "MAKEITEM",
+		targetType = "ARMOR",
+		conditions = { commonskill={type="BLACKSMITH",lv=5}, construction={type="ARMORY"} },
+		materials  = { type="LEATHER", quantity=30 },
+		products   = {
+						{itemtype="ARMOR", itemid=2000, quantity=1},
+					 },
+		time       = { day=30 },
+	},
+	[3000] =
+	{
+		name       = "制鞋",
+		type       = "MAKEITEM",
+		targetType = "SHOES",
+		conditions = { commonskill={type="TAILOR",lv=5}, construction={type="LETHER_FACTORY"} },
+		materials  = { type="CLOTH", quantity=30 },
+		products   = {
+						{itemtype="SHOES", itemid=3000, quantity=1},
+					 },
+		time       = { day=30 },
+	},
+	[4000] =
+	{
+		name       = "加工",
+		type       = "MAKEITEM",
+		targetType = "ACCESSORY",
+		conditions = { commonskill={type="TOOLMAKER",lv=5}, construction={type="FACTORY"} },
+		materials  = { type="JUDE", quantity=30 },
+		products   = {
+						{itemtype="ACCESSORY", itemid=4000, quantity=1},
+					 },
+		time       = { day=30 },
+	},
+	[5000] =
+	{
+		name       = "育马",
+		type       = "MAKEITEM",
+		targetType = "VEHICLE",
+		conditions = { commonskill={type="BLACKSMITH",lv=5}, construction={type="PASTURE"} },
+		materials  = { type="STEEL", quantity=30 },
+		products   = {
+						{itemtype="VEHICLE", itemid=5000, quantity=1},
+					 },
+		time       = { day=30 },
 	},
 }
 
@@ -54,19 +124,35 @@ end
 
 --------------------------------------------------
 local function PROCESS_DATATABLE_Match( group, process )
-	if process.material then
-		if process.material.type and group:GetNumOfResource( process.material.type ) < process.material.value then
+	if process.materials then
+		if process.materials.type and group:GetNumOfResource( process.materials.type ) < process.materials.quantity then
+			group:AddWishResource( process.materials.type, process.materials.quantity )
+			DBG_Trace( "no materials", process.materials.type, process.materials.quantity )
 			return false
 		end
 	end
 
-	if process.condition then
-		if process.condition.commonskill then			
+	if process.conditions then
+		if process.conditions.construction then
+		 	if group:GetNumOfConstruction( process.conditions.construction.type ) <= 0 then
+		 		DBG_Trace( "no construction", process.conditions.construction.type )
+		 		group:AddWishConstruction( process.conditions.construction.type )
+		 		return false
+		 	end
+		end
+		if process.conditions.commonskill then			
 			local list = group:FindMember( function ( ecsid )
 				local role = ECS_FindComponent( ecsid, "ROLE_COMPONENT" )
-				return role and role.commonSkills[process.condition.commonskill]
+				if process.conditions.commonskill then
+					Dump( process.conditions.commonskill )
+					DBG_Trace( "no commonskill", process.conditions.commonskill.type, process.conditions.commonskill.lv )
+					return role:HasCommonSkill( process.conditions.commonskill.type, process.conditions.commonskill.lv )
+				end
 			end )
-			if #list == 0 then return false end
+			if #list == 0 then
+				DBG_Trace( "no common skill", process.conditions.commonskill.type )
+				return false
+			end
 		end		
 	end
 
@@ -75,12 +161,50 @@ end
 
 
 --------------------------------------------------
-function PROCESS_DATATABLE_Find( group, type )
+function PROCESS_DATATABLE_Find( group, processType )
 	local list = {}
 	for _, process in pairs( PROCESS_DATATABLE ) do
-		if not types or type     == process.type then
+		if not types or type == process.type then
 			if PROCESS_DATATABLE_Match( group, process ) then
 				table.insert( list, process )
+			end
+		end
+	end
+	return list
+end
+
+
+--------------------------------------------------
+function PROCESS_DATATABLE_FindByItem( group, itemType, itemId )
+	local list = {}
+	for _, process in pairs( PROCESS_DATATABLE ) do
+		if process.targetType == itemType then
+			for _, data in ipairs( process.products ) do
+				if data.itemtype == itemType and data.itemid == itemId then
+					if PROCESS_DATATABLE_Match( group, process ) then
+						print( "match" )
+						table.insert( list, process )
+					end
+					break
+				end
+			end
+		end
+	end
+	return list
+end
+
+
+function PROCESS_DATATABLE_FindByResource( group, resourceType )
+	local list = {}
+	for _, process in pairs( PROCESS_DATATABLE ) do
+		if process.products and process.products.restype == resourceType then
+			for _, data in ipairs( process.products ) do
+				if data.restype == resourceType then
+					if PROCESS_DATATABLE_Match( group, process ) then
+						table.insert( list, process )						
+					end
+					break
+				end
 			end
 		end
 	end

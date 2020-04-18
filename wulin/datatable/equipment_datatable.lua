@@ -8,7 +8,7 @@ local EQUIPMENT_DATATABLE =
 		type       = "WEAPON",
 		lv         = 8,
 		value      = { money=1000 },
-		condition  = { commonskill="BLACKSMITH" },
+		condition  = { commonskill={type="BLACKSMITH"} },
 		costs      = { time=100, resources={ IRON_ORE={value=100} } },
 		atkAction  = { hit={mod=10}, agi={ratio=0.8}, dmg={} },
 	},
@@ -18,7 +18,7 @@ local EQUIPMENT_DATATABLE =
 		type       = "WEAPON",
 		lv         = 8,
 		value      = { money=1000 },
-		condition  = { commonskill="BLACKSMITH" },
+		condition  = { construction={type="SMITHY"} },
 		costs      = { time=100, resources={ IRON_ORE={value=100} } },
 		atkAction  = { hit={mod=10}, agi={ratio=0.8}, dmg={} },
 	},
@@ -29,7 +29,7 @@ local EQUIPMENT_DATATABLE =
 		type       = "ARMOR",
 		lv         = 8,
 		value      = { money=1000 },
-		condition  = { commonskill="BLACKSMITH" },
+		condition  = { construction={type="SMITHY"} },
 		costs      = { time=100, resources={ IRON_ORE={value=100} } },
 		defAction  = { hit={mod=10}, agi={ratio=0.8}, dmg={} },
 	},
@@ -40,7 +40,7 @@ local EQUIPMENT_DATATABLE =
 		type       = "SHOES",
 		lv         = 6,
 		value      = { money=1000 },
-		condition  = { commonskill="LETHER_FACTORY" },
+		condition  = { construction={type="LETHER_FACTORY"} },
 	},
 
 	[4000] =
@@ -49,7 +49,7 @@ local EQUIPMENT_DATATABLE =
 		type       = "ACCESSORY",		
 		lv         = 6,
 		value      = { money=1000 },
-		condition  = { commonskill="FACTORY" },
+		condition  = { construction={type="FACTORY"} },
 	},
 
 	[5000] =
@@ -58,8 +58,8 @@ local EQUIPMENT_DATATABLE =
 		type       = "VEHICLE",
 		lv         = 7,
 		value      = { money=1000 },
-		condition  = { commonskill="PASTURE" },
-		moveAction = {reduce_time=0.5},
+		condition  = { construction={type="PASTURE"} },
+		moveAction = { reduce_time=0.5 },
 	},
 }
 
@@ -77,7 +77,7 @@ end
 
 
 --------------------------------------------------
-local function Equipment_MatchCondition( group, equip )
+function Equipment_MatchCondition( group, equip )
 	--constructions
 	if equip.conditions then
 		if equip.conditions.constructions then
@@ -100,6 +100,7 @@ local function Equipment_MatchCondition( group, equip )
 end
 
 
+--------------------------------------------------
 function EQUIPMENT_DATATABLE_Find( group, type )
 	local list = {}
 	for _, equip in pairs( EQUIPMENT_DATATABLE ) do

@@ -88,7 +88,6 @@ end
 function INTEL_COMPONENT:GetGroupIntel( id )
 	if not self.groupintels[id] then
 		self.groupintels[id] = { entityid=self.entityid, id=id, grade="UNKNOWN", eval=0 }
-		Dump( self.groupintels[id] )		
 	end
 	return self.groupintels[id]
 end

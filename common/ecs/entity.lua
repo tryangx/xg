@@ -23,6 +23,20 @@ ECSENTITYPROPERTIES =
 
 ---------------------------------------
 ---------------------------------------
+local function Entity_ActivateComponent( entity, component )
+	--print( "Activate", entity.ecsname, component.ecsname, component.Activate )
+	--Loading 
+	--print( component.ecsname, "activate", component.status, ECSSTATUS.ACTIVATED )
+	if component.status == ECSSTATUS.ACTIVATED then error( component.status ) end
+	component.entityid = entity.ecsid
+	component.parent   = entity
+	if component.Activate then component:Activate() end
+	component.status = ECSSTATUS.ACTIVATED
+end
+
+
+---------------------------------------
+---------------------------------------
 ECSEntity = class()
 
 ---------------------------------------
@@ -105,9 +119,10 @@ end
 ---------------------------------------
 function ECSEntity:AddComponent( component )
 	--component's senity checker
-	if not ECS_IsComponent( component ) then DBG_Error( "component is invalid" ) return end
-	component.entityid = self.ecsid
+	if not ECS_IsComponent( component ) then DBG_Error( "Component is invalid" ) return end
+	if component.entityid then DBG_Error( "Component already be added" ) return end
 	Prop_Add( self, "components", component )
+	Entity_ActivateComponent( self, component )
 end
 
 
@@ -146,12 +161,7 @@ function ECSEntity:Activate()
 	entity = self
 	Prop_Foreach( self, "components", function ( component )
 		component.status = ECSSTATUS.ACTIVATING
-		--Loading 
-		component.entityid = entity.ecsid
-		component.parent   = entity
-		--print( "Activate component", component.ecsname )
-		if component.Activate then component:Activate() end
-		component.status = ECSSTATUS.ACTIVATED
+		Entity_ActivateComponent( self, component )
 	end)
 	Prop_Foreach( self, "children", function ( child )
 		child:Activate()

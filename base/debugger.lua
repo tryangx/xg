@@ -41,13 +41,9 @@ end
 
 -----------------------------------
 -- 
-function DBG_Error( content, lv )
-	if not lv then lv = DBGLevel.IMPORTANT end
-	if typeof( lv ) == "number" and lv >= _level then
-		error( content )
-	else
-		print( content )
-	end
+function DBG_Error( ... )
+	print( ... )
+	error( "" )
 end
 
 -----------------------------------

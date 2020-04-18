@@ -104,10 +104,13 @@ function Group_Prepare( group )
 
 	if group.location == 0 then
 		--we should find a location
-		local map = CurrentMap
-		local index = Random_GetInt_Unsync( 1, #map.cities )
-		local city = map.cities[index]		
+		local index = Random_GetInt_Unsync( 1, #CurrentMap.cities )
+		local city = CurrentMap.cities[index]
 		group.location = city.id
+
+		local cityCmp = ECS_SendEvent( "CITY_COMPONENT", "Get", city.id )
+		cityCmp:GroupAffect( group )
+
 		DBG_Trace( group.name .. " set base at " .. city.name )
 	end
 
@@ -182,7 +185,7 @@ function Group_Prepare( group )
 		local pool = MathUtil_Shuffle_Sync( start.books.pool )
 		for _, id in ipairs( pool ) do
 			local book = BOOK_DATATABLE_Get( id )
-			group:ObtainBook( type, id )
+			group:ObtainBook( "BOOK", id )
 			leftLv = leftLv - book.lv			
 			if leftLv and leftLv <= 0 then break end
 			num = num - 1
@@ -196,7 +199,7 @@ function Group_Prepare( group )
 		if start.vehicles.num.min and start.vehicles.num.max then
 			num = Random_GetInt_Sync( start.vehicles.num.min, start.vehicles.num.max )
 		end
-		local leftLv = start.books.num.tot_lv
+		local leftLv = start.vehicles.num.tot_lv
 		local pool = MathUtil_Shuffle_Sync( start.vehicles.pool )
 		for _, id in ipairs( pool ) do
 			local vehicle = EQUIPMENT_DATATABLE_Get( id )
@@ -292,6 +295,34 @@ function Group_Prepare( group )
 end
 
 
+function Group_Terminate( ecsid )	
+	local entity = ECS_FindEntity( ecsid )
+	if not entity then DBG_Error( "Group entity is invalid! Id=" .. ecsid ) end
+	
+	local group = entity:GetComponent( "GROUP_COMPONENT" )
+	if not group then DBG_Error( "No group component" ) end
+
+	group.statuses["TERMINATED"] = 1
+
+	--remove all members
+
+	--remove all affects
+	local city = CurrentMap:GetCity( group.location )
+	local cityCmp = ECS_SendEvent( "CITY_COMPONENT", "Get", city.id )
+	cityCmp:RemoveEffect( cityCmp )
+
+	--remove all relations
+	Relation_EndRelation( group )
+
+	--remove from group
+	
+	Stat_Add( "GroupTerminate", group.name, StatType.LIST )	
+	DBG_AddData( group.entityid )
+	DBG_Trace( group.name .. "[" .. ecsid .. "] is Terminated" )
+
+	ECS_DestroyEntity( entity )
+end
+
 ---------------------------------------
 ---------------------------------------
 local memberidx = 1
@@ -316,7 +347,10 @@ function Group_RemoveMember( group, ecsid )
 	end
 
 	--need to select new leader
-	if ecsid == group.leaderid then group.leaderid = nil end
+	if ecsid == group.leaderid then
+		group.leaderid = nil
+		--InputUtil_Pause( group.name, "lose leader" )
+	end
 
 	--need a new master
 	for _, id in ipairs( group.members ) do
@@ -463,7 +497,7 @@ end
 ---------------------------------------
 function Group_StartMakeItem( group, type, id )
 	local target
-	if type == "EQUIPMENT" then
+	if ROLE_EQUIP[type] then
 		target = EQUIPMENT_DATATABLE_Get( id )
 	else
 	end
@@ -475,14 +509,16 @@ function Group_StartMakeItem( group, type, id )
 	affair.makeid   = id
 	affair.time = 1 --target.costs.time
 
-	if target.costs.assets then
-		for name, data in pairs( target.costs.assets ) do
-			group:UseAssets( name, data.value )
+	if target.costs then
+		if target.costs.assets then
+			for name, data in pairs( target.costs.assets ) do
+				group:UseAssets( name, data.value )
+			end
 		end
-	end
-	if target.costs.resources then
-		for name, data in pairs( target.costs.resources ) do			
-			group:UseResources( name, data.value )
+		if target.costs.resources then
+			for name, data in pairs( target.costs.resources ) do			
+				group:UseResources( name, data.value )
+			end
 		end
 	end
 	table.insert( group.affairs, affair )
@@ -496,6 +532,7 @@ function Group_MakeItem( group, affair, deltaTime )
 	affair.time = affair.time - deltaTime
 	if affair.time > 0 then return end
 
+--[[
 	local target
 	if affair.maketype == "WEAPON"        then target = EQUIPMENT_DATATABLE_Get( affair.makeid )
 	elseif affair.maketype == "ARMOR"     then target = EQUIPMENT_DATATABLE_Get( affair.makeid )
@@ -506,6 +543,8 @@ function Group_MakeItem( group, affair, deltaTime )
 	end
 	if not target then DBG_Error( "Item is invalid! ID=", affair.makeid ) return end
 
+	--InputUtil_Pause( "finish make item", target.name )
+]]
 	--finished
 	if affair.maketype == "WEAPON"        then group:ObtainArm( affair.maketype, affair.makeid )		
 	elseif affair.maketype == "ARMOR"     then group:ObtainArm( affair.maketype, affair.makeid )
@@ -514,8 +553,6 @@ function Group_MakeItem( group, affair, deltaTime )
 	elseif affair.maketype == "VEHICLE"   then group:ObtainVehicle( affair.maketype, affair.makeid )
 	else
 	end
-
-	InputUtil_Pause( "finish make item", target.name )
 end
 
 
@@ -589,7 +626,7 @@ function Group_Produce( group, affair, deltaTime, actor )
 	local product = math.ceil( produce.yield.base * yieldEff )
 	affair.yield = affair.yield + product
 
-	DBG_Trace( group.name .. " produce=" .. produce.name .. " ramintime=" .. affair.time .. " yield=" .. affair.yield )
+	DBG_Trace( group.name .. " produce=" .. produce.name .. " remaintime=" .. affair.time .. " yield=" .. affair.yield )
 
 	if affair.time > 0 then return end
 
@@ -642,6 +679,9 @@ function Group_GrantGift( group, affair, deltaTime )
 	affair.time = affair.time - deltaTime	
 	if affair.time > 0 then return end
 
+	local target = ECS_FindComponent( affair.groupid, "GROUP_COMPONENT" )
+	if not target then DBG_Trace( group.name .. " end GRANT_GIFT, because target is terminated" ) return end
+
 	local eval = 10
 	local relationCmp = ECS_FindComponent( group.entityid, "RELATION_COMPONENT" )
 	Relation_AlterRelationship( relationCmp:GetRelation( affair.groupid ), eval )
@@ -664,6 +704,9 @@ end
 function Group_SignPact( group, affair, deltaTime )
 	affair.time = affair.time - deltaTime	
 	if affair.time > 0 then return end
+
+	local target = ECS_FindComponent( affair.groupid, "GROUP_COMPONENT" )
+	if not target then DBG_Trace( group.name .. " end GRANT_GIFT, because target is terminated" ) return end
 
 	local relationCmp = ECS_FindComponent( group.entityid, "RELATION_COMPONENT" )
 	HandlePactResult( relationCmp:GetRelation( affair.groupid ), affair.pact )
@@ -716,6 +759,88 @@ function Group_RewardFollower( group, roleid, invtype, invid )
 	end
 end
 
+
+---------------------------------------
+local function Group_UpdateEntrustAffair( group, affair )
+	local entrustData = ENTRUST_DATATABLE_Get( affair.entrustid )
+	local poolData    = entrustData.pool[affair.poolindex]
+	local needNum = poolData.need_follower or 1
+	if #affair.followers < needNum then
+		if affair.entrustType == "NEED_SKILL" then
+			local match = true
+			local list = {}
+			for _, ecsid in ipairs( group.members )	 do
+				if Entrust_IsFollowerMatch( ecsid, entrustData, affair.poolindex ) then table.insert( list, ecsid ) end
+			end
+			local num = #list
+			if num == 0 then return end
+			while needNum > 1 and num > 0 do
+				local index = Random_GetInt_Sync( 1, num )
+				table.insert( affair.followers, table.remove( list, index ) )
+				num = #list
+				needNum = needNum - 1
+				InputUtil_Pause( "add follower", ECS_FindComponent( affair.followers[#affair.followers], "ROLE_COMPONENT" ).name )
+			end
+
+		elseif affair.entrustType == "NEED_PROTECT" then
+			error( "todo" )
+
+		elseif affair.entrustType == "ASSASIN" then
+			error( "todo" )
+
+		end
+	end
+
+	--InputUtil_Pause( "execute entrust", affair.entrustType )
+
+	if affair.entrustType == "NEED_ITEM" then
+		group:AddWishItem( poolData.itemtype, poolData.itemid, poolData.quantity or 1 )
+
+	elseif affair.entrustType == "NEED_RESOURCE" then
+		group:AddWishResource( poolData.restype, poolData.quantity )
+
+	elseif affair.entrustType == "NEED_EQUIPMENT" then
+		group:AddWishItem( poolData.itemtype, poolData.itemid, poolData.quantity )
+	end
+end
+
+function Group_TakeEntrust( group, entrustIndex )
+	local city        = CurrentMap:GetCity( group.location )
+	local cityCmp     = ECS_SendEvent( "CITY_COMPONENT", "Get", city.id )
+	local entrustCmp  = ECS_FindComponent( cityCmp.entityid, "ENTRUST_COMPONENT" )
+	local entrust     = entrustCmp.entrusts[entrustIndex]
+	local entrustData = ENTRUST_DATATABLE_Get( entrust.id )
+	local poolData    = entrustData.pool[entrust.poolindex]
+
+	local affair     = {}
+	affair.type      = "ENTRUST"
+	affair.entrustType = entrustData.type
+	affair.entrustid = entrust.id
+	affair.poolindex = entrust.poolindex
+	affair.time      = poolData.time or entrustData.time.finish
+	affair.followers = {}
+	table.insert( group.affairs, affair )
+
+	--check the followers
+	Group_UpdateEntrustAffair( group, affair )
+	
+	--group has take the entrust, so remove it from the list	
+	entrustCmp:Remove( entrustIndex )
+
+	DBG_Trace( group.name, " take entrust=" .. entrustData.name )
+end
+
+local function Group_ExecuteEntrust( group, affair, deltaTime )
+	affair.time = affair.time - deltaTime
+
+	Group_UpdateEntrustAffair( group, affair )
+
+	if affair.time > 0 then return end
+
+	--entrust failed!
+end
+
+
 ---------------------------------------
 ---------------------------------------
 local function Group_DealAffair( group, affair, deltaTime )
@@ -742,6 +867,9 @@ local function Group_DealAffair( group, affair, deltaTime )
 		Group_GrantGift( group, affair, deltaTime )
 	elseif affair.type == "SIGN_PACT" then
 		Group_SignPact( group, affair, deltaTime )
+
+	elseif affair.type == "ENTRUST" then
+		Group_ExecuteEntrust( group, affair, deltaTime )
 
 	else
 		DBG_Error( "Unhandletype=", affair.type )
@@ -824,7 +952,7 @@ function Group_SelectLeader( group )
 	local prob = Random_GetInt_Sync( 1, totalProb )	
 	for _, data in ipairs( list ) do
 		if prob <= data.prob then
-			group.leaderid = data.entity.ecsid			
+			group.leaderid = data.entity.ecsid
 			break
 		end
 	end
@@ -883,9 +1011,14 @@ function Group_Attack( group, id )
 	local atkeids = Group_ListRoles( group, nil, { "OUTING" } )
 	local defeids = Group_ListRoles( target, nil, { "OUTING" } )
 
-	if #atkeids == 0 then
-		DBG_Error( target.name .. "doesn't have enough followr to attack" )
-		return
+	local num = #atkeids
+	if num == 0 then DBG_Error( target.name .. "doesn't have enough followr to attack" ) return end
+
+	if #group.members == num then
+		--remove at least one
+		local index = Random_GetInt_Sync( 1, num )
+		table.remove( atkeids, index )
+		--print( "should rmeove one" )
 	end
 
 	--InputUtil_Pause( group.name .. "(" .. #atkeids ..  ") "  .. "attack" .. " " .. target.name .. "(".. #defeids .. ")" )
@@ -946,6 +1079,13 @@ function Group_HoldMeeting( group )
 end
 
 
+function Group_AffectCity( group )
+	local city = CurrentMap:GetCity( group.location )
+	local cityCmp = ECS_SendEvent( "CITY_COMPONENT", "Get", city.id )
+	cityCmp:GroupAffect( group )
+end
+
+
 ---------------------------------------
 ---------------------------------------
 GROUP_SYSTEM = class()
@@ -972,6 +1112,8 @@ function GROUP_SYSTEM:Update( deltaTime )
 		Group_UpdateGoal( group, 1 )
 
 		Group_UpdateActionPoints( group )
+
+		Group_AffectCity( group )
 		
 		Group_UpdateAffairs( group, deltaTime )
 

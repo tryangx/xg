@@ -14,6 +14,9 @@ require "equipment_datatable"
 require "process_datatable"
 require "item_datatable"
 require "produce_datatable"
+require "city_datatable"
+require "facility_datatable"
+require "entrust_datatable"
 
 
 ---------------------------------------------------

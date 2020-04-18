@@ -11,7 +11,7 @@ FileReflectionMode =
 
 -----------------------------------------
 local function debugmsg( ... )
-	--if true then
+	--print( ... )
 	if nil then
 		local content = StringUtil_Concat( ... )
 		Log_Write( "reflection", content )
@@ -87,14 +87,15 @@ end
 
 ---------------------------------------
 function FileReflection:Write( value )
+	if typeof(value) == "boolean" then DBG_Error( "Don't use boolean" )	end
 	if self._mode == FileReflectionMode.EXPORT_PRINT then
-		if not self._dump then self._dump = "" end
+		if not self._dump then self._dump = "" end	
 		self._dump = self._dump .. value
 		debugmsg( "dump=" .. value )
 	else
 		if not self._fileHandle then
 			DBG_Warning( "FileReflection:Write", "File=" .. ( self._fileName or "" ) .. " isn't opened." )
-		else			
+		else
 			self._fileHandle:write( value )
 		end
 	end
@@ -141,37 +142,6 @@ function FileReflection:ImportData( data, name )
 	
 	local excludes = {}
 
---[[
-	if object then
-		--process with ECS properties in common
-		debugmsg( "ecstype=" .. data.ecstype, object )
-		for propname, prop in pairs( ecsproperties ) do
-			table.insert( excludes, propname )
-			if not data[propname] then error( "why no property=" .. propname ) end
-			debugmsg( "!!!!!!!set " .. propname .. "=", data[propname] )
-			object[propname] = data[propname]
-		end
-
-		--process with ECS properties by its own
-		if properties then
-			for propname, prop in pairs( properties ) do
-				table.insert( excludes, propname )
-				if not data[propname] then debugmsg( "no property=" .. propname ) end			
-				if prop.type == "LIST" or prop.type == "DICT" then
-					if data[propname] then
-						debugmsg( propname, data[propname] )
-						object[propname] = self:ImportData( data[propname], propname )
-					end
-				else
-					debugmsg( "!!!!!!!set " .. propname .. "=", data[propname] )
-					object[propname] = data[propname]
-				end			
-			end
-		end
-	else
-		object = {}
-	end
-	]]
 	if not object then object = {} end
 
 	--Dump( excludes )
@@ -336,7 +306,8 @@ function FileReflection:ExportValue( name, value )
 		elseif t == "number" then self:Write( value )
 		elseif t == "boolean" then self:Write( ( value and "true" or "false" ) )
 		else
-			DBG_Error( "unhandle", name, item, t )
+			--self:Write( "[UNHANDLE" )
+			DBG_Error( "unhandle export data", name, item, t, value )
 		end
 	end
 	self._singleValue = false

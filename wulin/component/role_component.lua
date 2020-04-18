@@ -144,7 +144,6 @@ end
 
 function ROLE_COMPONENT:SetupEquip( id )
 	local equip = EQUIPMENT_DATATABLE_Get( id )
-	print( equip, id )
 	if self.equips[equip.type] then
 		--takeoff
 		self:RemoveFromBag( equip.type, self.equips[equip.type].id )

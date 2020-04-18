@@ -312,6 +312,7 @@ end
 
 --------------------------------------------------
 local function FightSkill_MatchCondition( skill, fighter )
+	if not skill.conditions then return end
 	if skill.conditions.lv and skill.conditions.lv > fighter.lv then return false end
 	if skill.conditions.knowledge and skill.conditions.knowledge > fighter.knowledge then return false end
 	return true

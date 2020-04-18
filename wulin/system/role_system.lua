@@ -54,12 +54,12 @@ function Role_Dead( ecsid )
 	local group = ECS_FindComponent( role.groupid, "GROUP_COMPONENT" )
 	if not group then DBG_Error( "Group component is invalid!" ) end
 	Group_RemoveMember( group, ecsid )
-
-	ECS_DestroyEntity( entity )
 	
 	Stat_Add( "RoleDeath", role.name, StatType.LIST )	
 	DBG_AddData( role.entityid )
 	DBG_Trace( role.name, role.entityid, "Dead" )
+
+	ECS_DestroyEntity( entity )
 end
 
 
@@ -144,6 +144,8 @@ local function Role_Produce( role )
 end
 
 local function Role_Act( role )
+	--DBG_Trace( role.name, "action" )
+
 	local task = ECS_GetComponent( role.entityid, "TASK_COMPONENT" )
 	local cmd	
 	if role.groupid then
@@ -196,7 +198,7 @@ local function Role_Act( role )
 	elseif cmd == "PRODUCE" then
 
 	else
-		DBG_Trace( role.name .. " unhandle command type=", cmd )
+		DBG_TraceBug( role.name .. " unhandle command type=", cmd )
 		Role_Idle( role )
 	end
 end
@@ -211,7 +213,6 @@ local function Role_UpdateEquip( role )
 	if #role.bags == 0 then return end
 	local list = {}
 	for _, data in ipairs( role.bags ) do
-		print( data.id, data.type )
 		if ROLE_EQUIP[data.type] then			
 			local equip = EQUIPMENT_DATATABLE_Get( data.id )
 			if not role.equips[equip.type] then
@@ -246,7 +247,7 @@ end
 ---------------------------------------
 function ROLE_SYSTEM:Update( deltaTime )	
 	if not CurrentGame:IsNewDay() then return end
-	ECS_Foreach( "ROLE_COMPONENT", function ( role )
+	ECS_Foreach( "ROLE_COMPONENT", function ( role )		
 		Role_Update( role )
 		Role_UpdateEquip( role )
 		Role_Act( role )

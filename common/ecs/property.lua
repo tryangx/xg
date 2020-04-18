@@ -158,7 +158,6 @@ function Prop_Remove( container, name, data )
 	local prop = container._properties[name]
 
 	local t = typeof( container[name] )
-
 	if t == "table" then
 		for k, v in pairs( container[name] ) do
 			if v == data then

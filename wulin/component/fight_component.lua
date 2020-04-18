@@ -26,7 +26,7 @@ end
 
 ---------------------------------------
 function FIGHT_COMPONENT:Activate()
-	ECS_GetSystem( "FIGHT_SYSTEM" ):AppendFight( self.entityid )
+	--ECS_GetSystem( "FIGHT_SYSTEM" ):AppendFight( self.entityid )
 
 	--prepare datas
 
@@ -66,7 +66,7 @@ function FIGHT_COMPONENT:Activate()
 	PrepareFight( self.defs, self._defs )
 	PrepareFight( self.atks, self._atks )
 
-	if #self.defs == 0 or #self.atks == 0 then DBG_Error( "Invalid fight data" ) end
+	if #self.defs == 0 or #self.atks == 0 then DBG_TraceBug( "Invalid fight data", #self.defs, #self.atks ) end
 end
 
 function FIGHT_COMPONENT:Deactivate()

@@ -285,9 +285,7 @@ local function Construction_MatchCondition( constr, group, upgrade )
 		if constr.costs.resources then
 			if not Construction_Compare( group.resources, constr.costs.resources ) then				
 				for type, data in pairs( constr.costs.resources ) do
-					if group._resourceWishList then
-						group._resourceWishList[type] = math.max( group._resourceWishList[type] or 0, data.value )
-					end
+					group:AddWishResource( type, data.value )
 				end				
 				return false
 			end

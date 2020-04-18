@@ -37,7 +37,7 @@ function ITEM_DATATABLE_Find( group, type )
 	local list = {}
 	for _, item in pairs( ITEM_DATATABLE ) do
 		if not types or type == item.type then
-			table.insert( list, equip )
+			table.insert( list, item )
 		end
 	end
 	return list

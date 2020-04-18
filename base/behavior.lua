@@ -31,6 +31,9 @@ BehaviorNodeType =
 	-- Run all nodes in given sequence one by one, return true when any node return true, default return false
 	PARALLEL          = 130,
 	
+	-- Run all nodes in given sequence on by one, until all node return false
+	LOOP              = 140,
+
 
 	------------------------
 	-- Behaviour Node
@@ -250,7 +253,7 @@ end
 
 
 local function Parallel( behavior, node )
-	if  node.desc then debugmsg( "Parallel" ) end	
+	if node.desc then debugmsg( "Parallel" ) end	
 	local ret = false	
 	for k, child in pairs( node.children ) do
 		if behavior.functions[child.type]( behavior, child ) == true then
@@ -263,8 +266,21 @@ local function Parallel( behavior, node )
 end
 
 
+local function Loop( behavior, node )
+	if node.desc then debugmsg( "Loop" ) end	
+	local ret = true
+	while ret do
+		for k, child in pairs( node.children ) do
+			ret = behavior.functions[child.type]( behavior, child )
+		end		
+	end
+	debugmsg( "Loop return false, node=" .. ( node.desc or "" ) )
+	return ret
+end
+
+
 local function Action( behavior, node )
-	if  node.desc then
+	if node.desc then
 		debugmsg( "Action=" .. ( node.desc or "" ) .. " nodes=" .. #node.children )
 	end
 	if node.action then
@@ -282,7 +298,7 @@ local function Action( behavior, node )
 end
 
 local function ConditionAction( behavior, node )
-	if  node.desc then debugmsg( "ConditionAction=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
+	if node.desc then debugmsg( "ConditionAction=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
 	if node.condition and node.condition() then	
 		if node.action then node.action( node.params ) end
 		debugmsg( "Condition return true, node=" .. ( node.desc or "" ) )
@@ -293,7 +309,7 @@ local function ConditionAction( behavior, node )
 end
 
 local function Successor( behavior, node )
-	if  node.desc then debugmsg( "Successor=" .. ( node.desc or "" ) .. " nodes=" .. #node.children )	end
+	if node.desc then debugmsg( "Successor=" .. ( node.desc or "" ) .. " nodes=" .. #node.children )	end
 	local child = node:GetFirstChild()
 	if child then behavior:Run( child ) end
 	debugmsg( "Succesoor return true, node=" .. ( node.desc or "" ) )
@@ -301,7 +317,7 @@ local function Successor( behavior, node )
 end
 
 local function Failure( behavior, node )
-	if  node.desc then debugmsg( "Failure=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
+	if node.desc then debugmsg( "Failure=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
 	local child = node:GetFirstChild()
 	if child then behavior:Run( child ) end
 	debugmsg( "Failure return true, node=" .. ( node.desc or "" ) )
@@ -309,14 +325,14 @@ local function Failure( behavior, node )
 end
 
 local function Negate( behavior, node )
-	if  node.desc then debugmsg( "Negate=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
+	if node.desc then debugmsg( "Negate=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
 	local ret = not behavior:Run( node:GetFirstChild() )
 	debugmsg( "Negate return " .. ( ret and "true" or "false" ) .. ", node=" .. ( node.desc or "" ) )
 	return ret
 end
 
 local function Filter( behavior, node )
-	if  node.desc then debugmsg( "Filter=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
+	if node.desc then debugmsg( "Filter=" .. ( node.desc or "" ) .. " nodes=" .. #node.children ) end
 	local ret = node.condition and node.condition( node.params )
 	debugmsg( "Filter return " .. ( ret and "true" or "false" ) .. ", node=" .. ( node.desc or "" ) )
 	return ret
@@ -347,27 +363,31 @@ local function PauseFalse( behavior, node )
 end
 
 
+-------------------------------------------------
+-------------------------------------------------
 function Behavior:__init( ... )	
 	self.functions = {}
-	self.functions[BehaviorNodeType.SELECTOR] = Selector
-	self.functions[BehaviorNodeType.RANDOM_SELECTOR] = RandomSelector
-	self.functions[BehaviorNodeType.SEQUENCE] = Sequence
-	self.functions[BehaviorNodeType.PARALLEL] = Parallel
+	self.functions[BehaviorNodeType.SELECTOR]         = Selector
+	self.functions[BehaviorNodeType.RANDOM_SELECTOR]  = RandomSelector
+	self.functions[BehaviorNodeType.SEQUENCE]         = Sequence
+	self.functions[BehaviorNodeType.PARALLEL]         = Parallel
+	self.functions[BehaviorNodeType.LOOP]             = Loop
 	
-	self.functions[BehaviorNodeType.ACTION] = Action
+	self.functions[BehaviorNodeType.ACTION]           = Action
 	self.functions[BehaviorNodeType.CONDITION_ACTION] = ConditionAction
 	
-	self.functions[BehaviorNodeType.SUCCESSOR] = Successor
-	self.functions[BehaviorNodeType.FAILURE] = Failure
-	self.functions[BehaviorNodeType.NEGATE] = Negate
+	self.functions[BehaviorNodeType.SUCCESSOR]     = Successor
+	self.functions[BehaviorNodeType.FAILURE]       = Failure
+	self.functions[BehaviorNodeType.NEGATE]        = Negate
 	
-	self.functions[BehaviorNodeType.FILTER] = Filter
+	self.functions[BehaviorNodeType.FILTER]        = Filter
 
-	self.functions[BehaviorNodeType.MESSAGE] = Message;
-	self.functions[BehaviorNodeType.PAUSE] = Pause;
+	self.functions[BehaviorNodeType.MESSAGE]       = Message;
+	self.functions[BehaviorNodeType.PAUSE]         = Pause;
 	self.functions[BehaviorNodeType.MESSAGE_FALSE] = MessageFalse;
-	self.functions[BehaviorNodeType.PAUSE_FALSE] = PauseFalse;
+	self.functions[BehaviorNodeType.PAUSE_FALSE]   = PauseFalse;
 end
+
 
 function Behavior:Run( node )
 	if not node then
@@ -386,17 +406,19 @@ function Behavior:Run( node )
 	return false
 end
 
+
 function Behavior:Random( min, max )
-	return math.random( min, max )
+	return Random_GetInt_Sync( min, max )
+	--return math.random( min, max )
 end
+
 
 function Behavior:Copy( sour )
 	local dest = {}
-	for k, v in pairs( sour ) do
-		rawset( dest, k, v )
-	end
+	for k, v in pairs( sour ) do rawset( dest, k, v ) end
 	return dest
 end
+
 
 function Behavior:Shuffle( list )
 	local length = #list
@@ -408,10 +430,10 @@ function Behavior:Shuffle( list )
 	end
 end
 
+
 ------------------------------
 -- Behavior Tree Sample
 ------------------------------
-
 function Behavior_Test()
 	data1 = 
 	{

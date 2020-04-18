@@ -3,7 +3,8 @@ DATA_TYPE =
 	GROUP_DATA  = 1,
 	ROLE_DATA   = 2,
 	FIGHT_DATA  = 3,
-	GAME_DATA   = 4,	
+	GAME_DATA   = 4,
+	MAP_DATA    = 5,
 }
 ---------------------------------------------------
 ---------------------------------------------------
@@ -48,26 +49,51 @@ local function InitFight( scene )
 	local entity = ECS_CreateEntity( "FIGHT_DATA" )
 	scene:GetRootEntity():AddChild( entity )
 	entity:CreateComponent( "DATA_COMPONENT" ).type = "FIGHT_DATA"
+	return entity
 end
 
 
-local function InitGame( scene )
-	local entity = ECS_CreateEntity( "GAME_DATA" )	
-	scene:GetRootEntity():AddChild( entity )
+local function InitMap( scene )
+	local entity = ECS_CreateEntity( "MAP_DATA" )	
+	scene:GetRootEntity():AddChild( entity )	
+	entity:CreateComponent( "DATA_COMPONENT" ).type = "MAP_DATA"
 	
-	entity:CreateComponent( "DATA_COMPONENT" ).type = "GAME_DATA"
-	
-	local gameCmp = entity:CreateComponent( "GAME_COMPONENT" );
-	gameCmp.startTime = Time_CalcDateValue( 960, 1, 1 )
-	gameCmp.endTime   = Time_CalcDateValue( 960, 2, 1 )
-	gameCmp.curTime   = gameCmp.startTime
-
 	local mapData = MAP_DATATABLE_Get( 1 )
 	local map = entity:CreateComponent( "MAP_COMPONENT" )
 	map:Setup( mapData )
 	map:Generate( mapData )	
 	map:GenerateRoutes( mapData )
 	map:Update()
+
+	--add city
+	for _, cityData in pairs( map.cities ) do
+		local cityEntity = ECS_CreateEntity( "CITY_DATA" )
+		entity:AddChild( cityEntity )
+
+		local cityCmp  = cityEntity:CreateComponent( "CITY_COMPONENT" )
+		local city     = map.cities[cityData.id]
+		cityCmp.name   = city.name
+		cityCmp.lv     = city.lv
+		cityCmp.cityid = city.id
+
+		local entrustCmp = cityEntity:CreateComponent( "ENTRUST_COMPONENT" )
+	end
+
+	--ECS_Dump( entity ) InputUtil_Pause( "init" )
+
+	return entity
+end
+
+
+local function InitGame( scene )
+	local entity = ECS_CreateEntity( "GAME_DATA" )	
+	scene:GetRootEntity():AddChild( entity )	
+	entity:CreateComponent( "DATA_COMPONENT" ).type = "GAME_DATA"
+
+	local gameCmp = entity:CreateComponent( "GAME_COMPONENT" );
+	gameCmp.startTime = Time_CalcDateValue( 960, 1, 1 )
+	gameCmp.endTime   = Time_CalcDateValue( 960, 2, 1 )
+	gameCmp.curTime   = gameCmp.startTime
 
 	return entity
 end
@@ -84,6 +110,7 @@ function InitScene()
 	scene:SetRootEntity( ECS_CreateEntity( "RootEntity" ) )
 
 	InitGame( scene )
+	InitMap( scene )
 	InitGroups( scene )
 	InitRoles( scene )
 	InitFight( scene )

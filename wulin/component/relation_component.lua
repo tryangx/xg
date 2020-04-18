@@ -232,6 +232,11 @@ end
 ---------------------------------------
 function RELATION_COMPONENT:GetRelation( id )
 	if not self.relations[id] then
+		local group = ECS_FindComponent( id, "GROUP_COMPONENT" )
+		if not group then
+			DBG_Error( "Create relatoin", id )
+			return
+		end
 		self.relations[id] = { entityid=self.entityid, id=id, opinion="NEUTRAL", status="NONE", eval=0, elapsed=0, pacts={}, details={} }
 	end
 	return self.relations[id]
@@ -280,3 +285,6 @@ function RELATION_COMPONENT:SetOpinion( id, type )
 	local relation = self:GetRelation( id )
 	relation.opinion = type
 end
+
+
+---------------------------------------

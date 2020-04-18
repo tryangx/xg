@@ -56,14 +56,43 @@ local PRODUCE_DATATABLE =
 		time        = { base=20, commonskill={{type="COLLLECTER",lv=1, acc=1.2}}},
 		yield       = { base=1,  land={{type="JUNGLELAND",num=10, eff=1.2}}, resource={{type="",lv=1, eff=1}}, commonskill={{type="COLLLECTER",lv=1, eff=1}}},
 	},
+	STEEL =
+	{
+		name        = "炼钢",
+		conditions  = { resource={IRON_ORE=1} },
+		time        = { base=20, commonskill={{type="COLLLECTER",lv=1, acc=1.2}}},
+		yield       = { base=1,  land={{type="JUNGLELAND",num=10, eff=1.2}}, resource={{type="",lv=1, eff=1}}, commonskill={{type="COLLLECTER",lv=1, eff=1}}},
+	},
 }
 
 --------------------------------------------------
 --------------------------------------------------
+function PRODUCE_DATATABLE_MatchCondition( group, produce )	
+	if produce.conditions then
+		if produce.conditions.land then
+			for type, value in pairs( produce.conditions.land ) do
+				if group:GetNumOfLand( type ) < value then
+					return false
+				end
+			end
+		end
+		if produce.conditions.resources then
+			for type, value in pairs( produce.conditions.resources ) do
+				if group:GetNumOfResource( type ) < value then
+					return false
+				end
+			end
+		end
+	end
+
+	return true
+end
+
 function PRODUCE_DATATABLE_Get( type )
 	return PRODUCE_DATATABLE[type]
 end
 
-
 --------------------------------------------------
 --------------------------------------------------
+function PRODUCE_DATATABLE_Find( type )
+end

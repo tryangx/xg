@@ -24,7 +24,7 @@ end
 ---------------------------------------
 function MAP_COMPONENT:Activate()
 	local cmp = self
-	ECS_AddListener( self, "Get", nil, function( ... ) return cmp end )
+	ECS_AddListener( self, "Get", function( ... ) return cmp end )
 
 	CurrentMap = self
 
@@ -37,7 +37,7 @@ end
 ---------------------------------------
 function MAP_COMPONENT:Dectivate()
 	local cmp = self
-	ECS_RemoveListener( self, "Get", nil, function( ... ) return cmp end )
+	ECS_RemoveListener( self, "Get" )
 
 	CurrentMap = nil
 end
@@ -102,7 +102,7 @@ end
 
 
 ---------------------------------------
-function MAP_COMPONENT:GenerateRoutes( data )	
+function MAP_COMPONENT:GenerateRoutes( data )
 	local list = {}
 	for _, cityData in pairs( data.cities ) do
 		local city = self.cities[cityData.id]

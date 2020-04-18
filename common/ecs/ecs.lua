@@ -331,7 +331,7 @@ end
 --
 ---------------------------------------------------
 local _listener = {}
-function ECS_AddListener( component, type, id, callback )
+function ECS_AddListener( component, type, callback )
 	if component.ecstype ~= "ECSCOMPONENT" then return end	
 	local list = _listener[component.ecsname]
 	if not list then
@@ -339,39 +339,28 @@ function ECS_AddListener( component, type, id, callback )
 		list = _listener[component.ecsname]
 	end
 
-	list[type] = {}
-
-	if id then		
-		list[type][id] = callback
-	else
-		list[type]._callback = callback
-	end
+	if not list[type] then list[type] = {} end
+	list[type][component.entityid] = callback
 end
 
 
-function ECS_RemoveListener( component, type, id )
+function ECS_RemoveListener( component, type )
 	if component.ecstype ~= "ECSCOMPONENT" then return end
 	local list = _listener[component.ecsname]
 	if not list then return end
 
-	if id then
-		list[type][id] = nil
-	else
-		list[type] = nil
-	end
+	list[type][component.entityid] = nil
 end
 
 
-function ECS_SendEvent( ecsname, type, id, ... )
+function ECS_SendEvent( ecsname, type, ... )
 	local list = _listener[ecsname]
-	if not list then return end
+	if not list then DBG_Error( "No event type=" .. type .. " " .. ecsname ) return end
 
-	if id then
-		if list[type][id] then
-			return list[type][id]( ... )
-		end
-	elseif list[type]._callback then
-		return list[type]._callback( ... )
+	local ret = nil
+	for id, callback in pairs( list[type] ) do
+		ret = callback( ... )
+		if ret then return ret end
 	end
 end
 

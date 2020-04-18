@@ -545,6 +545,7 @@ function MathUtil_Remove( list, target, name )
 	else
 		for k, v in pairs( list ) do
 			if v[name] == target then
+				print( k, v )
 				table.remove( list, k )
 				return true
 			end

@@ -21,9 +21,11 @@ require "all_systems"
 ---------------------------------------------------
 ---------------------------------------------------
 --register component
+ECS_RegisterComponent( "CITY_COMPONENT",               CITY_COMPONENT,               CITY_PROPERTIES )
 ECS_RegisterComponent( "MAP_COMPONENT",                MAP_COMPONENT,                MAP_PROPERTIES )
 ECS_RegisterComponent( "GAME_COMPONENT",               GAME_COMPONENT,               GAME_PROPERTIES )
 ECS_RegisterComponent( "DATA_COMPONENT",               DATA_COMPONENT,               DATA_PROPERTIES )
+ECS_RegisterComponent( "ENTRUST_COMPONENT",            ENTRUST_COMPONENT,            ENTRUST_PROPERTIES )
 ECS_RegisterComponent( "RELATION_COMPONENT",           RELATION_COMPONENT,           RELATION_PROPERTIES )
 ECS_RegisterComponent( "INTEL_COMPONENT",              INTEL_COMPONENT,              INTEL_PROPERTIES )
 ECS_RegisterComponent( "GROUP_COMPONENT",              GROUP_COMPONENT,              GROUP_PROPERTIES )
@@ -40,12 +42,15 @@ ECS_RegisterComponent( "FIGHTERTEMPLATE_COMPONENT",    FIGHTERTEMPLATE_COMPONENT
 ---------------------------------------------------
 ---------------------------------------------------
 --register system
+ECS_RegisterSystem( CITY_SYSTEM() )
+ECS_RegisterSystem( ENTRUST_SYSTEM() )
 ECS_RegisterSystem( GROUP_SYSTEM() )
 ECS_RegisterSystem( ROLE_SYSTEM() )
 ECS_RegisterSystem( FIGHT_SYSTEM() )
 ECS_RegisterSystem( FIGHTER_SYSTEM() )
 ECS_RegisterSystem( FIGHTSKILL_SYSTEM() )
 ECS_RegisterSystem( TRAINING_SYSTEM() )
+ECS_RegisterSystem( RELATION_SYSTEM() )
 ECS_RegisterSystem( GAME_SYSTEM() )
 
 
@@ -279,6 +284,7 @@ function view_data()
 	ECS_GetSystem( "GROUP_SYSTEM" ):Dump()
 	ECS_GetSystem( "ROLE_SYSTEM" ):Dump()
 	ECS_GetSystem( "FIGHT_SYSTEM" ):Dump()
+	ECS_GetSystem( "CITY_SYSTEM" ):Dump()
 end
 
 local _savefile = "testsave.sav"

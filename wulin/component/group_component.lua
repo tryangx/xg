@@ -36,31 +36,35 @@ GROUP_PROPERTIES =
 
 	--actions
 	actionpts       = { type="DICT" },
+	
 	--land asset
 	lands           = { type="DICT" },	
+	
 	--virtual assets
 	assets          = { type="DICT" },
-	--reality mass assets
+
+	--reality mass assets, reference to RESOURCE_TYPE
 	resources       = { type="DICT" },	
+	
 	--books
 	--{ id=id, ... }
 	books           = { type="LIST" },
+	
 	--horse
 	--{ id=id, ... }
 	vehicles        = { type="LIST" },	
+	
 	--weapon/armor
 	--{ id=id, ... }
 	arms            = { type="LIST" },
+	
 	--accessory,shoes,medicine
 	--{ id=id, ... }
 	items           = { type="LIST" },
+	
 	--construction
 	--{ id=id, ... }
 	constructions   = { type="LIST" },
-
-	relationship    = { type="DICT" },
-
-	intels          = { type="DICT" },
 
 	--runtime data
 	affairs         = { type="LIST" }, 
@@ -88,6 +92,7 @@ end
 
 ---------------------------------------
 function GROUP_COMPONENT:Update()
+	if #self.members == 0 then DBG_Error( self.name, "should be terminated" ) end
 end
 
 ---------------------------------------
@@ -117,6 +122,29 @@ end
 function GROUP_COMPONENT:IncTempStatusValue( type )
 	return self._tempStatuses[type] or 0
 end
+
+function GROUP_COMPONENT:AddWishConstruction( constructionType )
+	local number = 1
+	self._constructionWishList[constructionType] = self._constructionWishList[constructionType] and self._constructionWishList[constructionType] + number or number
+	print( "add wish contruction", constructionType )
+end
+
+function GROUP_COMPONENT:AddWishItem( itemType, itemId, quantity )
+	if not self._itemWishList[itemType] then self._itemWishList[itemType] = {} end
+	if not quantity then DBG_Error( "no quantity" ) end
+	self._itemWishList[itemType][itemId] = self._itemWishList[itemType][itemId] and self._itemWishList[itemType][itemId] + quantity or quantity
+	print( "add wish item", itemType, itemId, quantity )
+end
+
+function GROUP_COMPONENT:AddWishResource( resType, quantity )
+	self._resourceWishList[resType] = self._resourceWishList[resType] and self._resourceWishList[resType] + quantity or quantity
+	print( "add wish res", resType )
+end
+
+function GROUP_COMPONENT:AddFollowerReserveList( roleid, affairid)
+	self._followerReserveList[roleid] = affairid
+end
+
 
 ---------------------------------------
 --
@@ -233,9 +261,8 @@ end
 
 ---------------------------------------
 function GROUP_COMPONENT:GetPlot()
-	local map = CurrentMap
-	local city = map:GetCity( self.location )
-	return city and map:GetPlot( city.x, city.y )
+	local city = CurrentMap:GetCity( self.location )
+	return city and CurrentMap:GetPlot( city.x, city.y )
 end
 
 
@@ -310,14 +337,15 @@ function GROUP_COMPONENT:DestroyConstruction( id )
 	DBG_Trace( self.name .. " destroy construction=" .. CONSTRUCTION_DATATABLE_Get( id ).name )
 end
 
-
 ---------------------------------------
 function GROUP_COMPONENT:ToString()
 	local content = ""
-	content = content .. "[" .. self.name .. "]"
+	content = content .. "[" .. self.name .. "]\n"
 
 	--leader
-	content = content .. " Leader=" .. ECS_FindComponent( self.leaderid, "ROLE_COMPONENT" ).name
+	if self.leaderid then
+		content = content .. " Leader=" .. ECS_FindComponent( self.leaderid, "ROLE_COMPONENT" ).name
+	end
 
 	--members
 	content = content .. " " .. "Member=" .. #self.members
@@ -333,25 +361,44 @@ function GROUP_COMPONENT:ToString()
 				num = num + 1
 			end
 		end
-		content = content .. "]"
+		content = content .. "]\n"
 	end
 
 	--actionpts
+	content = content .. " actpts=["
 	for type, pts in pairs( self.actionpts ) do
 		content = content .. " " .. type .. "=" .. pts
 	end
+	content = content .. "]\n"
 
 	--statues
+	content = content .. " statuses=["
 	for type, status in pairs( self.statuses ) do
 		content = content .. " " .. type .. "=" .. status
 	end
+	content = content .. "]\n"
 
 	--constructions
-	content = content .. " constructions=["
+	content = content .. " constrs=["
 	for inx, data in ipairs( self.constructions ) do
 		content = content .. ( inx > 1 and "," or "" ) .. CONSTRUCTION_DATATABLE_Get( data.id ).name
 	end
-	content = content .. "]"
+	content = content .. "]\n"
+
+	--affairs
+	content = content .. " affairs=["
+	for inx, affair in ipairs( self.affairs ) do
+		content = content .. ( inx > 1 and "," or "" ) .. affair.type
+		if affair.type == "ENTRUST" then
+			local entrust = ENTRUST_DATATABLE_Get( affair.entrustid )
+			content = content .. " " .. entrust.name
+		elseif affair.type == "BUILD_CONSTRUCTION" then
+			content = content .. " " .. CONSTRUCTION_DATATABLE_Get( affair.construction ).name
+
+		end
+		content = content .. " time=" .. affair.time
+	end
+	content = content .. " ]"
 
 	return content
 end

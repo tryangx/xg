@@ -87,26 +87,6 @@ GROUP_LAND =
 ---------------------------------------
 -- Reality Asset
 ---------------------------------------
-GROUP_RESOURCE = 
-{
-	FOOD       = 20,
-	MEAT       = 21,
-	FISH       = 22,
-	FRUIT      = 23,
-	HERBS      = 30,
-	LIVESTOCK  = 40,
-	CLOTH      = 41,
-	LEATHER    = 42,
-	LUMBER     = 60,
-	WOOD       = 61,
-	STONE      = 70,
-	MABLE      = 71,
-	IRON_ORE   = 80,
-	STEEL      = 81,
-	DARKSTEEL  = 82,
-}
-
-
 GROUP_DEPOT =
 {
 	BOOK       = 1,

@@ -128,6 +128,7 @@ local function Map_AddCityToPlot( map, city )
 	data.id    = city.id
 	data.name  = city.name
 	data.plot  = plot
+	data.lv    = city.lv
 	data.x     = city.x
 	data.y     = city.y
 	data.key   = Map_GenKey( data.x, data.y )

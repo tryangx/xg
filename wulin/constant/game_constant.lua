@@ -27,11 +27,13 @@ GAME_RULE =
 
 	------------------------------------
 	HOLD_MEETING  = function ( time )
+		if true then return true end
 		return time:GetDay() == 1
 	end,
 
 	SELECT_LEADER = function ( time )
-		local day = time:GetDay() 
+		if true then return true end
+		local day = time:GetDay()
 		return day == 1 or day == 10 or day == 20
 	end,
 }

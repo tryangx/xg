@@ -85,3 +85,8 @@ function FIGHTER_COMPONENT:ObtainPassiveSkill( id )
 	Prop_Add( self, "skills", id )
 	DBG_Trace( ECS_FindComponent( self.entityid, "ROLE_COMPONENT" ).name .. " obtain skill=" .. FIGHTSKILL_DATATABLE_Get( id ).name )
 end
+
+---------------------------------------
+function FIGHTER_COMPONENT:HasSkill( id )
+	
+end
