@@ -42,24 +42,10 @@ local PRODUCE_DATATABLE =
 		time        = { base=20, commonskill={{type="COLLLECTER",lv=1, acc=1.2}}},
 		yield       = { base=1,  land={{type="JUNGLELAND",num=10, eff=1.2}}, resource={{type="",lv=1, eff=1}}, commonskill={{type="COLLLECTER",lv=1, eff=1}}},
 	},
-	MINERAL =
+	IRON_ORE =
 	{
 		name        = "采矿",
 		conditions  = { land={MINELAND=1} },
-		time        = { base=20, commonskill={{type="COLLLECTER",lv=1, acc=1.2}}},
-		yield       = { base=1,  land={{type="JUNGLELAND",num=10, eff=1.2}}, resource={{type="",lv=1, eff=1}}, commonskill={{type="COLLLECTER",lv=1, eff=1}}},
-	},
-	STEEL =
-	{
-		name        = "炼钢",
-		conditions  = { resource={IRON_ORE=1} },
-		time        = { base=20, commonskill={{type="COLLLECTER",lv=1, acc=1.2}}},
-		yield       = { base=1,  land={{type="JUNGLELAND",num=10, eff=1.2}}, resource={{type="",lv=1, eff=1}}, commonskill={{type="COLLLECTER",lv=1, eff=1}}},
-	},
-	STEEL =
-	{
-		name        = "炼钢",
-		conditions  = { resource={IRON_ORE=1} },
 		time        = { base=20, commonskill={{type="COLLLECTER",lv=1, acc=1.2}}},
 		yield       = { base=1,  land={{type="JUNGLELAND",num=10, eff=1.2}}, resource={{type="",lv=1, eff=1}}, commonskill={{type="COLLLECTER",lv=1, eff=1}}},
 	},

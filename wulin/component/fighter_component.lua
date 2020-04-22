@@ -87,6 +87,6 @@ function FIGHTER_COMPONENT:ObtainPassiveSkill( id )
 end
 
 ---------------------------------------
-function FIGHTER_COMPONENT:HasSkill( id )
-	
+function FIGHTER_COMPONENT:HasFightSkill( id )
+	return MathUtil_IndexOf( self.skills, id )
 end

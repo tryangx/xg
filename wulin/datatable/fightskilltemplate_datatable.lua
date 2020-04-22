@@ -1,3 +1,5 @@
+-----------------------------------------------------------
+-----------------------------------------------------------
 local FIGHTSKILLTEMPLATE_DATATABLE =
 {
 	[100] =
@@ -241,6 +243,9 @@ local FIGHTSKILLTEMPLATE_DATATABLE =
 	},
 }
 
+
+-----------------------------------------------------------
+-----------------------------------------------------------
 function FIGHTSKILLTEMPLATE_DATATABLE_Get( id )
 	return FIGHTSKILLTEMPLATE_DATATABLE[id]
 end

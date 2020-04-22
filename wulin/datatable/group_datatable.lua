@@ -16,7 +16,7 @@ local GROUP_DATATABLE =
 		lands    = { JUNGLELAND=20, FARMLAND=100, WOODLAND=10, STONELAND=10, MINELAND=10 },
 		--constructions = { 400, 410, 500, 510, 600, 610, 700, 710 },
 	},
-	--[[]]
+	--[[
 	[2] =
 	{
 		name    = "武当派",

@@ -76,7 +76,7 @@ GROUP_PROPERTIES =
 ---------------------------------------
 function GROUP_COMPONENT:__init()
 	--temporary data
-	self._attrs = {}
+	self._datas = {}
 end
 
 
@@ -96,22 +96,70 @@ function GROUP_COMPONENT:Update()
 end
 
 ---------------------------------------
-function GROUP_COMPONENT:GetAttr( type )
-	local ret = self._attrs[type]
-	if not ret then
-		--need to calculated
-		if type == "POWER" then			
-			local power = 0
-			self:ForeachMember( function ( ecsid )
-				local fighter = ECS_FindComponent( ecsid, "FIGHTER_COMPONENT" )
-				if fighter then power = power + fighter.fighteff end
-			end)
-			self._attrs[type] = power
-		elseif type == "" then
+-- Get group's temporary data
+-- @param type reference to GROUP_DATA
+---------------------------------------
+function GROUP_COMPONENT:GetData( type )
+	local ret = self._datas[type]
+	if ret then return ret end
+
+	function GetConstructionEffect( effType )
+		local v = 0
+		for _, data in ipairs( self.constructions ) do
+			local constr = CONSTRUCTION_DATATABLE_Get( data.id )
+			v = v + ( constr.effects[effType] or 0 )
 		end
-		ret = self._attrs[type]
+		return v
 	end
-	return ret
+
+	--need to calculated
+	local value = 0
+	if type == "POWER" then		
+		local value = 0
+		self:ForeachMember( function ( ecsid )
+			local fighter = ECS_FindComponent( ecsid, "FIGHTER_COMPONENT" )
+			if fighter then value = value + fighter.fighteff end
+		end)
+	
+	elseif type == "MAX_MEMBER" then value = GetConstructionEffect( "max_member" ) + 5
+	elseif type == "MAX_SENIOR" then value = GetConstructionEffect( "max_senior" )
+	elseif type == "MAX_ELDER"  then value = GetConstructionEffect( "max_elder" )
+
+	elseif type == "MAX_CONSTRUCTION" then value = self.lands[FLATLAND]
+
+	elseif type == "MAX_ARMS" then     value = GetConstructionEffect( "arms_slot" )
+	elseif type == "MAX_VEHICLES" then value = GetConstructionEffect( "vehicle_slot" )
+	elseif type == "MAX_ITEM" then     value = GetConstructionEffect( "item_slot" )
+	elseif type == "MAX_BOOK" then     value = GetConstructionEffect( "book_slot" )
+	elseif type == "MAX_RESOURCE" then value = GetConstructionEffect( "res_slot" )
+
+	elseif type == "MAX_COOK_LV" then    value = GetConstructionEffect( "book_lv" )
+	elseif type == "MAX_DRILL_LV" then   value = GetConstructionEffect( "drill_lv" )
+	elseif type == "MAX_SECLUDE_LV" then value = GetConstructionEffect( "seclude_lv" )
+	elseif type == "MAX_STUDY_LV" then   value = GetConstructionEffect( "study_lv" )
+	elseif type == "MAX_SMITHY_LV" then  value = GetConstructionEffect( "smithy_lv" )
+	elseif type == "MAX_RAISE_LV" then   value = GetConstructionEffect( "raise_lv" )
+
+	elseif type == "MAX_LIVESTOCK_YIELD" then value = GetConstructionEffect( "livestock_yield" )
+	elseif type == "MAX_FOOD_YIELD"      then value = GetConstructionEffect( "food_yield" )
+	elseif type == "MAX_HERB_YIELD"      then value = GetConstructionEffect( "herb_yield" )
+
+	elseif type == "MAX_ALLY"            then value = GetConstructionEffect( "max_ally" ) + GROUP_PARAMS.DIPLOMACY.ally[self.size]
+	elseif type == "MAX_VASSAL"          then value = GetConstructionEffect( "max_vassal" ) + GROUP_PARAMS.DIPLOMACY.vassal[self.size]
+	elseif type == "MAX_SUBJECT"         then value = GetConstructionEffect( "max_subject" ) + GROUP_PARAMS.DIPLOMACY.subject[self.size]
+
+	elseif type == "ESTIMATE_MONEY"      then value = self.assets["MONEY"]
+	elseif type == "ESTIMATE_INCOME"     then
+		value = GetConstructionEffect( "sell_quantity" ) 
+	elseif type == "ESTIMATE_EXPEND"     then
+		self:ForeachMember( function ( ecsid )
+			local follower = ECS_FindComponent( ecsid, "FOLLOEWR_COMPONENT" )
+			if follower then value = value + follower.salary end
+		end)
+	end
+
+	self._datas[type] = value
+	return value
 end
 
 ---------------------------------------
@@ -126,25 +174,29 @@ end
 function GROUP_COMPONENT:AddWishConstruction( constructionType )
 	local number = 1
 	self._constructionWishList[constructionType] = self._constructionWishList[constructionType] and self._constructionWishList[constructionType] + number or number
-	print( "add wish contruction", constructionType )
 end
 
 function GROUP_COMPONENT:AddWishItem( itemType, itemId, quantity )
+	if not self._itemWishList then return end
 	if not self._itemWishList[itemType] then self._itemWishList[itemType] = {} end
 	if not quantity then DBG_Error( "no quantity" ) end
 	self._itemWishList[itemType][itemId] = self._itemWishList[itemType][itemId] and self._itemWishList[itemType][itemId] + quantity or quantity
-	print( "add wish item", itemType, itemId, quantity )
 end
 
 function GROUP_COMPONENT:AddWishResource( resType, quantity )
-	self._resourceWishList[resType] = self._resourceWishList[resType] and self._resourceWishList[resType] + quantity or quantity
-	print( "add wish res", resType )
+	if not self._resourceWishList then return end
+	self._resourceWishList[resType] = self._resourceWishList[resType] and self._resourceWishList[resType] + quantity or quantity	
 end
 
-function GROUP_COMPONENT:AddFollowerReserveList( roleid, affairid)
-	self._followerReserveList[roleid] = affairid
+function GROUP_COMPONENT:AddFollowerReserveList( roleid, affair )
+	if not self._followerReserveList then return end
+	self._followerReserveList[roleid] = affair
 end
 
+function GROUP_COMPONENT:AddWishLand( type, quantity )
+	if not self._landWishList then return end
+	self._landWishList[type] = ( self._landWishList[type] or 0 ) + quantity
+end
 
 ---------------------------------------
 --
@@ -237,6 +289,22 @@ function GROUP_COMPONENT:GetNumOfLand( type )
 	return self.lands[type] or 0
 end
 
+function GROUP_COMPONENT:ObtainLand( type, value )
+	self.lands[type] = ( self.lands[type] or 0 ) + value
+end
+
+function GROUP_COMPONENT:LostLand( type, value )
+	if not self.lands[type] then self.lands[type] = 0 end
+	if self.lands[type] < value then
+		value = self.lands[type]
+		self.lands[type] = 0
+	else
+		self.lands[type] = self.lands[type] - value
+	end
+	return value
+end
+
+
 ---------------------------------------
 -- 
 -- Get number of the exist constructions
@@ -271,7 +339,7 @@ function GROUP_COMPONENT:GetNumOfResource( type )
 	return self.resources[type] or 0
 end
 
-function GROUP_COMPONENT:UseResources( type, value )
+function GROUP_COMPONENT:RemoveResource( type, value )
 	if not self.resources[type] then self.resources[type] = 0 end
 	if value > 0 then
 		if self.resources[type] < value then
@@ -283,37 +351,36 @@ function GROUP_COMPONENT:UseResources( type, value )
 	end
 end
 
----------------------------------------
-function GROUP_COMPONENT:UseAssets( type, value )
-	if not self.assets[type] then self.assets[type] = 0 end
-	if value > 0 then
-		if self.assets[type] < value then
-			Dump( self.assets )
-			DBG_Error( self.name .. " doesn't have " .. type .. "=" .. math.abs( value ) )
-			self.assets[type] = 0
-		end
-	else
-		self.assets[type] = self.assets[type] + value
-	end
-end
-
-
----------------------------------------
--- Obtain resource, book, arm, item, vehicle
----------------------------------------
 function GROUP_COMPONENT:ObtainResource( type, value )
 	Prop_Add( self, "resources", value, type )
 	DBG_Trace( self.name .. " obtain resource=" .. type .. "+" .. value )
 end
 
-function GROUP_COMPONENT:ObtainBook( type, id )
-	Prop_Add( self, "books", { type=type, id=id } )	
-	DBG_Trace( self.name .. " obtain book=" .. BOOK_DATATABLE_Get( id ).name )
+
+---------------------------------------
+function GROUP_COMPONENT:ObtainAssets( type, value )
+	self.assets[type] = ( self.assets[type] or 0 ) + value
 end
 
-function GROUP_COMPONENT:ObtainArm( type, id )
-	Prop_Add( self, "arms", { type=type, id=id } )
-	DBG_Trace( self.name .. " obtain arm=" .. EQUIPMENT_DATATABLE_Get( id ).name )
+function GROUP_COMPONENT:ConsumeAssets( type, value )
+	if not self.assets[type] then self.assets[type] = 0 end
+	if self.assets[type] < value then
+		DBG_Trace( self.name .. " doesn't have " .. type .. "=" .. math.abs( value ) )
+		value = self.assets[type]
+		self.assets[type] = 0
+	else
+		self.assets[type] = self.assets[type] - value
+	end
+	return value
+end
+
+
+---------------------------------------
+function GROUP_COMPONENT:GetNumOfItem( type, id )
+	if id then
+		return MathUtil_GetNumOfData( self.items, id, "id" )
+	end
+	return MathUtil_GetNumOfData( self.items, type, "type" )
 end
 
 function GROUP_COMPONENT:ObtainItem( type, id )
@@ -321,11 +388,76 @@ function GROUP_COMPONENT:ObtainItem( type, id )
 	DBG_Trace( self.name .. " obtain item=" .. ITEM_DATATABLE_Get( id ).name )
 end
 
+function GROUP_COMPONENT:RemoveItem( type, id )
+	for inx, data in ipairs( self.items ) do
+		if data.type == type and data.id == id then
+			table.remove( self.items, inx )
+			DBG_Trace( self.name .. " remove item=" .. ITEM_DATATABLE_Get( id ).name )
+			return
+		end
+	end	
+end
+
+
+---------------------------------------
+function GROUP_COMPONENT:GetNumOfBook( type, id )
+	if id then
+		return MathUtil_GetNumOfData( self.books, id, "id" )
+	end
+	return MathUtil_GetNumOfData( self.books, type, "type" )
+end
+
+function GROUP_COMPONENT:ObtainBook( type, id )
+	Prop_Add( self, "books", { type=type, id=id } )	
+	DBG_Trace( self.name .. " obtain book=" .. BOOK_DATATABLE_Get( id ).name )
+end
+
+function GROUP_COMPONENT:RemoveBook( id )
+	Prop_Remove( self, "books", id, "id" )
+	DBG_Trace( self.name .. " remove book=" .. BOOK_DATATABLE_Get( id ).name )
+end
+
+
+---------------------------------------
+function GROUP_COMPONENT:GetNumOfArm( type, id )
+	if id then
+		return MathUtil_GetNumOfData( self.arms, id, "id" )
+	end
+	return MathUtil_GetNumOfData( self.arms, type, "type" )
+end
+
+function GROUP_COMPONENT:ObtainArm( type, id )
+	Prop_Add( self, "arms", { type=type, id=id } )
+	DBG_Trace( self.name .. " obtain arm=" .. EQUIPMENT_DATATABLE_Get( id ).name )
+end
+
+function GROUP_COMPONENT:RemoveArm( id )
+	Prop_Remove( self, "arms", id, "id" )
+	DBG_Trace( self.name .. " remove arm=" .. EQUIPMENT_DATATABLE_Get( id ).name )
+end
+
+
+---------------------------------------
+function GROUP_COMPONENT:GetNumOfVehicle( type, id )
+	if id then
+		return MathUtil_GetNumOfData( self.vehicles, id, "id" )
+	end
+	return MathUtil_GetNumOfData( self.vehicles, type, "type" )
+end
+
 function GROUP_COMPONENT:ObtainVehicle( type, id )
 	Prop_Add( self, "vehicles", { type=type, id=id } )
 	DBG_Trace( self.name .. " obtain vehicle=" .. EQUIPMENT_DATATABLE_Get( id ).name )
 end
 
+function GROUP_COMPONENT:RemoveVehicle( id )
+	Prop_Remove( self, "vehicles", id, "id" )
+	DBG_Trace( self.name .. " remove vehicle=" .. EQUIPMENT_DATATABLE_Get( id ).name )
+end
+
+
+---------------------------------------
+-- Obtain resource, book, arm, item, vehicle
 ---------------------------------------
 function GROUP_COMPONENT:CompleteConstruction( id )
 	Prop_Add( self, "constructions", { id=id } )
@@ -378,6 +510,48 @@ function GROUP_COMPONENT:ToString()
 	end
 	content = content .. "]\n"
 
+	--resource
+	content = content ..  " assets=["
+	for type, quantity in pairs( self.assets ) do
+		content = content .. " " .. type .. "=" .. quantity
+	end
+	content = content .. "]\n"
+
+	--resource
+	content = content ..  " res=["
+	for type, quantity in pairs( self.resources ) do
+		content = content .. " " .. type .. "=" .. quantity
+	end
+	content = content .. "]\n"
+
+	--books
+	content = content ..  " books=["
+	for _, data in ipairs( self.books ) do
+		content = content .. " " .. BOOK_DATATABLE_Get( data.id ).name
+	end
+	content = content .. "]\n"
+
+	--vehicle
+	content = content ..  " vehicles=["
+	for _, data in ipairs( self.vehicles ) do
+		content = content .. " " .. EQUIPMENT_DATATABLE_Get( data.id ).name
+	end
+	content = content .. "]\n"
+
+	--arms
+	content = content ..  " arms=["
+	for _, data in pairs( self.arms ) do
+		content = content .. " " .. EQUIPMENT_DATATABLE_Get( data.id ).name
+	end
+	content = content .. "]\n"
+
+	--items
+	content = content ..  " items=["
+	for _, data in pairs( self.items ) do
+		content = content .. " " .. ITEM_DATATABLE_Get( data.id ).name
+	end
+	content = content .. "]\n"
+
 	--constructions
 	content = content .. " constrs=["
 	for inx, data in ipairs( self.constructions ) do
@@ -398,7 +572,14 @@ function GROUP_COMPONENT:ToString()
 		end
 		content = content .. " time=" .. affair.time
 	end
-	content = content .. " ]"
+	content = content .. " ]\n"
+
+	--data
+	content = content .. " data=["
+	for type, data in pairs( self._datas ) do
+		content = content .. type .. "=" .. data .. " "
+	end
+	content = content .. "]\n"
 
 	return content
 end

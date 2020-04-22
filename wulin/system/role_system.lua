@@ -132,7 +132,7 @@ local function Role_TestFight( role )
 end
 
 local function Role_TestFightOfficer( role )
-	InputUtil_Pause( role.name, "is TESTFIGHT_OFFICER now." )
+	--InputUtil_Pause( role.name, "is TESTFIGHT_OFFICER now." )
 end
 
 local function Role_Championship( role )
@@ -220,7 +220,7 @@ local function Role_UpdateEquip( role )
 				list[equip.type] = equip.id
 			else
 				--Stronger equipment
-				local curEquip = EQUIPMENT_DATATABLE_Get( role.equips[equip.type] )
+				local curEquip = EQUIPMENT_DATATABLE_Get( role.equips[equip.type].id )
 				if curEquip.lv < equip.lv then
 					list[equip.type] = equip.id
 				end

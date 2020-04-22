@@ -2,6 +2,7 @@
 ---------------------------------------
 local function Entrust_UpdateByCity( entrustCmp )
 	if not entrustCmp:CanIssue() then return end
+
 	--issue
 	local cityCmp = ECS_FindComponent( entrustCmp.entityid, "CITY_COMPONENT" )
 	for groupid, _ in pairs( cityCmp.viewpoints ) do

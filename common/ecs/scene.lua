@@ -81,5 +81,3 @@ function ECSScene:Update( deltaTime )
 	if self.status ~= ECSSTATUS.ACTIVATED then DBG_Error( "Current scene isn't activated", self.status ) return end
 	self:GetRootEntity():Update( deltaTime )
 end
-
-

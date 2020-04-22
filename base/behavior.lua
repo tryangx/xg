@@ -267,12 +267,13 @@ end
 
 
 local function Loop( behavior, node )
-	if node.desc then debugmsg( "Loop" ) end	
+	if node.desc then debugmsg( "Loop" ) end
 	local ret = true
 	while ret do
-		for k, child in pairs( node.children ) do
-			ret = behavior.functions[child.type]( behavior, child )
-		end		
+		ret = false
+		for _, child in pairs( node.children ) do
+			if behavior.functions[child.type]( behavior, child ) then ret = true end
+		end
 	end
 	debugmsg( "Loop return false, node=" .. ( node.desc or "" ) )
 	return ret

@@ -66,12 +66,13 @@ function CITY_COMPONENT:OccupyPlot( plot )
 end
 
 
----------------------------------------
-function CITY_COMPONENT:GroupAffect( group )
+------------------------------------------------------------------------------
+-- Group evaluation update
+------------------------------------------------------------------------------
+function CITY_COMPONENT:EvaluateGroup( group )
 	local viewpoint = self.viewpoints[group.entityid]
 	if not viewpoint then
 		local influence = GROUP_SIZE[group.size] * 5 + 10
-		--self.viewpoints[group.entityid] = { influence=influence, eval=math.ceil( influence * 0.5 ) }
 		self.viewpoints[group.entityid] = { influence=influence, eval=influence }
 		viewpoint = self.viewpoints[group.entityid]
 	end
@@ -80,7 +81,22 @@ function CITY_COMPONENT:GroupAffect( group )
 end
 
 
-function CITY_COMPONENT:RemoveEffect( group )
+------------------------------------------------------------------------------
+-- Group affect the city by finish entrust
+------------------------------------------------------------------------------
+function CITY_COMPONENT:GroupAffect( group, influence )
+	local viewpoint = self.viewpoints[group.entityid]
+	if not viewpoint then
+		local influence = GROUP_SIZE[group.size] * 5 + 10
+		self.viewpoints[group.entityid] = { influence=influence, eval=influence }
+		viewpoint = self.viewpoints[group.entityid]
+	end
+
+	viewpoint.influence = viewpoint.influence + ( influence or 1 )
+end
+
+
+function CITY_COMPONENT:RemoveViewPoint( group )
 	self.viewpoints[group.entityid] = nil
 end
 

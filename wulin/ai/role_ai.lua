@@ -43,6 +43,28 @@ local function TestProbability( params )
 	return true
 end
 
+local function GroupHasActionPts( params )
+	local affairParams = GROUP_AFFAIRS[params.affair]
+
+	--action points
+	if affairParams.actionpts then
+		--group modification
+		local ratio = 1
+		if affairParams.size_mod then ratio = affairParams.size_mod[_targetGroupCmp.size] end
+		for type, value in pairs( affairParams.actionpts ) do
+			local need =  math.ceil( value * ratio )
+			local has = _targetGroupCmp.actionpts[type]
+			if has < need then
+				print( params.affair, "not enough ", type, has .. "/" .. need )
+				return false
+			end
+		end
+	end
+
+	print( _targetGroupCmp.name .. " has action pts for", params.affair )
+	return true
+end
+
 ----------------------------------------
 local function GroupHasConstruction( params )
 	local num = 0
@@ -173,8 +195,23 @@ local function AddAffair( params )
 			Group_TakeEntrust( _targetGroupCmp, _variables.entrustindex )
 		end
 
+	elseif params.type == "RECRUIT_FOLLOWER" then
+		Group_RecruitFollower( _targetGroupCmp )
+
 	else
 		DBG_Error( "unhandle", params.type )
+	end
+
+	local affairParams = GROUP_AFFAIRS[params.type]
+	--action points
+	if affairParams and affairParams.actionpts then
+		--group modification
+		local ratio = 1
+		if affairParams.size_mod then ratio = affairParams.size_mod[_targetGroupCmp.size] end
+		for type, value in pairs( affairParams.actionpts ) do			
+			_targetGroupCmp.actionpts[type] = _targetGroupCmp.actionpts[type] - math.ceil( value * ratio )			
+			if _targetGroupCmp.actionpts[type] < 0 then DBG_Error( _targetGroupCmp.name .. " doesn't have enough actionpts=", type ) end
+		end
 	end
 
 	DBG_Trace( _targetGroupCmp.name .. " add affair=" .. params.type )
@@ -224,6 +261,11 @@ local _DefaultDecision =
 local _Pause = 
 {
 	type="PAUSE", desc="Pause to debug",
+}
+
+local _Msg = 
+{
+	type="MESSAGE", desc="Pause message",
 }
 
 
@@ -519,12 +561,13 @@ local function GroupNeedMakeItem( params )
 		list = EQUIPMENT_DATATABLE_Find( _targetGroupCmp, params.type )
 	else
 		for itemType, data in pairs( _targetGroupCmp._itemWishList ) do
-			print( "test item wish list", itemType )
-			Dump( data )
-			for itemId, quantity in pairs( data ) do
-				print( "find item", itemId, quantity )
+			for itemId, quantity in pairs( data ) do				
 				list = PROCESS_DATATABLE_FindByItem( _targetGroupCmp, itemType, itemId )
-				if #list ~= 0 then break end
+				--print( "find item", itemId, quantity, #list )
+				if #list ~= 0 then
+					--print( "find item in wishlist=", itemType, itemId, quantity )
+					break					
+				end
 			end
 		end
 		if not list then return false end
@@ -582,13 +625,12 @@ end
 local function GroupNeedProduceResource( params )
 	--affairs need follower to do
 	if _targetGroupCmp:GetNumOfAffairs( "PRODUCE" ) >= #_targetGroupCmp.members then return false end
-	
-	local producetype
 
+	local producetype
 	if params and params.type then
 		producetype = params.type
 	else
-		--check wishlist first
+		--check wishlist first		
 		local total = MathUtil_Sum( _targetGroupCmp._resourceWishList )
 		if total > 0 then
 			local value = Random_GetInt_Sync( 1, total )
@@ -599,7 +641,6 @@ local function GroupNeedProduceResource( params )
 	end
 
 	if _targetGroupCmp:GetNumOfAffairsByParams( { type="PRODUCE", produce=producetype } ) > 0 then
-		--Dump( _targetGroupCmp.affairs ) print( "already has", params.type )
 		return false
 	end
 
@@ -613,7 +654,8 @@ local function GroupNeedProduceResource( params )
 	end
 
 	--find from process datatable
-	local list = PROCESS_DATATABLE_FindByResource( _targetGroupCmp, producetype )	
+	local list = PROCESS_DATATABLE_FindByResource( _targetGroupCmp, producetype )
+	--print( "find process by res", producetype, #list )
 	local num = #list
 	if num == 0 then return false end
 
@@ -627,51 +669,13 @@ local function GroupNeedProduceResource( params )
 end
 
 
-local _GroupMakePriority =
-{
-	type="SEQUENCE", desc="", children = 
-	{
-		{ type="FILTER", condition=GroupNeedMakeItem },
-		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
-	}
-}
-
-local _GroupProcessPriority =
-{
-	type="SEQUENCE", desc="", children =
-	{
-		{ type="FILTER", condition=GroupNeedProcess },
-		{ type="ACTION", action = AddAffair, params={ type="PROCESS" } },
-	}
-}
-
-local _GroupProducePriority =
-{
-	type="SEQUENCE", desc="group_priority", children = 
-	{
-		{ type="FILTER", condition=GroupNeedProduceResource },
-		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
-	}
-}
-
-
-local _GroupPriorityAffair = 
-{
-	type="LOOP", desc="", children = 
-	{
-		_GroupMakePriority,
-		_GroupProcessPriority,
-		_GroupProducePriority,
-	}	
-}
-
-
 ----------------------------------------
 ----------------------------------------
 local _GroupMakeAccessory =
 {
 	type="SEQUENCE", desc="", children = 
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="MAKE_ITEM" } },
 		{ type="FILTER", condition=GroupHasConstruction, params={ construction="ARMORY", affair={ type="MAKE_ITEM" } } },
 		{ type="FILTER", condition=GroupNeedMakeItem, params={ type="ACCESSORY" } },
 		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
@@ -683,6 +687,7 @@ local _GroupMakeEquip =
 {
 	type="SEQUENCE", desc="", children = 
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="MAKE_ITEM" } },
 		{ type="FILTER", condition=GroupHasConstruction, params={ construction="ARMORY", affair={ type="MAKE_ITEM" } } },
 		{ type="FILTER", condition=GroupNeedMakeItem, params={ type="WEAPON" } },
 		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
@@ -694,6 +699,7 @@ local _GroupMakeCloth =
 {
 	type="SEQUENCE", desc="", children =
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="MAKE_ITEM" } },
 		{ type="FILTER", condition=GroupHasConstruction, params={ construction="ARMORY", affair={ type="MAKE_ITEM" } } },
 		{ type="FILTER", condition=GroupNeedMakeItem, params={ type="ARMOR" } },
 		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
@@ -704,6 +710,7 @@ local _GroupRaiseHorse =
 {
 	type="SEQUENCE", desc="", children =
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="MAKE_ITEM" } },
 		{ type="FILTER", condition=GroupHasConstruction, params={ construction="PASTURE", affair={ type="MAKE_ITEM" } } },
 		{ type="FILTER", condition=GroupNeedMakeItem, params={ type="VEHICLE" } },
 		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
@@ -715,6 +722,7 @@ local _GroupSmelt =
 {
 	type="SEQUENCE", desc="", children =
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="PROCESS" } },
 		{ type="FILTER", condition=GroupHasConstruction, params={ construction="SMITHY", affair={ type="PROCESS", process="SMELT" } } },
 		{ type="FILTER", condition=GroupNeedProcess, params={ type="SMELT" } },
 		{ type="ACTION", action = AddAffair, params={ type="PROCESS" } },
@@ -725,6 +733,7 @@ local _GroupRaiseLivestock =
 {
 	type="SEQUENCE", desc="", children =
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="PROCESS" } },
 		{ type="FILTER", condition=GroupHasConstruction, params={ construction="FARM", affair={ type="PROCESS", process="RAISELIVESTOCK" } } },
 		{ type="FILTER", condition=GroupNeedProcess, params={ action="RAISELIVESTOK" } },
 		{ type="ACTION", action = AddAffair, params={ type="PROCESS" } },
@@ -736,6 +745,7 @@ local _GroupPlantHerb =
 {
 	type="SEQUENCE", desc="", children =
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="PROCESS" } },
 		{ type="FILTER", condition=GroupHasConstruction, params={ construction="GARDEN", affair={ type="PROCESS",process="PLANTHERB" } } },
 		{ type="FILTER", condition=GroupNeedProcess, params={ action="PLANTHERB" } },
 		{ type="ACTION", action = AddAffair, params={ type="PROCESS" } },
@@ -747,6 +757,7 @@ local _GroupMakeMedicine =
 {
 	type="SEQUENCE", desc="", children =
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="PROCESS" } },
 		{ type="FILTER", condition=GroupHasConstruction, params={ construction="PHARMACY", affair={ type="PROCESS", process="MAKEMEDICINE" } } },
 		{ type="FILTER", condition=GroupNeedProcess, params={ action="MAKEMEDICINE" } },
 		{ type="ACTION", action = AddAffair, params={ type="PROCESS" } },
@@ -756,7 +767,8 @@ local _GroupMakeMedicine =
 
 local _GroupProcess = 
 {
-	type="RANDOM_SELECTOR", desc="", children =
+	--type="RANDOM_SELECTOR", desc="", children =
+	type="SELECTOR", desc="", children =
 	{
 		_GroupMakeEquip,
 		_GroupMakeTool,
@@ -776,7 +788,8 @@ local _GroupCollect =
 	type="SEQUENCE", desc="group_collect", children = 
 	{
 		--{ type="FILTER", condition=GroupHasLand, params={ type="JUNGLELAND", lv=1 } },
-		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="FRUIT" } },
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="MAKE_ITEM" } },
+		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="PRODUCE" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
 }
@@ -786,6 +799,7 @@ local _GroupFish =
 	type="SEQUENCE", desc="group_fish", children = 
 	{
 		--{ type="FILTER", condition=GroupHasLand, params={ type="WATERLAND", lv=1 } },
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="PRODUCE" } },
 		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="FISH" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
@@ -796,6 +810,7 @@ local _GroupFarm =
 	type="SEQUENCE", desc="", children = 
 	{
 		--{ type="FILTER", condition=GroupHasLand, params={ type="FARMLAND", lv=1 } },
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="PRODUCE" } },
 		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="FOOD" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
@@ -806,6 +821,7 @@ local _GroupCutWood =
 	type="SEQUENCE", desc="", children =
 	{
 		--{ type="FILTER", condition=GroupHasLand, params={ type="WOODLAND" } },
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="PRODUCE" } },
 		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="WOOD" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
@@ -816,6 +832,7 @@ local _GroupMineStone =
 	type="SEQUENCE", desc="", children = 
 	{
 		--{ type="FILTER", condition=GroupHasLand, params={ type="STONEELAND", lv=1 } },
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="PRODUCE" } },
 		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="STONE" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
@@ -826,6 +843,7 @@ local _GroupMineMineral =
 	type="SEQUENCE", desc="", children = 
 	{
 		--{ type="FILTER", condition=GroupHasLand, params={ type="MINELAND", lv=1 } },
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="PRODUCE" } },
 		{ type="FILTER", condition=GroupNeedProduceResource, params={ type="MINERAL" } },
 		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
 	}
@@ -834,8 +852,9 @@ local _GroupMineMineral =
 local _GroupProduce = 
 {
 	--type="RANDOM_SELECTOR", desc="", children =
-	type="SELECTOR", desc="", children =
+	type="PARALLEL", desc="", children =
 	{
+		--Still have some thing need to produce at first
 		_GroupCollect,
 		_GroupFish,
 		_GroupFarm,
@@ -878,6 +897,7 @@ local _GroupTakeEntrust =
 {
 	type="SEQUENCE", desc="Entrust", children =
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="TAKE_ENTRUST" } },
 		{ type="FILTER", condition=GroupNeedEntrust },
 		{ type="ACTION", action = AddAffair, params={ type="TAKE_ENTRUST" } },
 	}	
@@ -910,7 +930,7 @@ local function GroupNeedGrantGift()
 	--  1.friend with our neighbor low power
 	--  2.the enemy of the enemy is our friend
 	--  3.potential to be ally
-	local power = _targetGroupCmp:GetAttr( "POWER" )
+	local power = _targetGroupCmp:GetData( "POWER" )
 	local list = {}
 	local totalprob = 0
 	local intelCmp = ECS_FindComponent( _targetGroupCmp.entityid, "INTEL_COMPONENT" )
@@ -949,7 +969,7 @@ end
 
 
 local function GroupNeedSignPact()
-	local power = _targetGroupCmp:GetAttr( "POWER" )
+	local power = _targetGroupCmp:GetData( "POWER" )
 	local list = {}
 	local totalprob = 0
 	local intelCmp = ECS_FindComponent( _targetGroupCmp.entityid, "INTEL_COMPONENT" )
@@ -1094,7 +1114,7 @@ local function GroupNeedAttack()
 	--find the target which match
 	--  1.at war
 	--  2.has enough power
-	local power = _targetGroupCmp:GetAttr( "POWER" )
+	local power = _targetGroupCmp:GetData( "POWER" )
 	local list = {}	
 	local relationCmp = ECS_FindComponent( _targetGroupCmp.entityid, "RELATION_COMPONENT" )
 	relationCmp:Foreach( function ( relation )
@@ -1227,13 +1247,16 @@ local function GroupNeedBuildConstruction()
 	if total > 0 then
 		local value = Random_GetInt_Sync( 1, total )
 		constrtype = MathUtil_FindNameByAccum( _targetGroupCmp._constructionWishList, value )
-		--InputUtil_Pause( "need build", constrtype )
+		--DBG_Trace( "need wishlist construction=" .. constrtype )
 	end
 
 	--find all constructions can be built
-	local list = CONSTRUCTION_DATATABLE_Find( constrtype, _targetGroupCmp )
+	local list = CONSTRUCTION_DATATABLE_Find( constrtype, _targetGroupCmp, { wishlist=true } )
 	local num = #list
-	if num == 0 then return false end
+	if num == 0 then
+		--print( "not match building conditions" )
+		return false
+	end
 
 	local index = Random_GetInt_Sync( 1, num )
 	local id = list[index].id
@@ -1252,7 +1275,7 @@ local function GroupNeedUpgradeConstruction()
 		return false
 	end
 
-	local list = CONSTRUCTION_DATATABLE_Find( nil, _roleGroupCmp, true )
+	local list = CONSTRUCTION_DATATABLE_Find( nil, _roleGroupCmp, { upgrade=true } )
 	local num = #list
 	if num == 0 then return false end
 
@@ -1284,8 +1307,9 @@ end
 
 local _GroupBuildConstruction = 
 {
-	type="SEQUENCE", desc="", children =
+	type="SEQUENCE", desc="build construction", children =
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="BUILD_CONSTRUCTION" } },
 		{ type="FILTER", condition=GroupNeedBuildConstruction },
 		{ type="ACTION", action = AddAffair, params={ type="BUILD_CONSTRUCTION" } },
 	}
@@ -1295,6 +1319,7 @@ local _GroupUpgradeConstruction =
 {
 	type="SEQUENCE", desc="", children =
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="UPGRADE_CONSTRUCTION" } },
 		{ type="FILTER", condition=GroupNeedUpgradeConstruction },
 		{ type="ACTION", action = AddAffair, params={ type="UPGRADE_CONSTRUCTION" } },
 	}
@@ -1308,6 +1333,7 @@ local _GroupDestroyConstruction =
 	}
 }
 
+
 ----------------------------------------
 ----------------------------------------
 local _GroupConstruction = 
@@ -1317,6 +1343,51 @@ local _GroupConstruction =
 		_GroupBuildConstruction,
 		_GroupUpgradeConstruction,
 		_GroupDestroyConstruction,
+	}
+}
+
+
+----------------------------------------
+----------------------------------------
+local _GroupMakePriority =
+{
+	type="SEQUENCE", desc="make priority", children = 
+	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="MAKE_ITEM" } },
+		{ type="FILTER", condition=GroupNeedMakeItem },
+		{ type="ACTION", action = AddAffair, params={ type="MAKE_ITEM" } },
+	}
+}
+
+local _GroupProcessPriority =
+{
+	type="SEQUENCE", desc="process priority", children =
+	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="PROCESS" } },
+		{ type="FILTER", condition=GroupNeedProcess },
+		{ type="ACTION", action = AddAffair, params={ type="PROCESS" } },
+	}
+}
+
+local _GroupProducePriority =
+{
+	type="SEQUENCE", desc="produce priority", children = 
+	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="PRODUCE" } },
+		{ type="FILTER", condition=GroupNeedProduceResource },
+		{ type="ACTION", action = AddAffair, params={ type="PRODUCE" } },
+	}
+}
+
+
+local _GroupPriorityAffair = 
+{
+	type="PARALLEL", desc="", children = 
+	{
+		_GroupMakePriority,
+		_GroupProcessPriority,
+		_GroupBuildConstruction,
+		_GroupProducePriority,
 	}
 }
 
@@ -1385,6 +1456,20 @@ local function GroupNeedRewardFollower()
 	return false
 end
 
+local function GroupNeedRecruitFollower()
+	--member number cap
+	--print( "follower", #_targetGroupCmp.members .. "/" .. _targetGroupCmp:GetData( "MAX_MEMBER" ) )
+	if #_targetGroupCmp.members >= _targetGroupCmp:GetData( "MAX_MEMBER" ) then return false end
+
+	--salary space
+	local space = Group_CalcFollowerSalary( { rank="SENIOR", size=_targetGroupCmp.size, grade=FIGHTERTEMPLATE_GRADE.ULTRA_RARE } )
+	local cap   = ( _targetGroupCmp:GetData( "ESTIMATE_EXPEND" ) + space ) * 3	
+	local has = _targetGroupCmp:GetData( "ESTIMATE_MONEY" )
+	--Dump( _targetGroupCmp.assets ) InputUtil_Pause( has, cap, space )
+	if has < cap then return false end
+
+	return true
+end
 
 local function GroupNeedSellItem()
 	return false
@@ -1395,10 +1480,22 @@ local function GroupBuyItem()
 end
 
 
+local _GroupRecruitFollower = 
+{
+	type="SEQUENCE", desc="", children =
+	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="RECRUIT_FOLLOWER" } },
+		{ type="FILTER", condition=GroupNeedRecruitFollower },
+		{ type="ACTION", action = AddAffair, params={ type="RECRUIT_FOLLOWER" } },
+	}
+}
+
+
 local _GroupRewardFollower = 
 {
 	type="SEQUENCE", desc="", children =
 	{
+		{ type="FILTER", condition=GroupHasActionPts, params={ affair="REWARD_FOLLOWER" } },
 		{ type="FILTER", condition=GroupNeedRewardFollower },
 		{ type="ACTION", action = AddAffair, params={ type="REWARD_FOLLOWER" } },
 	}
@@ -1423,10 +1520,11 @@ local _GroupBuyItem =
 }
 
 
-local _GroupItemManagement = 
+local _GroupHRManagement = 
 {
 	type="SEQUENCE", desc="", children =	
 	{
+		_GroupRecruitFollower,
 		_GroupRewardFollower,
 		_GroupSellItem,
 		_GroupBuyItem,
@@ -1452,17 +1550,20 @@ local GroupAffair =
 		--Priority
 		_GroupPriorityAffair,
 
-		--PROCESS always has the higher priority, it needs construction and resource materials				
+		--PROCESS always has the higher priority, it needs construction and resource materials
 		_GroupProcess,
 
 		--CONSTRUCTION should be considered after the PROCESS
 		_GroupConstruction,
 
+		--Still have some thing need to produce at first.
+		_GroupProducePriority,
+
 		--PRODUCE should be the last thing to consider about.		
 		_GroupProduce,
 
 		--Reward inventory to follower
-		_GroupItemManagement,
+		_GroupHRManagement,
 
 		--External
 		_GroupDipomacy,
@@ -1546,14 +1647,16 @@ function AI_DetermineGroupAffair( role_ecsid, params )
 	if not _targetGroupCmp then DBG_Error( "Target isn't in group!" ) end
 
 	_targetGroupCmp._tempStatuses = {}
-	--{ }
+	--{ constr=value, ... }
 	_targetGroupCmp._constructionWishList = {}
-	--{ {restype="", value=}, ... }
+	--{ restype=value, ... }
 	_targetGroupCmp._resourceWishList = {}
-	--{ { itemtype="", itemid= }, ... }
+	--{ itemtype={ itemid=value }, ... }
 	_targetGroupCmp._itemWishList = {}
-	--{ { roleid=, affairid=, } }
+	--{ roleid={affair}, ... }
 	_targetGroupCmp._followerReserveList = {}
+	--{ { type=quantity } }
+	_targetGroupCmp._landWishList = {}
 
 	DBG_Trace( _roleCmp.name, "is thinking about group affairs" )
 	Stat_Add( "RoleAI@Run_Times", nil, StatType.TIMES )

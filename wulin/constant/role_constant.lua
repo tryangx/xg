@@ -63,6 +63,12 @@ ROLE_TRAITS =
 }
 
 
+ROLE_ASSETS = 
+{
+	MONEY       = 1,
+}
+
+
 ROLE_STATUS = 
 {
 	BUSY        = 1,

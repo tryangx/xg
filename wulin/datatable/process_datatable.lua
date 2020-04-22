@@ -62,6 +62,7 @@ local PROCESS_DATATABLE =
 		materials  = { type="STEEL", quantity=30 },
 		products   = {
 						{itemtype="WEAPON", itemid=1000, quantity=1},
+						{itemtype="WEAPON", itemid=1001, quantity=1},
 					 },
 		time       = { day=30 },
 	},
@@ -123,11 +124,13 @@ end
 
 
 --------------------------------------------------
-local function PROCESS_DATATABLE_Match( group, process )
+local function PROCESS_DATATABLE_Match( group, process, addWishList )
 	if process.materials then
 		if process.materials.type and group:GetNumOfResource( process.materials.type ) < process.materials.quantity then
-			group:AddWishResource( process.materials.type, process.materials.quantity )
-			DBG_Trace( "no materials", process.materials.type, process.materials.quantity )
+			if addWishList then
+				DBG_Trace( "no materials", process.materials.type, process.materials.quantity )
+				group:AddWishResource( process.materials.type, process.materials.quantity )				
+			end
 			return false
 		end
 	end
@@ -135,16 +138,17 @@ local function PROCESS_DATATABLE_Match( group, process )
 	if process.conditions then
 		if process.conditions.construction then
 		 	if group:GetNumOfConstruction( process.conditions.construction.type ) <= 0 then
-		 		DBG_Trace( "no construction", process.conditions.construction.type )
-		 		group:AddWishConstruction( process.conditions.construction.type )
+		 		if addWishList then
+			 		DBG_Trace( "no construction", process.conditions.construction.type )
+			 		group:AddWishConstruction( process.conditions.construction.type )
+			 	end
 		 		return false
 		 	end
 		end
 		if process.conditions.commonskill then			
 			local list = group:FindMember( function ( ecsid )
 				local role = ECS_FindComponent( ecsid, "ROLE_COMPONENT" )
-				if process.conditions.commonskill then
-					Dump( process.conditions.commonskill )
+				if addWishList then
 					DBG_Trace( "no commonskill", process.conditions.commonskill.type, process.conditions.commonskill.lv )
 					return role:HasCommonSkill( process.conditions.commonskill.type, process.conditions.commonskill.lv )
 				end
@@ -161,11 +165,12 @@ end
 
 
 --------------------------------------------------
-function PROCESS_DATATABLE_Find( group, processType )
+function PROCESS_DATATABLE_Find( group, processType, addWishList )
+	if not addWishList then addWishList = true end
 	local list = {}
 	for _, process in pairs( PROCESS_DATATABLE ) do
 		if not types or type == process.type then
-			if PROCESS_DATATABLE_Match( group, process ) then
+			if PROCESS_DATATABLE_Match( group, process, addWishList ) then
 				table.insert( list, process )
 			end
 		end
@@ -175,14 +180,16 @@ end
 
 
 --------------------------------------------------
-function PROCESS_DATATABLE_FindByItem( group, itemType, itemId )
+function PROCESS_DATATABLE_FindByItem( group, itemType, itemId, addWishList )
+	if not addWishList then addWishList = true end
 	local list = {}
 	for _, process in pairs( PROCESS_DATATABLE ) do
-		if process.targetType == itemType then
+		if process.targetType == itemType then			
 			for _, data in ipairs( process.products ) do
+				--print( "find item", data.itemtype, data.itemid, itemType, itemId )
 				if data.itemtype == itemType and data.itemid == itemId then
-					if PROCESS_DATATABLE_Match( group, process ) then
-						print( "match" )
+					if PROCESS_DATATABLE_Match( group, process, addWishList ) then
+						print( "match process datatable" )
 						table.insert( list, process )
 					end
 					break
@@ -194,13 +201,14 @@ function PROCESS_DATATABLE_FindByItem( group, itemType, itemId )
 end
 
 
-function PROCESS_DATATABLE_FindByResource( group, resourceType )
+function PROCESS_DATATABLE_FindByResource( group, resourceType, addWishList )
+	if not addWishList then addWishList = true end
 	local list = {}
 	for _, process in pairs( PROCESS_DATATABLE ) do
-		if process.products and process.products.restype == resourceType then
+		if process.targetType == resourceType then
 			for _, data in ipairs( process.products ) do
 				if data.restype == resourceType then
-					if PROCESS_DATATABLE_Match( group, process ) then
+					if PROCESS_DATATABLE_Match( group, process, addWishList ) then
 						table.insert( list, process )						
 					end
 					break

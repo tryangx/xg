@@ -50,14 +50,16 @@ end
 
 ---------------------------------------
 function GAME_COMPONENT:Update( deltaTime )
-	self:Dump()
+	self:Elapsed( deltaTime )
 end
 
 ---------------------------------------
 function GAME_COMPONENT:Elapsed( deltaTime )
 	self.curTime = self.curTime + deltaTime
+	self.time:Update()
 	self.time:ElapseHour( deltaTime )
-	--InputUtil_Pause( "Gameupdate", self.curTime, self.time:ToString())
+	--print( self, "time debug", self.time.passYear, self.time.passMonth, self.time.passDay )
+	--InputUtil_Pause( "Gameupdate", self.curTime, self.time:ToString(), "+" .. deltaTime )
 end
 
 ---------------------------------------
@@ -78,6 +80,14 @@ end
 
 function GAME_COMPONENT:IsNewDay()
 	return self.time.passDay
+end
+
+function GAME_COMPONENT:IsNewMonth()
+	return self.time.passMonth
+end
+
+function GAME_COMPONENT:IsNewYear()
+	return self.time.passYear
 end
 
 function GAME_COMPONENT:GetDay()
@@ -146,7 +156,7 @@ function GAME_COMPONENT:CalcScore( group )
 	end )
 
 	--score = powre_percent * POWER_PERCENT_MOD
-	score = score + math.ceil( group:GetAttr( "POWER" ) * GAME_ACHIEVEMENT_SCORE.POWER_PERCENT_MOD / self.totpower )
+	score = score + math.ceil( group:GetData( "POWER" ) * GAME_ACHIEVEMENT_SCORE.POWER_PERCENT_MOD / self.totpower )
 
 	--vassal
 	local relationCmp = ECS_FindComponent( group.entityid, "RELATION_COMPONENT" )

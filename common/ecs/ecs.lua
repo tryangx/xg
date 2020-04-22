@@ -196,9 +196,8 @@ function ECS_Reset()
 	--reset ecsid
 	ECS_ResetID()
 
-	ECS_Foreach( "GAME_COMPONENT", function ( game )
-		game:Dump()
-	end )
+	--game
+	ECS_Foreach( "GAME_COMPONENT", function ( game ) game:Dump() end )
 
 	print( "=========Reset ECS==========" )
 end
@@ -372,11 +371,11 @@ end
 --
 ---------------------------------------------------
 function ECS_Update( deltaTime )
-	--update scenes, entities, components
-	for _, scene in ipairs( _activateScenes ) do scene:Update( deltaTime ) end
-
 	--update system
 	ECS_UpdateSystem( deltaTime )
+
+	--update scenes, entities, components
+	for _, scene in ipairs( _activateScenes ) do scene:Update( deltaTime ) end
 
 	return _currentScene
 end

@@ -152,7 +152,7 @@ function Prop_Add( container, name, data, id )
 end
 
 ---------------------------------------
-function Prop_Remove( container, name, data )
+function Prop_Remove( container, name, data, id )
 	if not container._properties then DBG_Error( "only use in ecs object" ) return end
 	
 	local prop = container._properties[name]
@@ -160,8 +160,9 @@ function Prop_Remove( container, name, data )
 	local t = typeof( container[name] )
 	if t == "table" then
 		for k, v in pairs( container[name] ) do
-			if v == data then
+			if ( not id and v == data ) or ( id and v[id] == data ) then
 				table.remove( container[name], k )
+				error( "remove" )
 				return true
 			end
 		end

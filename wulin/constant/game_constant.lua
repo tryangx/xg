@@ -2,13 +2,12 @@ GAME_RULE =
 {
 	PASS_TIME = 24,
 
-
-	WEEK_IN_MONTH = 3,
-
 	------------------------------------
 	-- Week time
 	--   Week time used for schedule
 	------------------------------------
+	WEEK_IN_MONTH = 3,
+	WEEK_DAY  = 10,
 	WEEK_TIME = 24 * 10,
 
 	------------------------------------
@@ -27,14 +26,15 @@ GAME_RULE =
 
 	------------------------------------
 	HOLD_MEETING  = function ( time )
-		if true then return true end
+		--if true then return true end
 		return time:GetDay() == 1
 	end,
 
 	SELECT_LEADER = function ( time )
 		if true then return true end
 		local day = time:GetDay()
-		return day == 1 or day == 10 or day == 20
+		return day == 1
+		--return day == 1 or day == 10 or day == 20
 	end,
 }
 

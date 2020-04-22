@@ -270,7 +270,7 @@ local FIGHTSKILL_DATATABLE =
                      { name="卸力", cate="120_1", prob=1000, combo= 2,
                        buffs={
                        			{ target="SELF", effects = {
-												            { status="STRENGTH_ENHNACED", value_percent=20, value=0, duration=10 },
+											            { status="STRENGTH_ENHNACED", value_percent=20, value=0, duration=10 },
 												            { status="INTERNAL_ENHANCED", value_percent=20, value=0, duration=10 },
 												            { status="TECHNIQUE_ENHANCED", value_percent=0, value=100, duration=8 },
                        				 		               },

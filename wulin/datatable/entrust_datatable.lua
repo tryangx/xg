@@ -8,11 +8,11 @@ local ENTRUST_DATATABLE =
 		type = "NEED_ITEM",
 		pool =
 		{
-			{ itemtype="MEDICINE", itemid=100, reward=100, prob=30 },
-			{ itemtype="MEDICINE", itemid=110, reward=150, prob=20 },
-			{ itemtype="MEDICINE", itemid=120, reward=200, prob=10 },
+			{ itemtype="MEDICINE", itemid=100, quantity=1, reward=100, influence=5, prob=30 },
+			{ itemtype="MEDICINE", itemid=110, quantity=1, reward=150, influence=5, prob=20 },
+			{ itemtype="MEDICINE", itemid=120, quantity=1, reward=200, influence=5, prob=10 },
 		},
-		time = { valid=30, finish=30, cd=10, maxcd=100 }, conditions = { eval={ min=0, max=200 }, facility={} },
+		time = { valid=30, finish=30, cd=10, maxcd=100 }, conditions = { eval={ min=0, max=200 }, facility={} },		
 	},
 
 	[1100] = 
@@ -21,21 +21,16 @@ local ENTRUST_DATATABLE =
 		type = "NEED_RESOURCE",
 		pool =
 		{
-			{ restype="FOOD",      quantity=100, reward=100, prob=30 },
-			{ restype="MEAT",      quantity=100, reward=100, prob=30 },
-			{ restype="FISH",      quantity=100, reward=100, prob=30 },
-			{ restype="FRUIT",     quantity=100, reward=100, prob=30 },
-			{ restype="HERB",      quantity=100, reward=100, prob=30 },
-			{ restype="LIVESTOCK", quantity=100, reward=100, prob=30 },
-			{ restype="CLOTH",     quantity=100, reward=100, prob=30 },
-			{ restype="LEATHER",   quantity=100, reward=100, prob=30 },
-			{ restype="LUMBER",    quantity=100, reward=100, prob=30 },
-			{ restype="WOOD",      quantity=100, reward=100, prob=30 },
-			{ restype="STONE",     quantity=100, reward=100, prob=30 },
-			{ restype="MABLE",     quantity=100, reward=100, prob=30 },
-			{ restype="IRON_ORE",  quantity=100, reward=100, prob=30 },
-			{ restype="STEEL",     quantity=100, reward=100, prob=30 },
-			{ restype="DARKSTEEL", quantity=100, reward=100, prob=30 },
+			{ restype="FOOD",      quantity=100, reward=100, influence=5, prob=30 },
+			{ restype="HERB",      quantity=100, reward=100, influence=5, prob=30 },
+			{ restype="LIVESTOCK", quantity=100, reward=100, influence=5, prob=30 },
+			{ restype="CLOTH",     quantity=100, reward=100, influence=5, prob=30 },
+			{ restype="LEATHER",   quantity=100, reward=100, influence=5, prob=30 },
+			{ restype="LUMBER",    quantity=100, reward=100, influence=5, prob=30 },
+			{ restype="WOOD",      quantity=100, reward=100, influence=5, prob=30 },
+			{ restype="STONE",     quantity=100, reward=100, influence=5, prob=30 },
+			{ restype="IRON_ORE",  quantity=100, reward=100, influence=5, prob=30 },
+			{ restype="STEEL",     quantity=100, reward=100, influence=5, prob=30 },
 		},
 		time = { valid=90, finish=30, cd=10, maxcd=100 },
 		conditions = { eval={ min=0, max=200 }, },
@@ -47,9 +42,9 @@ local ENTRUST_DATATABLE =
 		type = "NEED_EQUIPMENT",
 		pool =
 		{
-			{ itemtype="WEAPON", itemid=1000, quantity=1, reward=100, prob=30 },
-			{ itemtype="WEAPON", itemid=1001, quantity=1, reward=100, prob=30 },
-			{ itemtype="ARMOR",  itemid=2000, quantity=1, reward=100, prob=30 },
+			{ itemtype="WEAPON", itemid=1000, quantity=1, reward=100, influence=5, prob=30 },
+			{ itemtype="WEAPON", itemid=1001, quantity=1, reward=100, influence=5, prob=30 },
+			{ itemtype="ARMOR",  itemid=2000, quantity=1, reward=100, influence=5, prob=30 },
 		},
 		time = { valid=90, finish=30, cd=10, maxcd=100 },
 		conditions = { eval={ min=0, max=200 }, },
@@ -62,7 +57,7 @@ local ENTRUST_DATATABLE =
 		type = "NEED_SKILL",
 		pool = 
 		{
-			{ need_commonskill={type="STRATEGIC", lv=1}, need_fightskill={id=100}, need_lv=10, need_follower=1, reward=100, prob=100 },
+			{ need_commonskill={type="STRATEGIC", lv=1}, need_fightskill={id=100}, need_lv=10, need_follower=1, reward=100, influence=5, prob=100 },
 		},
 		time = { valid=30, finish=30, cd=10, maxcd=100 },
 		conditions = { eval={ min=0, max=200 }, },
@@ -74,10 +69,10 @@ local ENTRUST_DATATABLE =
 		type = "NEED_PROTECT",
 		pool = 
 		{
-			{ diffculty=10, need_follower=1, reward=100, prob=100 },
-			{ diffculty=20, need_follower=1, reward=100, prob=100 },
-			{ diffculty=30, need_follower=2, reward=100, prob=100 },
-			{ diffculty=40, need_follower=2, reward=100, prob=100 },
+			{ diffculty=10, need_follower=1, reward=100, influence=5, prob=100 },
+			{ diffculty=20, need_follower=1, reward=100, influence=5, prob=100 },
+			{ diffculty=30, need_follower=2, reward=100, influence=5, prob=100 },
+			{ diffculty=40, need_follower=2, reward=100, influence=5, prob=100 },
 		},
 		time = { valid=30, finish=30, cd=10, maxcd=100 },
 		conditions = { eval={ min=0, max=200 }, },
@@ -89,7 +84,7 @@ local ENTRUST_DATATABLE =
 		type = "ASSASIN",
 		pool = 
 		{
-			{ diffculty=10, need_follower=1, reward=100, prob=100 },
+			{ diffculty=10, need_follower=1, reward=100, influence=5, prob=100 },
 		},
 		time = { valid=60, finish=30, cd=10, maxcd=100 },
 		conditions = { eval={ min=0, max=200 }, },

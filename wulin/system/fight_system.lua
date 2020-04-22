@@ -20,8 +20,6 @@ end
 
 ---------------------------------------
 function FIGHT_SYSTEM:Update( deltaTime )
-	--print( "Update Fight System", #self._fights )
-	--MathUtil_RemoveListItemIf( self._fights, function ( ecsid )
 	local list = {}
 	ECS_Foreach( "FIGHT_COMPONENT", function ( fight )
 		self:ProcessFight( fight )
@@ -79,7 +77,7 @@ function FIGHT_SYSTEM:CreateFight( params )
 	entity:AddComponent( fightCmp )
 	Data_GetRoot( "FIGHT_DATA" ):AddChild( entity )
 
-	--DBG_Trace( "Create fight id=" .. entity.ecsid )
+	DBG_Trace( "Create fight id=" .. entity.ecsid )
 end
 
 

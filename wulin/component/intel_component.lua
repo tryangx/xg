@@ -54,7 +54,7 @@ end
 
 function Intel_GetGroupPower( intel )
 	local group = ECS_FindComponent( intel.id, "GROUP_COMPONENT" )
-	local power = group:GetAttr( "POWER" )	
+	local power = group:GetData( "POWER" )	
 	local seed  = MathUtil_ToNumber( intel.entityid ) + MathUtil_ToNumber( intel.id )
 	local mod = Random_GetInt_Const( 80, 120, seed )
 	power = math.ceil( power * mod * 0.01 )

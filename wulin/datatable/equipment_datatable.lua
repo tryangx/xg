@@ -6,7 +6,7 @@ local EQUIPMENT_DATATABLE =
 	{
 		name       = "倚天剑", 		
 		type       = "WEAPON",
-		lv         = 8,
+		lv         = 4,
 		value      = { money=1000 },
 		condition  = { commonskill={type="BLACKSMITH"} },
 		costs      = { time=100, resources={ IRON_ORE={value=100} } },
@@ -16,7 +16,7 @@ local EQUIPMENT_DATATABLE =
 	{
 		name       = "屠龙刀",
 		type       = "WEAPON",
-		lv         = 8,
+		lv         = 4,
 		value      = { money=1000 },
 		condition  = { construction={type="SMITHY"} },
 		costs      = { time=100, resources={ IRON_ORE={value=100} } },
@@ -27,7 +27,7 @@ local EQUIPMENT_DATATABLE =
 	{
 		name       = "软猬甲",
 		type       = "ARMOR",
-		lv         = 8,
+		lv         = 4,
 		value      = { money=1000 },
 		condition  = { construction={type="SMITHY"} },
 		costs      = { time=100, resources={ IRON_ORE={value=100} } },
@@ -38,7 +38,7 @@ local EQUIPMENT_DATATABLE =
 	{
 		name       = "鹿皮靴",
 		type       = "SHOES",
-		lv         = 6,
+		lv         = 4,
 		value      = { money=1000 },
 		condition  = { construction={type="LETHER_FACTORY"} },
 	},
@@ -47,19 +47,37 @@ local EQUIPMENT_DATATABLE =
 	{
 		name       = "玉佩",
 		type       = "ACCESSORY",		
-		lv         = 6,
+		lv         = 2,
 		value      = { money=1000 },
 		condition  = { construction={type="FACTORY"} },
 	},
 
 	[5000] =
 	{
+		name       = "普通马",
+		type       = "VEHICLE",
+		lv         = 1,
+		value      = { money=500 },
+		condition  = { construction={type="PASTURE"} },
+		moveAction = { reduce_time=0.3 },
+	},
+	[5000] =
+	{
+		name       = "骏马",
+		type       = "VEHICLE",
+		lv         = 2,
+		value      = { money=1500 },
+		condition  = { construction={type="PASTURE"} },
+		moveAction = { reduce_time=0.45 },
+	},
+	[5000] =
+	{
 		name       = "汗血宝马",
 		type       = "VEHICLE",
-		lv         = 7,
-		value      = { money=1000 },
+		lv         = 3,
+		value      = { money=4000 },
 		condition  = { construction={type="PASTURE"} },
-		moveAction = { reduce_time=0.5 },
+		moveAction = { reduce_time=0.6 },
 	},
 }
 

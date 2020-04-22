@@ -61,8 +61,14 @@ function run()
 
 	local ret = true
 	while ret do
+		print( "###########################################" )
+		CurrentGame:Dump()
 		if pause_menu() == true then return end
-		ret = ECS_Update( GAME_RULE.PASS_TIME )
+		local days = GAME_RULE.WEEK_DAY * GAME_RULE.WEEK_IN_MONTH
+		while days > 0 and ret do
+			ret = ECS_Update( GAME_RULE.PASS_TIME )
+			days = days - 1
+		end
 	end
 
 	--ECS_DumpSystem()
@@ -139,6 +145,7 @@ function test_mapsaveload()
 	save_data( map, "map.json" )
 end
 
+--[[
 function create_fightskill( id )
 	local fightSkill = ECS_CreateComponent( "FIGHTSKILL_COMPONENT" )
 	MathUtil_ShallowCopy( FIGHTSKILL_DATATABLE_Get( id ), fightSkill )
@@ -158,7 +165,7 @@ function create_follower( id )
 	MathUtil_ShallowCopy( ROLE_DATATABLE_Get( id ), follower )	
 	save_data( fighter, "follower_" .. id .. ".json" )	
 end
-
+]]
 
 ---------------------------------------------------
 ---------------------------------------------------

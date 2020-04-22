@@ -14,23 +14,18 @@ end
 ---------------------------------------
 ---------------------------------------
 function GAME_SYSTEM:Update( deltaTime )
-	CurrentGame:Elapsed( deltaTime )
 	if not CurrentGame:IsGameOver() then return end
 	
 	CurrentGame.totpower = 0
 	ECS_Foreach( "GROUP_COMPONENT", function ( group )
-		CurrentGame.totpower = CurrentGame.totpower + group:GetAttr( "POWER" )
+		CurrentGame.totpower = CurrentGame.totpower + group:GetData( "POWER" )
 	end )
 
-	ECS_Foreach( "GROUP_COMPONENT", function ( group )
-		CurrentGame:CalcScore( group )
-	end )
+	ECS_Foreach( "GROUP_COMPONENT", function ( group ) CurrentGame:CalcScore( group ) 	end )
 
-	if CurrentGame.winner then
-		print( CurrentGame.winner )
-		DBG_Trace( "Winner=" .. ECS_FindComponent( CurrentGame.winner, "GROUP_COMPONENT" ).name )
-	end
+	if CurrentGame.winner then 	DBG_Trace( "Winner=" .. ECS_FindComponent( CurrentGame.winner, "GROUP_COMPONENT" ).name ) end
+
+	ECS_LeaveScene()
 
 	InputUtil_Pause( "game end" )
-	ECS_LeaveScene()
 end

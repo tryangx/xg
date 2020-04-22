@@ -38,7 +38,8 @@ end
 
 local function InitRoles( scene )
 	local entity = ECS_CreateEntity( "ROLE_DATA" )
-	ROLE_DATATABLE_Foreach( function ( roleTable ) entity:AddChild( Role_CreateByTableData( roleTable ) ) end )
+	--Don't create role by datatable now
+	--ROLE_DATATABLE_Foreach( function ( roleTable ) entity:AddChild( Role_CreateByTableData( roleTable ) ) end )
 	scene:GetRootEntity():AddChild( entity )
 	entity:CreateComponent( "DATA_COMPONENT" ).type = "ROLE_DATA"
 	return entity
@@ -92,7 +93,7 @@ local function InitGame( scene )
 
 	local gameCmp = entity:CreateComponent( "GAME_COMPONENT" );
 	gameCmp.startTime = Time_CalcDateValue( 960, 1, 1 )
-	gameCmp.endTime   = Time_CalcDateValue( 960, 2, 1 )
+	gameCmp.endTime   = Time_CalcDateValue( 970, 1, 1 )
 	gameCmp.curTime   = gameCmp.startTime
 
 	return entity

@@ -396,6 +396,22 @@ function MathUtil_IndexOf( source, target, name )
 	return nil
 end
 
+
+function MathUtil_GetNumOfData( source, target, name )
+	if not source then return 0 end
+	local num = 0
+	if not name then
+		for k, v in pairs( source ) do
+			if v == target then num = num + 1 end
+		end
+	else
+		for k, v in pairs( source ) do
+			if v[name] == target then num = num + 1 end
+		end
+	end
+	return num
+end
+
 --[[
 	@return retrun the data by given value and name
 
@@ -527,8 +543,7 @@ function MathUtil_RemoveAndReserved( list, target, name )
 	return false
 end
 
---[[
-	
+--[[	
 ]]
 function MathUtil_Remove( list, target, name )
 	if not list then 
@@ -545,7 +560,6 @@ function MathUtil_Remove( list, target, name )
 	else
 		for k, v in pairs( list ) do
 			if v[name] == target then
-				print( k, v )
 				table.remove( list, k )
 				return true
 			end
@@ -564,7 +578,7 @@ end
 function MathUtil_RemoveListItemIf( list, fn )
 	local inx = 1
 	while inx <= #list do
-		if fn( list[inx] ) then
+		if fn( list[inx] ) == true then
 			table.remove( list, inx )
 		else
 			inx = inx + 1
@@ -631,7 +645,7 @@ end
 
 function MathUtil_FindNameByAccum( valueList, accValue )
 	for k, v in pairs( valueList ) do
-		if accValue < v then return k end
+		if accValue <= v then return k end
 		accValue = accValue - v
 	end
 end

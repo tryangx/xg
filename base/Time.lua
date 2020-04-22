@@ -201,7 +201,6 @@ function TIME:Update()
 	self.passYear  = false
 	self.passMonth = false
 	self.passDay   = false
-	InputUtil_Pause( "Update time" )
 end
 
 

@@ -17,7 +17,7 @@ FOLLOWER_PROPERTIES =
 	--measure what follower did for group
 	contribution = { type="OBJECT" }, --value, unrewarded
 
-	--prestige
+	salary       = { type="NUMBER" },
 }
 
 ---------------------------------------
